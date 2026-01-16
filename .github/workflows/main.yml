@@ -1,0 +1,61 @@
+name: CI
+on: [pull_request, push]
+
+env:
+  NODE_VERSION: 24
+
+jobs:
+  format:
+    name: Check Format
+    runs-on: ubuntu-latest
+    container: wpilib/ubuntu-base:22.04
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Add repository to git safe directories
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
+      
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org/
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Check robot code formatting
+        run: ./gradlew spotlessCheck
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: wpilib/roborio-cross-ubuntu:2025-22.04
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Add repository to git safe directories
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org/
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Ensure spotless will not fail on build
+        run: ./gradlew spotlessApply
+
+      - name: Compile and run tests on robot code
+        run: ./gradlew build
