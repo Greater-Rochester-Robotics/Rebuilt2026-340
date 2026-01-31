@@ -36,5 +36,33 @@ public final class Constants {
         public static final int BR_ENCODER = 13;
 
         public static final int CANANDGYRO = 14;
+
+        // Shooter
+
+        public static final int SHOOTER_PORT_LEAD_MOTOR = 20;
+        public static final int SHOOTER_PORT_FOLLOW_MOTOR = 21;
+        public static final int SHOOTER_STARBOARD_LEAD_MOTOR = 22;
+        public static final int SHOOTER_STARBOARD_FOLLOW_MOTOR = 23;
+
+        // Hood
+
+        public static final int HOOD_MOTOR = 30;
+        public static final int HOOD_ZERO_SWITCH = 31;
+
+        // Indexer
+
+        public static final int INDEXER_TWINDEXER_MOTOR = 40;
+        public static final int INDEXER_UPTAKE_MOTOR = 41;
+
+        // Intake
+
+        public static final int INTAKE_PIVOT_MOTOR = 50;
+        public static final int INTAKE_ROLLER_MOTOR = 51;
+        public static final int INTAKE_WCP_THROUGHBORE_ENCODE_POWERED_BY_CANCODER_HALF_INCH_HEX = 52;
+
+        // Climber
+
+        public static final int CLIMBER_LEAD_MOTOR = 60;
+        public static final int CLIMBER_FOLLOW_MOTOR = 61;
     }
 }
