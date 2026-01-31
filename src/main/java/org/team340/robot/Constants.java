@@ -1,5 +1,7 @@
 package org.team340.robot;
 
+import com.ctre.phoenix6.CANBus;
+
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -19,7 +21,7 @@ public final class Constants {
      */
     public static final class RobotMap {
 
-        public static final String LOWER_CAN = "LowerCAN";
+        public static final CANBus CANBus = new CANBus("canivore");
 
         public static final int FL_MOVE = 2;
         public static final int FL_TURN = 3;

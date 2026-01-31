@@ -1,6 +1,5 @@
 package org.team340.robot.subsystems;
 
-import com.ctre.phoenix6.CANBus;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -78,7 +77,7 @@ public final class Swerve extends GRRSubsystem {
         .setMechanicalProperties(675.0 / 112.0, 287.0 / 11.0, Units.inchesToMeters(4.0))
         .setOdometryStd(0.1, 0.1, 0.05)
         .setIMU(SwerveIMUs.canandgyro(RobotMap.CANANDGYRO))
-        .setPhoenixFeatures(new CANBus(RobotMap.LOWER_CAN), true, true, true)
+        .setPhoenixFeatures(RobotMap.CANBus, true, true, true)
         .setModules(frontLeft, frontRight, backLeft, backRight);
 
     @NotLogged
