@@ -34,10 +34,10 @@ public final class Shooters extends GRRSubsystem {
     }
 
     public Shooters() {
-        this.portLead = new TalonFX(RobotMap.SHOOTER_PORT_LEAD_MOTOR);
-        this.portFollow = new TalonFX(RobotMap.SHOOTER_PORT_FOLLOW_MOTOR);
-        this.starboardLead = new TalonFX(RobotMap.SHOOTER_STARBOARD_LEAD_MOTOR);
-        this.starboardFollow = new TalonFX(RobotMap.SHOOTER_STARBOARD_FOLLOW_MOTOR);
+        this.portLead = new TalonFX(RobotMap.SHOOTER_PORT_LEAD_MOTOR, RobotMap.CANBus);
+        this.portFollow = new TalonFX(RobotMap.SHOOTER_PORT_FOLLOW_MOTOR, RobotMap.CANBus);
+        this.starboardLead = new TalonFX(RobotMap.SHOOTER_STARBOARD_LEAD_MOTOR, RobotMap.CANBus);
+        this.starboardFollow = new TalonFX(RobotMap.SHOOTER_STARBOARD_FOLLOW_MOTOR, RobotMap.CANBus);
 
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
