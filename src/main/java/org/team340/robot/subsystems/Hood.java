@@ -1,0 +1,103 @@
+package org.team340.robot.subsystems;
+
+import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.configs.CANdiConfiguration;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.hardware.CANdi;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
+import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.wpilibj2.command.Command;
+import java.util.function.DoubleSupplier;
+import org.team340.lib.util.command.GRRSubsystem;
+import org.team340.lib.util.vendors.PhoenixUtil;
+import org.team340.robot.Constants.RobotMap;
+
+public class Hood extends GRRSubsystem {
+
+    private static final InterpolatingDoubleTreeMap distancePositionMap;
+
+    static {
+        distancePositionMap = new InterpolatingDoubleTreeMap();
+
+        // TODO: Populate data points.
+        distancePositionMap.put(0.0, 0.0);
+    }
+
+    private final TalonFX motor;
+    private final CANdi zeroSwitch;
+
+    private final PositionVoltage positionVoltage;
+
+    public Hood() {
+        this.motor = new TalonFX(RobotMap.HOOD_MOTOR);
+        this.zeroSwitch = new CANdi(RobotMap.HOOD_ZERO_SWITCH);
+
+        final TalonFXConfiguration config = new TalonFXConfiguration();
+
+        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+
+        config.HardwareLimitSwitch.ReverseLimitRemoteSensorID = RobotMap.HOOD_ZERO_SWITCH;
+        config.HardwareLimitSwitch.ReverseLimitSource = ReverseLimitSourceValue.RemoteCANdiS1;
+        config.HardwareLimitSwitch.ReverseLimitType = ReverseLimitTypeValue.NormallyOpen;
+        config.HardwareLimitSwitch.ReverseLimitAutosetPositionEnable = true;
+        config.HardwareLimitSwitch.ReverseLimitAutosetPositionValue = 0.0;
+
+        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+
+        config.Slot0.kP = 0.0;
+        config.Slot0.kI = 0.0;
+        config.Slot0.kD = 0.0;
+        config.Slot0.kG = 0.0;
+        config.Slot0.kS = 0.0;
+        config.Slot0.kV = 0.0;
+        config.Slot0.kA = 0.0;
+
+        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 0.0;
+        config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+
+        // This config restores factory defaults.
+        final CANdiConfiguration candiConfig = new CANdiConfiguration();
+
+        // TODO: Find out the direction of the motor.
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+
+        PhoenixUtil.run(() -> motor.clearStickyFaults());
+        PhoenixUtil.run(() -> motor.getConfigurator().apply(config));
+        PhoenixUtil.run(() -> zeroSwitch.getConfigurator().apply(candiConfig));
+
+        PhoenixUtil.run(() ->
+            BaseStatusSignal.setUpdateFrequencyForAll(500, zeroSwitch.getS1State(), zeroSwitch.getS1Closed())
+        );
+
+        positionVoltage = new PositionVoltage(0.0);
+        positionVoltage.EnableFOC = true;
+        positionVoltage.UpdateFreqHz = 0.0;
+    }
+
+    /**
+     * Run the hood pivot to target a specific distance based on a preset interpolating map.
+     * @param distance The distance to target in meters.
+     */
+    public Command targetDistance(final DoubleSupplier distance) {
+        return goTo(() -> distancePositionMap.get(distance.getAsDouble())).withName("Hood.targetDistance()");
+    }
+
+    /**
+     * Runs the hood to a position.
+     * @param position The position in revolutions.
+     */
+    private Command goTo(final DoubleSupplier position) {
+        return commandBuilder("Hood.goTo()")
+            .onExecute(() -> {
+                positionVoltage.withPosition(position.getAsDouble());
+                motor.setControl(positionVoltage);
+            })
+            .onEnd(motor::stopMotor);
+    }
+}
