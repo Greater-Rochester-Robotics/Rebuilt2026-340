@@ -1,6 +1,5 @@
 package org.team340.robot.subsystems;
 
-import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -62,18 +61,6 @@ public class Indexer extends GRRSubsystem {
 
         PhoenixUtil.run(() -> uptake.clearStickyFaults());
         PhoenixUtil.run(() -> uptake.getConfigurator().apply(config));
-
-        PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(
-                500,
-                twindexer.getDutyCycle(),
-                twindexer.getMotorVoltage(),
-                twindexer.getTorqueCurrent(),
-                uptake.getDutyCycle(),
-                uptake.getMotorVoltage(),
-                uptake.getTorqueCurrent()
-            )
-        );
 
         velocityControl = new VelocityVoltage(0.0);
         velocityControl.EnableFOC = true;
