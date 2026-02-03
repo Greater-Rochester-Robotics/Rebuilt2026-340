@@ -32,8 +32,8 @@ public class Indexer extends GRRSubsystem {
     private final VelocityVoltage velocityControl;
 
     public Indexer() {
-        this.twindexer = new TalonFX(RobotMap.INDEXER_TWINDEXER_MOTOR);
-        this.uptake = new TalonFX(RobotMap.INDEXER_UPTAKE_MOTOR);
+        this.twindexer = new TalonFX(RobotMap.INDEXER_TWINDEXER_MOTOR, RobotMap.CANBus);
+        this.uptake = new TalonFX(RobotMap.INDEXER_UPTAKE_MOTOR, RobotMap.CANBus);
 
         final TalonFXConfiguration config = new TalonFXConfiguration();
 

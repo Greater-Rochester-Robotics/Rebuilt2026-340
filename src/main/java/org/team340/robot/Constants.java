@@ -60,7 +60,7 @@ public final class Constants {
 
         public static final int INTAKE_PIVOT_MOTOR = 50;
         public static final int INTAKE_ROLLER_MOTOR = 51;
-        public static final int INTAKE_WCP_THROUGHBORE_ENCODE_POWERED_BY_CANCODER_HALF_INCH_HEX = 52;
+        public static final int INTAKE_WCP_THROUGHBORE_POWERED_BY_CANCODER_FOR_HALF_INCH_HEX = 52;
 
         // Climber
 
