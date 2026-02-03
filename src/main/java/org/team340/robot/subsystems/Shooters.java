@@ -17,13 +17,6 @@ import org.team340.robot.Constants.RobotMap;
 
 public final class Shooters extends GRRSubsystem {
 
-    private final VelocityVoltage velocityControl;
-
-    private final TalonFX portLead;
-    private final TalonFX portFollow;
-    private final TalonFX starboardLead;
-    private final TalonFX starboardFollow;
-
     private static final InterpolatingDoubleTreeMap distanceVelocityMap;
 
     static {
@@ -32,6 +25,13 @@ public final class Shooters extends GRRSubsystem {
         // TODO: Populate data points.
         distanceVelocityMap.put(0.0, 0.0);
     }
+
+    private final TalonFX portLead;
+    private final TalonFX portFollow;
+    private final TalonFX starboardLead;
+    private final TalonFX starboardFollow;
+
+    private final VelocityVoltage velocityControl;
 
     public Shooters() {
         this.portLead = new TalonFX(RobotMap.SHOOTER_PORT_LEAD_MOTOR, RobotMap.CANBus);
@@ -63,6 +63,9 @@ public final class Shooters extends GRRSubsystem {
         PhoenixUtil.run(() -> portFollow.clearStickyFaults());
         PhoenixUtil.run(() -> portFollow.getConfigurator().apply(config));
 
+        // Inverts the direction for the other side.
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+
         PhoenixUtil.run(() -> starboardLead.clearStickyFaults());
         PhoenixUtil.run(() -> starboardLead.getConfigurator().apply(config));
 
@@ -82,7 +85,7 @@ public final class Shooters extends GRRSubsystem {
         );
 
         velocityControl = new VelocityVoltage(0.0);
-        velocityControl.EnableFOC = false;
+        velocityControl.EnableFOC = true;
         velocityControl.UpdateFreqHz = 0.0;
 
         final Follower portFollowControl = new Follower(portLead.getDeviceID(), MotorAlignmentValue.Aligned);
