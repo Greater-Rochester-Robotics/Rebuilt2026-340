@@ -4,8 +4,8 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
@@ -23,7 +23,7 @@ public class Climber extends GRRSubsystem {
     private final TalonFX follow;
     private final CANcoder zeroSwitch;
 
-    private final PositionVoltage positionVoltage;
+    private final MotionMagicVoltage positionVoltage;
 
     public Climber() {
         this.lead = new TalonFX(RobotMap.CLIMBER_LEAD_MOTOR, RobotMap.CANBus);
@@ -52,7 +52,7 @@ public class Climber extends GRRSubsystem {
             )
         );
 
-        positionVoltage = new PositionVoltage(0.0);
+        positionVoltage = new MotionMagicVoltage(0.0);
         positionVoltage.EnableFOC = true;
         positionVoltage.UpdateFreqHz = 0.0;
 
