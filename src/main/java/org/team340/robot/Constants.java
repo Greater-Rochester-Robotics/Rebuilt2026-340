@@ -66,5 +66,6 @@ public final class Constants {
 
         public static final int CLIMBER_LEAD_MOTOR = 60;
         public static final int CLIMBER_FOLLOW_MOTOR = 61;
+        public static final int CLIMBER_CANCODER = 62;
     }
 }
