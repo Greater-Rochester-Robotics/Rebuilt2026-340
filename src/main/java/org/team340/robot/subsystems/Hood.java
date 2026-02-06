@@ -15,12 +15,16 @@ import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
+import org.team340.lib.tunable.Tunables;
+import org.team340.lib.tunable.Tunables.TunableDouble;
+import org.team340.lib.util.Mutable;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
 public class Hood extends GRRSubsystem {
 
+    private static final TunableDouble manualControlSpeed = Tunables.value("Hood/manualControlSpeed", 0.0);
     private static final double homingVelocity = 0.0; // In rotations per second.
     private static final InterpolatingDoubleTreeMap distancePositionMap;
 
@@ -109,6 +113,18 @@ public class Hood extends GRRSubsystem {
      */
     public Command targetDistance(final DoubleSupplier distance) {
         return goTo(() -> distancePositionMap.get(distance.getAsDouble())).withName("Hood.targetDistance()");
+    }
+
+    /**
+     * Manually run the hood up or down using a velocity input.
+     * @param velocity A velocity between [-1.0, 1.0] to drive the hood up or down. This is scaled by {@link Hood#manualControlSpeed}.
+     */
+    public Command manualControl(final DoubleSupplier velocity) {
+        final Mutable<Double> position = new Mutable<Double>(0.0);
+
+        return goTo(() -> position.value += -velocity.getAsDouble() * manualControlSpeed.get())
+            .beforeStarting(() -> position.value = motor.getPosition().getValueAsDouble())
+            .withName("Hood.manualControl()");
     }
 
     /**
