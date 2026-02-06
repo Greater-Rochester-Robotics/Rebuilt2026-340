@@ -1,9 +1,11 @@
 package org.team340.robot.subsystems;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANdiConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANdi;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -19,6 +21,7 @@ import org.team340.robot.Constants.RobotMap;
 
 public class Hood extends GRRSubsystem {
 
+    private static final double homingVelocity = 0.0; // In rotations per second.
     private static final InterpolatingDoubleTreeMap distancePositionMap;
 
     static {
@@ -31,11 +34,18 @@ public class Hood extends GRRSubsystem {
     private final TalonFX motor;
     private final CANdi zeroSwitch;
 
+    private boolean isZeroed = false;
+
     private final PositionVoltage positionVoltage;
+    private final VelocityVoltage velocityVoltage;
+
+    private final StatusSignal<Boolean> zeroSwitchS1Closed;
 
     public Hood() {
         this.motor = new TalonFX(RobotMap.HOOD_MOTOR);
         this.zeroSwitch = new CANdi(RobotMap.HOOD_ZERO_SWITCH);
+
+        this.zeroSwitchS1Closed = zeroSwitch.getS1Closed();
 
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
@@ -78,6 +88,19 @@ public class Hood extends GRRSubsystem {
         positionVoltage = new PositionVoltage(0.0);
         positionVoltage.EnableFOC = true;
         positionVoltage.UpdateFreqHz = 0.0;
+
+        velocityVoltage = new VelocityVoltage(0.0);
+        velocityVoltage.EnableFOC = true;
+        velocityVoltage.UpdateFreqHz = 0.0;
+    }
+
+    @Override
+    public void periodic() {
+        zeroSwitchS1Closed.refresh();
+    }
+
+    public boolean atZero() {
+        return zeroSwitchS1Closed.getValue();
     }
 
     /**
@@ -95,6 +118,14 @@ public class Hood extends GRRSubsystem {
     private Command goTo(final DoubleSupplier position) {
         return commandBuilder("Hood.goTo()")
             .onExecute(() -> {
+                if (!isZeroed) {
+                    velocityVoltage.withVelocity(homingVelocity);
+                    motor.setControl(velocityVoltage);
+                    if (!atZero()) return;
+
+                    isZeroed = true;
+                }
+
                 positionVoltage.withPosition(position.getAsDouble());
                 motor.setControl(positionVoltage);
             })
