@@ -108,8 +108,8 @@ public final class Swerve extends GRRSubsystem {
     public void periodic() {
         api.refresh();
 
-        final double deltaX = api.state.pose.getX() - Field.HUB.get().getX();
-        final double deltaY = api.state.pose.getY() - Field.HUB.get().getY();
+        final double deltaX = state.pose.getX() - Field.HUB.get().getX();
+        final double deltaY = state.pose.getY() - Field.HUB.get().getY();
 
         distanceToHub = Math.hypot(deltaX, deltaY);
         angleToHub = Math.atan2(deltaY, deltaX);
