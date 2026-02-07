@@ -14,7 +14,7 @@ import org.team340.robot.Constants.RobotMap;
 
 public class Indexer extends GRRSubsystem {
 
-    public enum States {
+    private enum States {
         INTAKE(0.0, 0.0);
 
         public final TunableDouble twindexerSpeed;
@@ -67,7 +67,11 @@ public class Indexer extends GRRSubsystem {
         velocityControl.UpdateFreqHz = 0.0;
     }
 
-    public Command run(final States state) {
+    public Command intake() {
+        return run(States.INTAKE).withName("Indexer.intake()");
+    }
+
+    private Command run(final States state) {
         return commandBuilder("Indexer.run()")
             .onExecute(() -> {
                 velocityControl.withVelocity(state.twindexerSpeed.get());
