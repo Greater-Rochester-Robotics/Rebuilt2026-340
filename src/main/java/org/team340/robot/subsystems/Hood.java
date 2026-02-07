@@ -140,7 +140,7 @@ public class Hood extends GRRSubsystem {
         config.HardwareLimitSwitch.ReverseLimitAutosetPositionEnable = true;
         config.HardwareLimitSwitch.ReverseLimitAutosetPositionValue = 0.0;
 
-        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
         config.Slot0.kP = 0.0;
         config.Slot0.kI = 0.0;
