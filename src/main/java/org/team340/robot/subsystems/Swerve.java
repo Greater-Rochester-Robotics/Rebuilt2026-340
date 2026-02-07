@@ -26,6 +26,7 @@ import org.team340.lib.tunable.Tunables;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.robot.Constants;
 import org.team340.robot.Constants.RobotMap;
+import org.team340.robot.util.Field;
 
 /**
  * The robot's swerve drivetrain.
@@ -87,6 +88,9 @@ public final class Swerve extends GRRSubsystem {
     private final PAPFController apf;
     private final ProfiledPIDController angularPID;
 
+    private double distanceToHub = 0.0;
+    private double angleToHub = 0.0;
+
     public Swerve() {
         api = new SwerveAPI(config);
         apf = new PAPFController(6.0, 0.25, 0.01, true, new Obstacle[0]);
@@ -103,6 +107,12 @@ public final class Swerve extends GRRSubsystem {
     @Override
     public void periodic() {
         api.refresh();
+
+        final double deltaX = state.pose.getX() - Field.HUB.get().getX();
+        final double deltaY = state.pose.getY() - Field.HUB.get().getY();
+
+        distanceToHub = Math.hypot(deltaX, deltaY);
+        angleToHub = Math.atan2(deltaY, deltaX);
     }
 
     /**
@@ -191,5 +201,13 @@ public final class Swerve extends GRRSubsystem {
      */
     public Command stop(boolean lock) {
         return commandBuilder("Swerve.stop(" + lock + ")").onExecute(() -> api.applyStop(lock));
+    }
+
+    public double distanceToHub() {
+        return distanceToHub;
+    }
+
+    public double angleToHub() {
+        return angleToHub;
     }
 }
