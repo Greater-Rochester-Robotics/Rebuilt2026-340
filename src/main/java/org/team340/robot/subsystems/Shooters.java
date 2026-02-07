@@ -43,38 +43,7 @@ public final class Shooters extends GRRSubsystem {
         this.starboardLead = new TalonFX(RobotMap.SHOOTER_STARBOARD_LEAD_MOTOR, RobotMap.CANBus);
         this.starboardFollow = new TalonFX(RobotMap.SHOOTER_STARBOARD_FOLLOW_MOTOR, RobotMap.CANBus);
 
-        final TalonFXConfiguration config = new TalonFXConfiguration();
-
-        config.CurrentLimits.StatorCurrentLimit = 80.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
-
-        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-
-        config.Slot0.kP = 0.0;
-        config.Slot0.kI = 0.0;
-        config.Slot0.kD = 0.0;
-        config.Slot0.kG = 0.0;
-        config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.0;
-        config.Slot0.kA = 0.0;
-
-        // TODO: Find out the direction of the motor.
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-
-        PhoenixUtil.run(() -> portLead.clearStickyFaults());
-        PhoenixUtil.run(() -> portLead.getConfigurator().apply(config));
-
-        PhoenixUtil.run(() -> portFollow.clearStickyFaults());
-        PhoenixUtil.run(() -> portFollow.getConfigurator().apply(config));
-
-        // Inverts the direction for the other side.
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-
-        PhoenixUtil.run(() -> starboardLead.clearStickyFaults());
-        PhoenixUtil.run(() -> starboardLead.getConfigurator().apply(config));
-
-        PhoenixUtil.run(() -> starboardFollow.clearStickyFaults());
-        PhoenixUtil.run(() -> starboardFollow.getConfigurator().apply(config));
+        configureMotors();
 
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(
@@ -134,5 +103,40 @@ public final class Shooters extends GRRSubsystem {
                 portLead.stopMotor();
                 starboardLead.stopMotor();
             });
+    }
+
+    private void configureMotors() {
+        final TalonFXConfiguration config = new TalonFXConfiguration();
+
+        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+
+        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+
+        config.Slot0.kP = 0.0;
+        config.Slot0.kI = 0.0;
+        config.Slot0.kD = 0.0;
+        config.Slot0.kG = 0.0;
+        config.Slot0.kS = 0.0;
+        config.Slot0.kV = 0.0;
+        config.Slot0.kA = 0.0;
+
+        // TODO: Find out the direction of the motor.
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+
+        PhoenixUtil.run(() -> portLead.clearStickyFaults());
+        PhoenixUtil.run(() -> portLead.getConfigurator().apply(config));
+
+        PhoenixUtil.run(() -> portFollow.clearStickyFaults());
+        PhoenixUtil.run(() -> portFollow.getConfigurator().apply(config));
+
+        // Inverts the direction for the other side.
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+
+        PhoenixUtil.run(() -> starboardLead.clearStickyFaults());
+        PhoenixUtil.run(() -> starboardLead.getConfigurator().apply(config));
+
+        PhoenixUtil.run(() -> starboardFollow.clearStickyFaults());
+        PhoenixUtil.run(() -> starboardFollow.getConfigurator().apply(config));
     }
 }
