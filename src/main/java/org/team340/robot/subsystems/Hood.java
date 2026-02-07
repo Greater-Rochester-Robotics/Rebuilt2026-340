@@ -134,7 +134,7 @@ public class Hood extends GRRSubsystem {
         config.CurrentLimits.StatorCurrentLimit = 80.0;
         config.CurrentLimits.SupplyCurrentLimit = 70.0;
 
-        config.HardwareLimitSwitch.ReverseLimitRemoteSensorID = RobotMap.HOOD_ZERO_SWITCH;
+        config.HardwareLimitSwitch.ReverseLimitRemoteSensorID = zeroSwitch.getDeviceID();
         config.HardwareLimitSwitch.ReverseLimitSource = ReverseLimitSourceValue.RemoteCANdiS1;
         config.HardwareLimitSwitch.ReverseLimitType = ReverseLimitTypeValue.NormallyOpen;
         config.HardwareLimitSwitch.ReverseLimitAutosetPositionEnable = true;
