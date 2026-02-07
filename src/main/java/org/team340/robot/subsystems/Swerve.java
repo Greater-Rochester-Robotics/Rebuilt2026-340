@@ -207,7 +207,7 @@ public final class Swerve extends GRRSubsystem {
         return Field.BLUE_ZONE > state.pose.getX();
     }
 
-    public boolean inNoOnesZone() {
+    public boolean inNeutralZone() {
         final double x = state.pose.getX();
         return Field.BLUE_ZONE <= x && Field.RED_ZONE >= x;
     }
