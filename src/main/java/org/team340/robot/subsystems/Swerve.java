@@ -203,6 +203,19 @@ public final class Swerve extends GRRSubsystem {
         return commandBuilder("Swerve.stop(" + lock + ")").onExecute(() -> api.applyStop(lock));
     }
 
+    public boolean inOurZone() {
+        return Field.BLUE_ZONE > state.pose.getX();
+    }
+
+    public boolean inNoOnesZone() {
+        final double x = state.pose.getX();
+        return Field.BLUE_ZONE <= x && Field.RED_ZONE >= x;
+    }
+
+    public boolean inTheirZone() {
+        return Field.RED_ZONE < state.pose.getX();
+    }
+
     public double distanceToHub() {
         return distanceToHub;
     }
