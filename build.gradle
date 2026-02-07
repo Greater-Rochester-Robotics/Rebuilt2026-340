@@ -34,9 +34,9 @@ deploy {
                     jvmArgs.add('-XX:MaxGCPauseMillis=50')
 
                     // Only enable these arguments when using a RIO 2
-                    // jvmArgs.add('-Xmx100M')
-                    // jvmArgs.add('-Xms100M')
-                    // jvmArgs.add('-XX:+AlwaysPreTouch')
+                    jvmArgs.add('-Xmx100M')
+                    jvmArgs.add('-Xms100M')
+                    jvmArgs.add('-XX:+AlwaysPreTouch')
 
                     // Enable VisualVM connection
                     // jvmArgs.add('-Dcom.sun.management.jmxremote=true')
