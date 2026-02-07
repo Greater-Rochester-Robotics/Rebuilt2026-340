@@ -35,32 +35,8 @@ public class Indexer extends GRRSubsystem {
         this.twindexer = new TalonFX(RobotMap.INDEXER_TWINDEXER_MOTOR, RobotMap.CANBus);
         this.uptake = new TalonFX(RobotMap.INDEXER_UPTAKE_MOTOR, RobotMap.CANBus);
 
-        final TalonFXConfiguration config = new TalonFXConfiguration();
-
-        config.CurrentLimits.StatorCurrentLimit = 80.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
-
-        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-
-        config.Slot0.kP = 0.0;
-        config.Slot0.kI = 0.0;
-        config.Slot0.kD = 0.0;
-        config.Slot0.kG = 0.0;
-        config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.0;
-        config.Slot0.kA = 0.0;
-
-        // TODO: Find out the direction of the motor.
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-
-        PhoenixUtil.run(() -> twindexer.clearStickyFaults());
-        PhoenixUtil.run(() -> twindexer.getConfigurator().apply(config));
-
-        // TODO: Find out the direction of the motor.
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-
-        PhoenixUtil.run(() -> uptake.clearStickyFaults());
-        PhoenixUtil.run(() -> uptake.getConfigurator().apply(config));
+        configureTwindexer();
+        configureUptake();
 
         velocityControl = new VelocityVoltage(0.0);
         velocityControl.EnableFOC = true;
@@ -83,5 +59,51 @@ public class Indexer extends GRRSubsystem {
                 twindexer.stopMotor();
                 uptake.stopMotor();
             });
+    }
+
+    private void configureTwindexer() {
+        final TalonFXConfiguration config = new TalonFXConfiguration();
+
+        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+
+        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+
+        config.Slot0.kP = 0.0;
+        config.Slot0.kI = 0.0;
+        config.Slot0.kD = 0.0;
+        config.Slot0.kG = 0.0;
+        config.Slot0.kS = 0.0;
+        config.Slot0.kV = 0.0;
+        config.Slot0.kA = 0.0;
+
+        // TODO: Find out the direction of the motor.
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+
+        PhoenixUtil.run(() -> twindexer.clearStickyFaults());
+        PhoenixUtil.run(() -> twindexer.getConfigurator().apply(config));
+    }
+
+    private void configureUptake() {
+        final TalonFXConfiguration config = new TalonFXConfiguration();
+
+        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+
+        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+
+        config.Slot0.kP = 0.0;
+        config.Slot0.kI = 0.0;
+        config.Slot0.kD = 0.0;
+        config.Slot0.kG = 0.0;
+        config.Slot0.kS = 0.0;
+        config.Slot0.kV = 0.0;
+        config.Slot0.kA = 0.0;
+
+        // TODO: Find out the direction of the motor.
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+
+        PhoenixUtil.run(() -> uptake.clearStickyFaults());
+        PhoenixUtil.run(() -> uptake.getConfigurator().apply(config));
     }
 }

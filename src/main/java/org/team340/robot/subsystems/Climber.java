@@ -30,18 +30,8 @@ public class Climber extends GRRSubsystem {
         this.follow = new TalonFX(RobotMap.CLIMBER_FOLLOW_MOTOR, RobotMap.CANBus);
         this.zeroSwitch = new CANcoder(RobotMap.CLIMBER_CANCODER, RobotMap.CANBus);
 
-        final CANcoderConfiguration cancoderConfig = createCANCoderConfig();
-
-        PhoenixUtil.run(() -> zeroSwitch.clearStickyFaults());
-        PhoenixUtil.run(() -> zeroSwitch.getConfigurator().apply(cancoderConfig));
-
-        final TalonFXConfiguration config = createMotorConfig();
-
-        PhoenixUtil.run(() -> lead.clearStickyFaults());
-        PhoenixUtil.run(() -> lead.getConfigurator().apply(config));
-
-        PhoenixUtil.run(() -> follow.clearStickyFaults());
-        PhoenixUtil.run(() -> follow.getConfigurator().apply(config));
+        configureCANcoder();
+        configureMotors();
 
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(
@@ -75,13 +65,14 @@ public class Climber extends GRRSubsystem {
             });
     }
 
-    private CANcoderConfiguration createCANCoderConfig() {
+    private void configureCANcoder() {
         final CANcoderConfiguration config = new CANcoderConfiguration();
 
-        return config;
+        PhoenixUtil.run(() -> zeroSwitch.clearStickyFaults());
+        PhoenixUtil.run(() -> zeroSwitch.getConfigurator().apply(config));
     }
 
-    private TalonFXConfiguration createMotorConfig() {
+    private void configureMotors() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 80.0;
@@ -113,6 +104,10 @@ public class Climber extends GRRSubsystem {
         // TODO: Find out the direction of the motor.
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
-        return config;
+        PhoenixUtil.run(() -> lead.clearStickyFaults());
+        PhoenixUtil.run(() -> lead.getConfigurator().apply(config));
+
+        PhoenixUtil.run(() -> follow.clearStickyFaults());
+        PhoenixUtil.run(() -> follow.getConfigurator().apply(config));
     }
 }

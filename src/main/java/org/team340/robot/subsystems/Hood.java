@@ -51,39 +51,8 @@ public class Hood extends GRRSubsystem {
 
         this.zeroSwitchS1Closed = zeroSwitch.getS1Closed();
 
-        final TalonFXConfiguration config = new TalonFXConfiguration();
-
-        config.CurrentLimits.StatorCurrentLimit = 80.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
-
-        config.HardwareLimitSwitch.ReverseLimitRemoteSensorID = RobotMap.HOOD_ZERO_SWITCH;
-        config.HardwareLimitSwitch.ReverseLimitSource = ReverseLimitSourceValue.RemoteCANdiS1;
-        config.HardwareLimitSwitch.ReverseLimitType = ReverseLimitTypeValue.NormallyOpen;
-        config.HardwareLimitSwitch.ReverseLimitAutosetPositionEnable = true;
-        config.HardwareLimitSwitch.ReverseLimitAutosetPositionValue = 0.0;
-
-        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-
-        config.Slot0.kP = 0.0;
-        config.Slot0.kI = 0.0;
-        config.Slot0.kD = 0.0;
-        config.Slot0.kG = 0.0;
-        config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.0;
-        config.Slot0.kA = 0.0;
-
-        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 0.0;
-        config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-
-        // This config restores factory defaults.
-        final CANdiConfiguration candiConfig = new CANdiConfiguration();
-
-        // TODO: Find out the direction of the motor.
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-
-        PhoenixUtil.run(() -> motor.clearStickyFaults());
-        PhoenixUtil.run(() -> motor.getConfigurator().apply(config));
-        PhoenixUtil.run(() -> zeroSwitch.getConfigurator().apply(candiConfig));
+        configureCANcoder();
+        configureMotor();
 
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(500, zeroSwitch.getS1State(), zeroSwitch.getS1Closed())
@@ -150,5 +119,44 @@ public class Hood extends GRRSubsystem {
                 motor.setControl(positionVoltage);
             })
             .onEnd(motor::stopMotor);
+    }
+
+    private void configureCANcoder() {
+        // This config restores factory defaults.
+        final CANdiConfiguration candiConfig = new CANdiConfiguration();
+
+        PhoenixUtil.run(() -> zeroSwitch.getConfigurator().apply(candiConfig));
+    }
+
+    private void configureMotor() {
+        final TalonFXConfiguration config = new TalonFXConfiguration();
+
+        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+
+        config.HardwareLimitSwitch.ReverseLimitRemoteSensorID = RobotMap.HOOD_ZERO_SWITCH;
+        config.HardwareLimitSwitch.ReverseLimitSource = ReverseLimitSourceValue.RemoteCANdiS1;
+        config.HardwareLimitSwitch.ReverseLimitType = ReverseLimitTypeValue.NormallyOpen;
+        config.HardwareLimitSwitch.ReverseLimitAutosetPositionEnable = true;
+        config.HardwareLimitSwitch.ReverseLimitAutosetPositionValue = 0.0;
+
+        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+
+        config.Slot0.kP = 0.0;
+        config.Slot0.kI = 0.0;
+        config.Slot0.kD = 0.0;
+        config.Slot0.kG = 0.0;
+        config.Slot0.kS = 0.0;
+        config.Slot0.kV = 0.0;
+        config.Slot0.kA = 0.0;
+
+        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 0.0;
+        config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+
+        // TODO: Confirm the direction in testing.
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+
+        PhoenixUtil.run(() -> motor.clearStickyFaults());
+        PhoenixUtil.run(() -> motor.getConfigurator().apply(config));
     }
 }
