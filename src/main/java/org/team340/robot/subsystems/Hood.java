@@ -115,6 +115,10 @@ public class Hood extends GRRSubsystem {
         return goTo(() -> distancePositionMap.get(distance.getAsDouble())).withName("Hood.targetDistance()");
     }
 
+    public Command goToZero() {
+        return goTo(() -> 0).withName("Hood.goToZero()");
+    }
+
     /**
      * Manually run the hood up or down using a velocity input.
      * @param velocity A velocity between [-1.0, 1.0] to drive the hood up or down. This is scaled by {@link Hood#manualSpeed}.
