@@ -24,7 +24,7 @@ import org.team340.robot.Constants.RobotMap;
 
 public class Hood extends GRRSubsystem {
 
-    private static final TunableDouble manualControlSpeed = Tunables.value("Hood/manualControlSpeed", 0.0);
+    private static final TunableDouble manualSpeed = Tunables.value("Hood/manualSpeed", 0.0);
     private static final double homingVelocity = 0.0; // In rotations per second.
     private static final InterpolatingDoubleTreeMap distancePositionMap;
 
@@ -117,12 +117,12 @@ public class Hood extends GRRSubsystem {
 
     /**
      * Manually run the hood up or down using a velocity input.
-     * @param velocity A velocity between [-1.0, 1.0] to drive the hood up or down. This is scaled by {@link Hood#manualControlSpeed}.
+     * @param velocity A velocity between [-1.0, 1.0] to drive the hood up or down. This is scaled by {@link Hood#manualSpeed}.
      */
     public Command manualControl(final DoubleSupplier velocity) {
-        final Mutable<Double> position = new Mutable<Double>(0.0);
+        final Mutable<Double> position = new Mutable<>(0.0);
 
-        return goTo(() -> position.value += -velocity.getAsDouble() * manualControlSpeed.get())
+        return goTo(() -> position.value += -velocity.getAsDouble() * manualSpeed.get())
             .beforeStarting(() -> position.value = motor.getPosition().getValueAsDouble())
             .withName("Hood.manualControl()");
     }
