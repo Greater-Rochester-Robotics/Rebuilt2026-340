@@ -2,19 +2,40 @@ package org.team340.robot.subsystems;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.wpilibj2.command.Command;
+import org.team340.lib.tunable.Tunables;
+import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
 public class Intake extends GRRSubsystem {
 
+    private enum States {
+        DOWN(0.0, 0.0),
+        UP(0.0, 0.0);
+
+        public final TunableDouble harvesterPosition;
+        public final TunableDouble rollerVelocity;
+
+        private States(final double harvesterPosition, final double rollerVelocity) {
+            this.harvesterPosition = Tunables.value("Intake/" + name() + "/harvesterPosition", harvesterPosition);
+            this.rollerVelocity = Tunables.value("Intake/" + name() + "/rollerVelocity", rollerVelocity);
+        }
+    }
+
     private TalonFX pivot;
     private TalonFX rollers;
     private CANcoder wcpThroughborePoweredByCANcoderForHalfInchHex;
+
+    private final MotionMagicVoltage pivotPositionControl;
+    private final VelocityVoltage rollersVelocityControl;
 
     public Intake() {
         this.pivot = new TalonFX(RobotMap.INTAKE_PIVOT_MOTOR, RobotMap.CANBus);
@@ -27,6 +48,28 @@ public class Intake extends GRRSubsystem {
         configureCANcoder();
         configurePivot();
         configureRollers();
+
+        pivotPositionControl = new MotionMagicVoltage(0.0);
+        pivotPositionControl.EnableFOC = true;
+        pivotPositionControl.UpdateFreqHz = 0.0;
+
+        rollersVelocityControl = new VelocityVoltage(0.0);
+        rollersVelocityControl.EnableFOC = true;
+        rollersVelocityControl.UpdateFreqHz = 0.0;
+    }
+
+    public Command intake(States state) {
+        return commandBuilder("Intake.intake()")
+            .onInitialize(() -> {
+                pivotPositionControl.withPosition(state.harvesterPosition.getAsDouble());
+                pivot.setControl(pivotPositionControl);
+                rollersVelocityControl.withVelocity(state.rollerVelocity.getAsDouble());
+                rollers.setControl(rollersVelocityControl);
+            })
+            .onEnd(() -> {
+                pivot.stopMotor();
+                rollers.stopMotor();
+            });
     }
 
     private void configureCANcoder() {
