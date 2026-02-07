@@ -85,7 +85,7 @@ public class Climber extends GRRSubsystem {
         config.HardwareLimitSwitch.ReverseLimitAutosetPositionValue = 0.0;
         config.HardwareLimitSwitch.ReverseLimitEnable = false;
 
-        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
         config.Slot0.kP = 0.0;
         config.Slot0.kI = 0.0;
