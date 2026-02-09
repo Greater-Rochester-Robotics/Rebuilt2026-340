@@ -1,5 +1,5 @@
 name: CI
-on: [pull_request, push]
+on: push
 
 env:
   NODE_VERSION: 24
