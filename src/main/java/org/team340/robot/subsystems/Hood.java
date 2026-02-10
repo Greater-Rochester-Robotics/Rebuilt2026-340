@@ -85,8 +85,8 @@ public class Hood extends GRRSubsystem {
     }
 
     public Command goToZero(boolean reZero) {
-        Command goTo = goTo(()->0).withName("Hood.goToZero(" + reZero + ")");
-        if(reZero) goTo = goTo.beforeStarting(()->isZeroed=false);
+        Command goTo = goTo(() -> 0).withName("Hood.goToZero(" + reZero + ")");
+        if (reZero) goTo = goTo.beforeStarting(() -> isZeroed = false);
         return goTo;
     }
 
