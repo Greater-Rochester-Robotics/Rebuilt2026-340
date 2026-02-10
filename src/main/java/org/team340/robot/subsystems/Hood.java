@@ -51,7 +51,7 @@ public class Hood extends GRRSubsystem {
 
         this.zeroSwitchS1Closed = zeroSwitch.getS1Closed();
 
-        configureCANcoder();
+        configureCANdi();
         configureMotor();
 
         PhoenixUtil.run(() ->
@@ -121,7 +121,7 @@ public class Hood extends GRRSubsystem {
             .onEnd(motor::stopMotor);
     }
 
-    private void configureCANcoder() {
+    private void configureCANdi() {
         // This config restores factory defaults.
         final CANdiConfiguration candiConfig = new CANdiConfiguration();
 
