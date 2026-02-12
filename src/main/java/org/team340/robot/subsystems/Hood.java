@@ -51,7 +51,7 @@ public class Hood extends GRRSubsystem {
 
         this.zeroSwitchS1Closed = zeroSwitch.getS1Closed();
 
-        configureCANcoder();
+        configureCANdi();
         configureMotor();
 
         PhoenixUtil.run(() ->
@@ -84,8 +84,10 @@ public class Hood extends GRRSubsystem {
         return goTo(() -> distancePositionMap.get(distance.getAsDouble())).withName("Hood.targetDistance()");
     }
 
-    public Command goToZero() {
-        return goTo(() -> 0).withName("Hood.goToZero()");
+    public Command goToZero(boolean reZero) {
+        Command goTo = goTo(() -> 0).withName("Hood.goToZero(" + reZero + ")");
+        if (reZero) goTo = goTo.beforeStarting(() -> isZeroed = false);
+        return goTo;
     }
 
     /**
@@ -121,7 +123,7 @@ public class Hood extends GRRSubsystem {
             .onEnd(motor::stopMotor);
     }
 
-    private void configureCANcoder() {
+    private void configureCANdi() {
         // This config restores factory defaults.
         final CANdiConfiguration candiConfig = new CANdiConfiguration();
 
