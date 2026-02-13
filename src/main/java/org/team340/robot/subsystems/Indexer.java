@@ -15,7 +15,8 @@ import org.team340.robot.Constants.RobotMap;
 public class Indexer extends GRRSubsystem {
 
     private enum States {
-        INTAKE(0.0, 0.0);
+        INTAKE(0.0, 0.0),
+        UNJAM(0.0, 0.0);
 
         public final TunableDouble twindexerSpeed;
         public final TunableDouble updateSpeed;
@@ -45,6 +46,10 @@ public class Indexer extends GRRSubsystem {
 
     public Command intake() {
         return run(States.INTAKE).withName("Indexer.intake()");
+    }
+
+    public Command unjam() {
+        return run(States.UNJAM).withName("Indexer.unjam()");
     }
 
     private Command run(final States state) {
