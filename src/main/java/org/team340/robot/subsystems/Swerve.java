@@ -27,6 +27,8 @@ import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.robot.Constants;
 import org.team340.robot.Constants.RobotMap;
 import org.team340.robot.util.Field;
+import org.team340.robot.util.Vision;
+import org.team340.robot.util.Vision.CameraConfig;
 
 /**
  * The robot's swerve drivetrain.
@@ -81,18 +83,24 @@ public final class Swerve extends GRRSubsystem {
         .setPhoenixFeatures(RobotMap.CANBus, true, true, true)
         .setModules(frontLeft, frontRight, backLeft, backRight);
 
+    // TODO: Populate camera locations.
+    private final CameraConfig[] cameras = {};
+
     @NotLogged
     private final SwerveState state;
 
     private final SwerveAPI api;
+    private final Vision vision;
     private final PAPFController apf;
     private final ProfiledPIDController angularPID;
 
     private double distanceToHub = 0.0;
     private double angleToHub = 0.0;
+    private boolean seesAprilTag = false;
 
     public Swerve() {
         api = new SwerveAPI(config);
+        vision = new Vision(cameras);
         apf = new PAPFController(6.0, 0.25, 0.01, true, new Obstacle[0]);
         angularPID = new ProfiledPIDController(8.0, 0.0, 0.0, new Constraints(10.0, 26.0));
         angularPID.enableContinuousInput(-Math.PI, Math.PI);
@@ -108,11 +116,24 @@ public final class Swerve extends GRRSubsystem {
     public void periodic() {
         api.refresh();
 
+        // Apply vision estimates to the pose estimator.
+        final var measurements = vision.getUnreadResults(state.poseHistory, state.odometryPose, state.velocity);
+        seesAprilTag = measurements.length > 0;
+        api.addVisionMeasurements(measurements);
+
         final double deltaX = state.pose.getX() - Field.HUB.get().getX();
         final double deltaY = state.pose.getY() - Field.HUB.get().getY();
 
         distanceToHub = Math.hypot(deltaX, deltaY);
         angleToHub = Math.atan2(deltaY, deltaX);
+    }
+
+    /**
+     * Returns {@code true} if an AprilTag has been seen since the last robot loop.
+     */
+    @NotLogged
+    public boolean seesAprilTag() {
+        return seesAprilTag;
     }
 
     /**
