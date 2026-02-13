@@ -216,10 +216,12 @@ public final class Swerve extends GRRSubsystem {
         return Field.RED_ZONE < state.pose.getX();
     }
 
+    @NotLogged
     public double distanceToHub() {
         return distanceToHub;
     }
 
+    @NotLogged
     public double angleToHub() {
         return angleToHub;
     }
