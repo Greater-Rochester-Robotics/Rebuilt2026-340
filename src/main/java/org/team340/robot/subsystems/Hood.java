@@ -58,7 +58,7 @@ public class Hood extends GRRSubsystem {
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(500, zeroSwitch.getS1State(), zeroSwitch.getS1Closed())
         );
-        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(50, motor, zeroSwitch));
+        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, motor, zeroSwitch));
 
         positionVoltage = new PositionVoltage(0.0);
         positionVoltage.EnableFOC = true;

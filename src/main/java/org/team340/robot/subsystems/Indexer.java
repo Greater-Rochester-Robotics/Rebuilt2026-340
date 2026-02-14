@@ -39,7 +39,7 @@ public class Indexer extends GRRSubsystem {
         configureTwindexer();
         configureUptake();
 
-        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(50, twindexer, uptake));
+        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, twindexer, uptake));
 
         velocityControl = new VelocityVoltage(0.0);
         velocityControl.EnableFOC = true;

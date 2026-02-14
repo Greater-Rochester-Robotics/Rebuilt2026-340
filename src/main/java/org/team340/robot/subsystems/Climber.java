@@ -42,7 +42,7 @@ public class Climber extends GRRSubsystem {
                 lead.getTorqueCurrent()
             )
         );
-        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(50, lead, follow, zeroSwitch));
+        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, lead, follow, zeroSwitch));
 
         positionControl = new MotionMagicVoltage(0.0);
         positionControl.EnableFOC = true;

@@ -51,7 +51,7 @@ public class Intake extends GRRSubsystem {
         configureRollers();
 
         PhoenixUtil.run(() ->
-            ParentDevice.optimizeBusUtilizationForAll(50, pivot, rollers, wcpThroughborePoweredByCANcoderForHalfInchHex)
+            ParentDevice.optimizeBusUtilizationForAll(4, pivot, rollers, wcpThroughborePoweredByCANcoderForHalfInchHex)
         );
 
         pivotPositionControl = new MotionMagicVoltage(0.0);

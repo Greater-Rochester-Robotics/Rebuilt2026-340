@@ -58,7 +58,7 @@ public final class Shooters extends GRRSubsystem {
             )
         );
         PhoenixUtil.run(() ->
-            ParentDevice.optimizeBusUtilizationForAll(50, portLead, portFollow, starboardLead, starboardFollow)
+            ParentDevice.optimizeBusUtilizationForAll(4, portLead, portFollow, starboardLead, starboardFollow)
         );
 
         velocityControl = new VelocityVoltage(0.0);
