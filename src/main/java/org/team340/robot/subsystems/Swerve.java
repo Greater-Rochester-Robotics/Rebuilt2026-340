@@ -252,7 +252,7 @@ public final class Swerve extends GRRSubsystem {
 
     /**
      * Returns the distance from the origin of our robot to the center of the hub in meters.
-     * @return The distance from the origin of our robot to the center of the hub, recalculated every code cycle. 
+     * @return The distance from the origin of our robot to the center of the hub, recalculated every code cycle.
      */
     @NotLogged
     public double distanceToHub() {
@@ -261,7 +261,7 @@ public final class Swerve extends GRRSubsystem {
 
     /**
      * Returns the angle from the origin of our robot to the center of the hub in radians.
-     * @return The angle from the origin of our robot to the center of the hub, recalculated every code cycle. 
+     * @return The angle from the origin of our robot to the center of the hub, recalculated every code cycle.
      */
     @NotLogged
     public double angleToHub() {
