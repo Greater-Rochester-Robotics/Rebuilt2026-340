@@ -4,6 +4,7 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -222,6 +223,21 @@ public final class Swerve extends GRRSubsystem {
     }
 
     /**
+     * Drives the robot to a target position using the P-APF while aiming at the hub. This command does not end.
+     * @param goal A supplier that returns the target blue-origin relative field location.
+     * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
+     */
+    public Command aimAtHub(final Supplier<Translation2d> goal, final DoubleSupplier maxDeceleration) {
+        return commandBuilder("Swerve.aimAtHub()")
+            .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
+            .onExecute(() -> {
+                var speeds = apf.calculate(state.pose, goal.get(), config.velocity, maxDeceleration.getAsDouble());
+
+                speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), angleToHub);
+            });
+    }
+
+    /*
      * Drives the robot to a target position using the P-APF while aiming in the direction of our alliance zone (0 or PI radians). This command does not end.
      * @param goal A supplier that returns the target blue-origin relative field location.
      * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
