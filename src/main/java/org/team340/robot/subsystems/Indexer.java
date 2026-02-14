@@ -20,14 +20,14 @@ import org.team340.robot.Constants.RobotMap;
 @Logged
 public final class Indexer extends GRRSubsystem {
 
-    private enum States {
+    private enum State {
         INTAKE(0.0, 0.0),
         UNJAM(0.0, 0.0);
 
         public final TunableDouble twindexerSpeed;
         public final TunableDouble updateSpeed;
 
-        private States(final double twindexerSpeed, final double updateSpeed) {
+        private State(final double twindexerSpeed, final double updateSpeed) {
             this.twindexerSpeed = Tunables.value("Indexer/" + name() + "/twindexerSpeed", twindexerSpeed);
             this.updateSpeed = Tunables.value("Indexer/" + name() + "/updateSpeed", updateSpeed);
         }
@@ -53,14 +53,14 @@ public final class Indexer extends GRRSubsystem {
     }
 
     public Command intake() {
-        return run(States.INTAKE).withName("Indexer.intake()");
+        return run(State.INTAKE).withName("Indexer.intake()");
     }
 
     public Command unjam() {
-        return run(States.UNJAM).withName("Indexer.unjam()");
+        return run(State.UNJAM).withName("Indexer.unjam()");
     }
 
-    private Command run(final States state) {
+    private Command run(final State state) {
         return commandBuilder("Indexer.run()")
             .onExecute(() -> {
                 velocityControl.withVelocity(state.twindexerSpeed.get());

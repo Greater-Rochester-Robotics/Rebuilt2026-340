@@ -23,14 +23,14 @@ import org.team340.robot.Constants.RobotMap;
 @Logged
 public final class Intake extends GRRSubsystem {
 
-    private enum States {
+    private enum State {
         DOWN(0.0, 0.0),
         UP(0.0, 0.0);
 
         public final TunableDouble harvesterPosition;
         public final TunableDouble rollerVelocity;
 
-        private States(final double harvesterPosition, final double rollerVelocity) {
+        private State(final double harvesterPosition, final double rollerVelocity) {
             this.harvesterPosition = Tunables.value("Intake/" + name() + "/harvesterPosition", harvesterPosition);
             this.rollerVelocity = Tunables.value("Intake/" + name() + "/rollerVelocity", rollerVelocity);
         }
@@ -68,7 +68,7 @@ public final class Intake extends GRRSubsystem {
         rollersVelocityControl.UpdateFreqHz = 0.0;
     }
 
-    public Command intake(States state) {
+    public Command intake(State state) {
         return commandBuilder("Intake.intake()")
             .onInitialize(() -> {
                 pivotPositionControl.withPosition(state.harvesterPosition.getAsDouble());
