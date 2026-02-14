@@ -1,5 +1,9 @@
 package org.team340.robot.subsystems;
 
+import static edu.wpi.first.wpilibj2.command.Commands.either;
+import static edu.wpi.first.wpilibj2.command.Commands.none;
+import static edu.wpi.first.wpilibj2.command.Commands.sequence;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -16,15 +20,8 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
 import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
-
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
-
-import static edu.wpi.first.wpilibj2.command.Commands.either;
-import static edu.wpi.first.wpilibj2.command.Commands.none;
-import static edu.wpi.first.wpilibj2.command.Commands.parallel;
-import static edu.wpi.first.wpilibj2.command.Commands.sequence;
-
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
@@ -84,7 +81,12 @@ public class Climber extends GRRSubsystem {
             )
         );
         PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(100, lead.getPosition(), lead.getStatorCurrent(), follow.getStatorCurrent())
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                lead.getPosition(),
+                lead.getStatorCurrent(),
+                follow.getStatorCurrent()
+            )
         );
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, lead, follow, zeroSwitch));
 
@@ -145,7 +147,11 @@ public class Climber extends GRRSubsystem {
     public Command retract() {
         return sequence(
             either(zero(), none(), () -> !isZeroed),
-            either(goTo(Position.RETRACTING), none(), () -> position.getValueAsDouble() > Position.RETRACTING.value.get()),
+            either(
+                goTo(Position.RETRACTING),
+                none(),
+                () -> position.getValueAsDouble() > Position.RETRACTING.value.get()
+            ),
             goTo(Position.ZERO)
         );
     }
