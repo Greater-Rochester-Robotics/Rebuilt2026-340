@@ -218,6 +218,25 @@ public final class Swerve extends GRRSubsystem {
     }
 
     /**
+     * Drives the robot to a target position using the P-APF while aiming in the direction of our alliance zone (0 or PI radians). This command does not end.
+     * @param goal A supplier that returns the target blue-origin relative field location.
+     * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
+     */
+    public Command aimAtOurZone(final DoubleSupplier x, final DoubleSupplier y) {
+        final double target = Alliance.isBlue() ? Math.PI : 0.0;
+
+        return commandBuilder("Swerve.aimAtOurZone()")
+            .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
+            .onExecute(() -> {
+                final double angularVelocity = angularPID.calculate(state.rotation.getRadians(), target);
+
+                var speeds = api.calculateDriverSpeeds(distanceToHub, angleToHub, angularVelocity);
+
+                api.applySpeeds(speeds, Perspective.BLUE, true, true);
+            });
+    }
+
+    /**
      * Drives the modules to stop the robot from moving.
      * @param lock If the wheels should be driven to an X formation to stop the robot from being pushed.
      */
