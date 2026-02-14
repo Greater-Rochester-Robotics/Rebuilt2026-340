@@ -69,6 +69,7 @@
     "Accum",
     "ADIS",
     "AllWPILib",
+    "apriltag",
     "Autoset",
     "Backports",
     "Bezier",

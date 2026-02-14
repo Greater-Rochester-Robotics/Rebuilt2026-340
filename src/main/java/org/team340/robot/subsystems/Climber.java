@@ -8,6 +8,7 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MagnetHealthValue;
@@ -55,12 +56,14 @@ public class Climber extends GRRSubsystem {
                 500,
                 lead.getDutyCycle(),
                 lead.getMotorVoltage(),
-                lead.getTorqueCurrent()
+                lead.getTorqueCurrent(),
+                zeroSwitch.getMagnetHealth()
             )
         );
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(100, lead.getStatorCurrent(), follow.getStatorCurrent())
         );
+        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, lead, follow, zeroSwitch));
 
         positionControl = new MotionMagicVoltage(0.0);
         positionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.

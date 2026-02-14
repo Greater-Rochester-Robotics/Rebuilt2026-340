@@ -2,6 +2,7 @@ package org.team340.robot.subsystems;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -15,7 +16,8 @@ import org.team340.robot.Constants.RobotMap;
 public class Indexer extends GRRSubsystem {
 
     private enum States {
-        INTAKE(0.0, 0.0);
+        INTAKE(0.0, 0.0),
+        UNJAM(0.0, 0.0);
 
         public final TunableDouble twindexerSpeed;
         public final TunableDouble updateSpeed;
@@ -38,6 +40,8 @@ public class Indexer extends GRRSubsystem {
         configureTwindexer();
         configureUptake();
 
+        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, twindexer, uptake));
+
         velocityControl = new VelocityVoltage(0.0);
         velocityControl.EnableFOC = true;
         velocityControl.UpdateFreqHz = 0.0;
@@ -45,6 +49,10 @@ public class Indexer extends GRRSubsystem {
 
     public Command intake() {
         return run(States.INTAKE).withName("Indexer.intake()");
+    }
+
+    public Command unjam() {
+        return run(States.UNJAM).withName("Indexer.unjam()");
     }
 
     private Command run(final States state) {
