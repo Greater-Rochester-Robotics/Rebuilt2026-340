@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
 import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
@@ -23,7 +24,11 @@ import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
-public class Climber extends GRRSubsystem {
+/**
+ * the robot's climber.
+ */
+@Logged
+public final class Climber extends GRRSubsystem {
 
     private static final TunableDouble zeroingVelocity = Tunables.value("Climber/zeroingVelocity", 0.0);
     private static final TunableDouble stallCurrent = Tunables.value("Climber/stallCurrent", 0.0);
