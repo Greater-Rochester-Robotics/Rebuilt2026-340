@@ -39,7 +39,8 @@ public class Climber extends GRRSubsystem {
                 500,
                 lead.getDutyCycle(),
                 lead.getMotorVoltage(),
-                lead.getTorqueCurrent()
+                lead.getTorqueCurrent(),
+                zeroSwitch.getMagnetHealth()
             )
         );
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, lead, follow, zeroSwitch));
