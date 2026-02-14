@@ -161,28 +161,28 @@ public final class Climber extends GRRSubsystem {
         return sequence(
             either(zero(), none(), () -> !isZeroed),
             either(
-                goTo(Position.RETRACTING),
+                goTo(Position.RETRACTING, false),
                 none(),
                 () -> position.getValueAsDouble() > Position.RETRACTING.value.get()
             ),
-            goTo(Position.ZERO)
+            goTo(Position.ZERO, false)
         );
     }
 
     /**
-     * Run the climber to the specified position.
-     * @param position The position in revolutions.
+     * Run the climber to the specified Position.
+     * @param position The climber Position.
      */
-    public Command goTo(final double position, final boolean loaded) {
+    private Command goTo(final Position position, final boolean loaded) {
         return commandBuilder("Climber.goTo(" + position + ")")
             .onExecute(
                 loaded
                     ? () -> {
-                          loadedPositionControl.withPosition(position);
+                          loadedPositionControl.withPosition(position.value.get());
                           lead.setControl(loadedPositionControl);
                       }
                     : () -> {
-                          unloadedPositionControl.withPosition(position);
+                          unloadedPositionControl.withPosition(position.value.get());
                           lead.setControl(unloadedPositionControl);
                       }
             )
