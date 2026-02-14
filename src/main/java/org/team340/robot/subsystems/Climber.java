@@ -1,6 +1,7 @@
 package org.team340.robot.subsystems;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
@@ -9,6 +10,7 @@ import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MagnetHealthValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
@@ -22,10 +24,10 @@ import org.team340.robot.Constants.RobotMap;
 
 public class Climber extends GRRSubsystem {
 
-    public static final TunableDouble zeroingVelocity = Tunables.value("Climber/zeroingVelocity", 0.0);
-    public static final TunableDouble stallCurrent = Tunables.value("Climber/stallCurrent", 0.0);
+    private static final TunableDouble zeroingVelocity = Tunables.value("Climber/zeroingVelocity", 0.0);
+    private static final TunableDouble stallCurrent = Tunables.value("Climber/stallCurrent", 0.0);
 
-    public static final double topOffset = 0.0;
+    private static final double TOP_OFFSET = 0.0;
 
     private final TalonFX lead;
     private final TalonFX follow;
@@ -34,12 +36,16 @@ public class Climber extends GRRSubsystem {
     private boolean isZeroed = false;
 
     private final MotionMagicVoltage positionControl;
-    private final VelocityTorqueCurrentFOC velocityTorque;
+    private final VelocityTorqueCurrentFOC velocityControl;
+
+    private final StatusSignal<MagnetHealthValue> seesMagnet;
 
     public Climber() {
         this.lead = new TalonFX(RobotMap.CLIMBER_LEAD_MOTOR, RobotMap.CANBus);
         this.follow = new TalonFX(RobotMap.CLIMBER_FOLLOW_MOTOR, RobotMap.CANBus);
         this.zeroSwitch = new CANcoder(RobotMap.CLIMBER_CANCODER, RobotMap.CANBus);
+
+        this.seesMagnet = zeroSwitch.getMagnetHealth();
 
         configureCANcoder();
         configureMotors();
@@ -52,46 +58,62 @@ public class Climber extends GRRSubsystem {
                 lead.getTorqueCurrent()
             )
         );
+        PhoenixUtil.run(() ->
+            BaseStatusSignal.setUpdateFrequencyForAll(100, lead.getStatorCurrent(), follow.getStatorCurrent())
+        );
 
         positionControl = new MotionMagicVoltage(0.0);
         positionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
         positionControl.EnableFOC = true;
         positionControl.UpdateFreqHz = 0.0;
 
-        velocityTorque = new VelocityTorqueCurrentFOC(0.0);
-        velocityTorque.Slot = 1;
-        velocityTorque.UpdateFreqHz = 0.0;
+        velocityControl = new VelocityTorqueCurrentFOC(0.0);
+        velocityControl.Slot = 1;
+        velocityControl.UpdateFreqHz = 0.0;
 
         final Follower followControl = new Follower(lead.getDeviceID(), MotorAlignmentValue.Aligned);
         PhoenixUtil.run(() -> follow.setControl(followControl));
     }
 
+    @Override
+    public void periodic() {
+        seesMagnet.refresh();
+    }
+
     public Command zero() {
         return commandBuilder("Climber.zero()")
             .onExecute(() -> {
-                velocityTorque.withVelocity(zeroingVelocity.get());
-                lead.setControl(velocityTorque);
+                velocityControl.withVelocity(zeroingVelocity.get());
+                lead.setControl(velocityControl);
             })
             .isFinished(() -> {
-                // Probably unnecessary, but also fancy looking switch.
-                switch (zeroSwitch.getMagnetHealth().getValue()) {
-                    case Magnet_Green, Magnet_Orange:
-                        isZeroed = true;
-                        return true;
-                    default:
+                if (atZero()) {
+                    isZeroed = true;
+                    return true;
                 }
 
                 if (
                     lead.getStatorCurrent().getValueAsDouble() > stallCurrent.get()
                     || follow.getStatorCurrent().getValueAsDouble() > stallCurrent.get()
                 ) {
-                    lead.setPosition(topOffset); // Set here to avoid rechecking (or having the stator current change concurrently).
+                    lead.setPosition(TOP_OFFSET); // Set here to avoid rechecking (or having the stator current change concurrently).
                     isZeroed = true;
                     return true;
                 }
 
                 return false;
             });
+    }
+
+    public boolean atZero() {
+        // Probably unnecessary, but also fancy looking switch.
+        switch (seesMagnet.getValue()) {
+            case Magnet_Green, Magnet_Orange:
+                return true;
+            case Magnet_Invalid, Magnet_Red:
+            default:
+                return false;
+        }
     }
 
     /**
@@ -154,6 +176,10 @@ public class Climber extends GRRSubsystem {
 
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+        config.TorqueCurrent.PeakForwardTorqueCurrent = 0.0;
+        config.TorqueCurrent.PeakReverseTorqueCurrent = 0.0;
+        config.TorqueCurrent.TorqueNeutralDeadband = 0.0;
 
         // TODO: Find out the direction of the motor.
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
