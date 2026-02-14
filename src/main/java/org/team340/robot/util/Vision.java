@@ -21,6 +21,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.photonvision.PhotonCamera;
+import org.photonvision.PhotonPoseEstimator;
+import org.photonvision.PhotonPoseEstimator.ConstrainedSolvepnpParams;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
@@ -31,7 +33,6 @@ import org.team340.lib.math.geometry.VisionMeasurement;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
-import org.team340.robot.util.PhotonPoseEstimator.ConstrainedSolvepnpParams;
 
 /**
  * Manages all of the robot's cameras.
@@ -80,11 +81,13 @@ public final class Vision {
     }
 
     /**
-     * Resets cached measurements utilized by the pose estimators for seeding. It is
+     * Resets cached measurements utilized by the pose estimators for seeding, and then reseed it. It is
      * recommended to call this method after resetting the robot's pose or rotation.
+     * @param timestampSeconds The timestamp of the new seed.
+     * @param heading The new heading.
      */
-    public void reset() {
-        for (var camera : cameras) camera.clearHeadingData();
+    public void resetHeadingData(double timestampSeconds, Rotation3d heading) {
+        for (var camera : cameras) camera.resetHeadingData(timestampSeconds, heading);
     }
 
     /**
@@ -168,10 +171,12 @@ public final class Vision {
         }
 
         /**
-         * Clears all heading data in the buffer.
+         * Clears all heading data in the buffer, and sets a new seed.
+         * @param timestampSeconds The timestamp of the new seed.
+         * @param heading The new heading.
          */
-        private void clearHeadingData() {
-            estimator.clearHeadingData();
+        private void resetHeadingData(double timestampSeconds, Rotation3d heading) {
+            estimator.resetHeadingData(timestampSeconds, heading);
         }
 
         /**
