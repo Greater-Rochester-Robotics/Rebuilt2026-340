@@ -24,6 +24,7 @@ import org.team340.lib.swerve.hardware.SwerveIMUs;
 import org.team340.lib.swerve.hardware.SwerveMotors;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
+import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.Alliance;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.robot.Constants;
@@ -41,6 +42,9 @@ public final class Swerve extends GRRSubsystem {
     private static final double OFFSET = Units.inchesToMeters(12.5);
 
     private static final TunableTable tunables = Tunables.getNested("swerve");
+
+    private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", 0.0);
+    private static final TunableDouble zeroVelocityTolerance = tunables.value("zeroVelocityTolerance", 0.0);
 
     private final SwerveModuleConfig frontLeft = new SwerveModuleConfig()
         .setName("frontLeft")
@@ -230,6 +234,22 @@ public final class Swerve extends GRRSubsystem {
                 var speeds = apf.calculate(state.pose, goal.get(), config.velocity, maxDeceleration.getAsDouble());
 
                 speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), angleToHub);
+    }
+
+    /*
+     * Drives the robot to a target position using the P-APF while aiming in the direction of our alliance zone (0 or PI radians). This command does not end.
+     * @param goal A supplier that returns the target blue-origin relative field location.
+     * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
+     */
+    public Command aimAtOurZone(final DoubleSupplier x, final DoubleSupplier y) {
+        final double target = Alliance.isBlue() ? Math.PI : 0.0;
+
+        return commandBuilder("Swerve.aimAtOurZone()")
+            .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
+            .onExecute(() -> {
+                final double angularVelocity = angularPID.calculate(state.rotation.getRadians(), target);
+
+                var speeds = api.calculateDriverSpeeds(distanceToHub, angleToHub, angularVelocity);
 
                 api.applySpeeds(speeds, Perspective.BLUE, true, true);
             });
@@ -241,6 +261,20 @@ public final class Swerve extends GRRSubsystem {
      */
     public Command stop(boolean lock) {
         return commandBuilder("Swerve.stop(" + lock + ")").onExecute(() -> api.applyStop(lock));
+    }
+
+    /**
+     * Checks if the robot is aiming at the hub and not rotating within a tolerance.
+     * @return True if the robot is aiming at the hub, false otherwise.
+     */
+    public boolean aimingAtHub() {
+        final double angleDifference = Math.abs(state.rotation.getRadians() - angleToHub);
+        final double angleTolerance = aimAtHubTolerance.get();
+
+        return (
+            (angleDifference < angleDifference || angleDifference > Math2.TWO_PI - angleTolerance)
+            && Math.abs(state.speeds.omegaRadiansPerSecond) < zeroVelocityTolerance.get()
+        );
     }
 
     public boolean inOurZone() {
