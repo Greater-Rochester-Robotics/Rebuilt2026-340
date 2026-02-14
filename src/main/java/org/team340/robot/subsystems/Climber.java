@@ -121,6 +121,22 @@ public final class Climber extends GRRSubsystem {
         seesMagnet.refresh();
     }
 
+    public boolean atZero() {
+        // Probably unnecessary, but also fancy looking switch.
+        switch (seesMagnet.getValue()) {
+            case Magnet_Green, Magnet_Orange:
+                return true;
+            case Magnet_Invalid, Magnet_Red:
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * run climber to zero position
+     * then zeroes encoder
+     * @return
+     */
     public Command zero() {
         return commandBuilder("Climber.zero()")
             .onExecute(() -> {
@@ -146,17 +162,6 @@ public final class Climber extends GRRSubsystem {
             });
     }
 
-    public boolean atZero() {
-        // Probably unnecessary, but also fancy looking switch.
-        switch (seesMagnet.getValue()) {
-            case Magnet_Green, Magnet_Orange:
-                return true;
-            case Magnet_Invalid, Magnet_Red:
-            default:
-                return false;
-        }
-    }
-
     public Command retract() {
         return sequence(
             either(zero(), none(), () -> !isZeroed),
@@ -171,10 +176,11 @@ public final class Climber extends GRRSubsystem {
 
     /**
      * Run the climber to the specified Position.
+     * Run zero() if isZeroed false
      * @param position The climber Position.
      */
     private Command goTo(final Position position, final boolean loaded) {
-        return commandBuilder("Climber.goTo(" + position + ")")
+        Command goTo = commandBuilder()
             .onExecute(
                 loaded
                     ? () -> {
@@ -192,6 +198,7 @@ public final class Climber extends GRRSubsystem {
             .isFinished(
                 () -> Math.abs(this.position.getValueAsDouble() - position.value.get()) < atPositionEpsilon.get()
             );
+        return either(goTo, zero().andThen(goTo), () -> isZeroed).withName("Climber.goTo(" + position + ")");
     }
 
     private void configureCANcoder() {
