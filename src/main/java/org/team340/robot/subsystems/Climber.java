@@ -35,6 +35,7 @@ public class Climber extends GRRSubsystem {
 
     private static final TunableDouble zeroingVelocity = tunables.value("zeroingVelocity", 0.0);
     private static final TunableDouble stallCurrent = tunables.value("stallCurrent", 0.0);
+    private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 0.0);
 
     private enum Position {
         TOP(0.0),
@@ -168,7 +169,10 @@ public class Climber extends GRRSubsystem {
             })
             .onEnd(() -> {
                 lead.stopMotor();
-            });
+            })
+            .isFinished(
+                () -> Math.abs(this.position.getValueAsDouble() - position.value.get()) < atPositionEpsilon.get()
+            );
     }
 
     private void configureCANcoder() {
