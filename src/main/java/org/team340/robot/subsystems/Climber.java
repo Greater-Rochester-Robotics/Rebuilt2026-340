@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
@@ -36,7 +37,8 @@ public class Climber extends GRRSubsystem {
 
     private boolean isZeroed = false;
 
-    private final MotionMagicVoltage positionControl;
+    private final MotionMagicVoltage unloadedPositionControl;
+    private final DynamicMotionMagicVoltage loadedPositionControl;
     private final VelocityTorqueCurrentFOC velocityControl;
 
     private final StatusSignal<MagnetHealthValue> seesMagnet;
@@ -65,10 +67,15 @@ public class Climber extends GRRSubsystem {
         );
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, lead, follow, zeroSwitch));
 
-        positionControl = new MotionMagicVoltage(0.0);
-        positionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
-        positionControl.EnableFOC = true;
-        positionControl.UpdateFreqHz = 0.0;
+        unloadedPositionControl = new MotionMagicVoltage(0.0);
+        unloadedPositionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
+        unloadedPositionControl.EnableFOC = true;
+        unloadedPositionControl.UpdateFreqHz = 0.0;
+
+        loadedPositionControl = new DynamicMotionMagicVoltage(0.0, 0.0, 0.0);
+        loadedPositionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
+        loadedPositionControl.EnableFOC = true;
+        loadedPositionControl.UpdateFreqHz = 0.0;
 
         velocityControl = new VelocityTorqueCurrentFOC(0.0);
         velocityControl.Slot = 1;
@@ -123,12 +130,19 @@ public class Climber extends GRRSubsystem {
      * Run the climber to the specified position.
      * @param position The position in revolutions.
      */
-    public Command goTo(final double position) {
+    public Command goTo(final double position, final boolean loaded) {
         return commandBuilder("Climber.goTo(" + position + ")")
-            .onExecute(() -> {
-                positionControl.withPosition(position);
-                lead.setControl(positionControl);
-            })
+            .onExecute(
+                loaded
+                    ? () -> {
+                          loadedPositionControl.withPosition(position);
+                          lead.setControl(loadedPositionControl);
+                      }
+                    : () -> {
+                          unloadedPositionControl.withPosition(position);
+                          lead.setControl(unloadedPositionControl);
+                      }
+            )
             .onEnd(() -> {
                 lead.stopMotor();
             });
