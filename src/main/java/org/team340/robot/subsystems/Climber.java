@@ -1,5 +1,9 @@
 package org.team340.robot.subsystems;
 
+import static edu.wpi.first.wpilibj2.command.Commands.either;
+import static edu.wpi.first.wpilibj2.command.Commands.none;
+import static edu.wpi.first.wpilibj2.command.Commands.sequence;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -17,19 +21,39 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
 import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
+import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
+import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
-public class Climber extends GRRSubsystem {
+/**
+ * the robot's climber.
+ */
+@Logged
+public final class Climber extends GRRSubsystem {
 
-    private static final TunableDouble zeroingVelocity = Tunables.value("Climber/zeroingVelocity", 0.0);
-    private static final TunableDouble stallCurrent = Tunables.value("Climber/stallCurrent", 0.0);
+    private static final TunableTable tunables = Tunables.getNested("climber");
 
-    private static final double TOP_OFFSET = 0.0;
+    private static final TunableDouble zeroingVelocity = tunables.value("zeroingVelocity", 0.0);
+    private static final TunableDouble stallCurrent = tunables.value("stallCurrent", 0.0);
+    private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 0.0);
+
+    private enum Position {
+        TOP(0.0),
+        ZERO(0.0),
+        RETRACTING(0.0); // This is the position we go to before we retract.
+
+        public TunableDouble value;
+
+        private Position(final double value) {
+            this.value = tunables.value("position/" + name(), value);
+        }
+    }
 
     private final TalonFX lead;
     private final TalonFX follow;
@@ -41,6 +65,7 @@ public class Climber extends GRRSubsystem {
     private final DynamicMotionMagicVoltage loadedPositionControl;
     private final VelocityTorqueCurrentFOC velocityControl;
 
+    private final StatusSignal<Angle> position;
     private final StatusSignal<MagnetHealthValue> seesMagnet;
 
     public Climber() {
@@ -48,6 +73,7 @@ public class Climber extends GRRSubsystem {
         this.follow = new TalonFX(RobotMap.CLIMBER_FOLLOW_MOTOR, RobotMap.CANBus);
         this.zeroSwitch = new CANcoder(RobotMap.CLIMBER_CANCODER, RobotMap.CANBus);
 
+        this.position = lead.getPosition();
         this.seesMagnet = zeroSwitch.getMagnetHealth();
 
         configureCANcoder();
@@ -63,7 +89,12 @@ public class Climber extends GRRSubsystem {
             )
         );
         PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(100, lead.getStatorCurrent(), follow.getStatorCurrent())
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                lead.getPosition(),
+                lead.getStatorCurrent(),
+                follow.getStatorCurrent()
+            )
         );
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, lead, follow, zeroSwitch));
 
@@ -106,7 +137,7 @@ public class Climber extends GRRSubsystem {
                     lead.getStatorCurrent().getValueAsDouble() > stallCurrent.get()
                     || follow.getStatorCurrent().getValueAsDouble() > stallCurrent.get()
                 ) {
-                    lead.setPosition(TOP_OFFSET); // Set here to avoid rechecking (or having the stator current change concurrently).
+                    lead.setPosition(Position.TOP.value.get()); // Set here to avoid rechecking (or having the stator current change concurrently).
                     isZeroed = true;
                     return true;
                 }
@@ -124,6 +155,18 @@ public class Climber extends GRRSubsystem {
             default:
                 return false;
         }
+    }
+
+    public Command retract() {
+        return sequence(
+            either(zero(), none(), () -> !isZeroed),
+            either(
+                goTo(Position.RETRACTING),
+                none(),
+                () -> position.getValueAsDouble() > Position.RETRACTING.value.get()
+            ),
+            goTo(Position.ZERO)
+        );
     }
 
     /**
@@ -145,7 +188,10 @@ public class Climber extends GRRSubsystem {
             )
             .onEnd(() -> {
                 lead.stopMotor();
-            });
+            })
+            .isFinished(
+                () -> Math.abs(this.position.getValueAsDouble() - position.value.get()) < atPositionEpsilon.get()
+            );
     }
 
     private void configureCANcoder() {

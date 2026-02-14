@@ -13,6 +13,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
 import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
@@ -23,7 +24,11 @@ import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
-public class Hood extends GRRSubsystem {
+/**
+ * the robot's hood.
+ */
+@Logged
+public final class Hood extends GRRSubsystem {
 
     private static final TunableDouble manualSpeed = Tunables.value("Hood/manualSpeed", 0.0);
     private static final double homingVelocity = 0.0; // In rotations per second.
