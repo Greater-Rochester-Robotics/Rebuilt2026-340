@@ -23,6 +23,7 @@ import org.team340.lib.swerve.hardware.SwerveIMUs;
 import org.team340.lib.swerve.hardware.SwerveMotors;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
+import org.team340.lib.util.Alliance;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.robot.Constants;
 import org.team340.robot.Constants.RobotMap;
@@ -225,7 +226,7 @@ public final class Swerve extends GRRSubsystem {
     }
 
     public boolean inOurZone() {
-        return Field.BLUE_ZONE > state.pose.getX();
+        return Alliance.isBlue() ? Field.BLUE_ZONE > state.pose.getX() : Field.RED_ZONE < state.pose.getX();
     }
 
     public boolean inNeutralZone() {
@@ -234,7 +235,7 @@ public final class Swerve extends GRRSubsystem {
     }
 
     public boolean inTheirZone() {
-        return Field.RED_ZONE < state.pose.getX();
+        return Alliance.isBlue() ? Field.RED_ZONE < state.pose.getX() : Field.BLUE_ZONE > state.pose.getX();
     }
 
     @NotLogged
