@@ -264,7 +264,7 @@ public final class Swerve extends GRRSubsystem {
         return commandBuilder("Swerve.stop(" + lock + ")").onExecute(() -> api.applyStop(lock));
     }
 
-    /**
+    /*
      * Checks if the robot is aiming at the hub and not rotating within a tolerance.
      * @return True if the robot is aiming at the hub, false otherwise.
      */
@@ -278,24 +278,44 @@ public final class Swerve extends GRRSubsystem {
         );
     }
 
+    /**
+     * Checks if the origin of the robot is in our alliance's zone (the blue zone if we are on the blue alliance, and the red zone if we are on the red alliance).
+     * @return True if we are in our zone, false otherwise.
+     */
     public boolean inOurZone() {
         return Alliance.isBlue() ? Field.BLUE_ZONE > state.pose.getX() : Field.RED_ZONE < state.pose.getX();
     }
 
+    /**
+     * Checks if the origin of the robot is in the neutral zone (between the blue zone and the red zone).
+     * @return True if we are in the neutral zone, false otherwise.
+     */
     public boolean inNeutralZone() {
         final double x = state.pose.getX();
         return Field.BLUE_ZONE <= x && Field.RED_ZONE >= x;
     }
 
+    /**
+     * Checks if the origin of the robot is in the opposing alliance's zone (the red zone if we are on the blue alliance, and the blue zone if we are on the red alliance).
+     * @return True if we are in the opposing alliance's zone, false otherwise.
+     */
     public boolean inTheirZone() {
         return Alliance.isBlue() ? Field.RED_ZONE < state.pose.getX() : Field.BLUE_ZONE > state.pose.getX();
     }
 
+    /**
+     * Returns the distance from the origin of our robot to the center of the hub in meters.
+     * @return The distance from the origin of our robot to the center of the hub, recalculated every code cycle.
+     */
     @NotLogged
     public double distanceToHub() {
         return distanceToHub;
     }
 
+    /**
+     * Returns the angle from the origin of our robot to the center of the hub in radians.
+     * @return The angle from the origin of our robot to the center of the hub, recalculated every code cycle.
+     */
     @NotLogged
     public double angleToHub() {
         return angleToHub;
