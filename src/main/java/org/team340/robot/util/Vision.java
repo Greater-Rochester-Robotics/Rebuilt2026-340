@@ -20,7 +20,6 @@ import java.util.Optional;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.ConstrainedSolvepnpParams;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
@@ -145,7 +144,6 @@ public final class Vision {
 
         private final PhotonCamera camera;
         private final PhotonPoseEstimator estimator;
-        private final Optional<ConstrainedSolvepnpParams> constrainedPnpParams;
         private final Debouncer disabledDebounce = new Debouncer(5.0, DebounceType.kFalling);
 
         /**
@@ -158,7 +156,6 @@ public final class Vision {
 
             camera = new PhotonCamera(config.name());
             estimator = new PhotonPoseEstimator(FieldInfo.aprilTags(), robotToCamera);
-            constrainedPnpParams = Optional.of(new ConstrainedSolvepnpParams(true, 0.0));
 
             if (sim != null) {
                 // (Roughly) the properties of an OV9281
