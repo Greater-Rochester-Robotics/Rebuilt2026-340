@@ -1,8 +1,5 @@
 package org.team340.robot.util;
 
-import static org.photonvision.PhotonPoseEstimator.PoseStrategy.CONSTRAINED_SOLVEPNP;
-import static org.photonvision.PhotonPoseEstimator.PoseStrategy.PNP_DISTANCE_TRIG_SOLVE;
-
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.Debouncer;
@@ -20,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.ConstrainedSolvepnpParams;
@@ -47,7 +45,12 @@ public final class Vision {
     private static final TunableDouble trigXyStd = tunables.value("trigXyStd", 0.18);
     private static final TunableDouble constrainedPnpXyStd = tunables.value("constrainedPnpXyStd", 0.4);
     private static final TunableDouble constrainedPnpAngStd = tunables.value("constrainedPnpAngStd", 0.14);
+    private static final TunableDouble multitagXyStd = tunables.value("multitagXyStd", 0.0); // TODO: Add value.
+    private static final TunableDouble multitagAngStd = tunables.value("multitagAngStd", 0.); // TODO: Add value.
     private static final TunableDouble velocityLatencyFactor = tunables.value("velocityLatencyFactor", 0.06);
+
+    // How close april tags have to be to count as paired.
+    private static final double PAIRED_TOLERANCE = 1.0;
 
     // Set to true to enable simulation. Note that this may
     // negatively impact performance on slower devices.
@@ -154,7 +157,7 @@ public final class Vision {
             Transform3d robotToCamera = new Transform3d(config.translation(), config.rotation());
 
             camera = new PhotonCamera(config.name());
-            estimator = new PhotonPoseEstimator(FieldInfo.aprilTags(), PNP_DISTANCE_TRIG_SOLVE, robotToCamera);
+            estimator = new PhotonPoseEstimator(FieldInfo.aprilTags(), robotToCamera);
             constrainedPnpParams = Optional.of(new ConstrainedSolvepnpParams(true, 0.0));
 
             if (sim != null) {
@@ -197,14 +200,81 @@ public final class Vision {
          * @param targets A list of targets to add to.
          */
         private void refresh(double velocity, List<VisionMeasurement> measurements, List<Pose3d> targets) {
-            // If we are disabled, use Constrained SolvePNP to estimate the robot's heading.
-            // See https://github.com/Greater-Rochester-Robotics/Reefscape2025-340/issues/19
-            boolean usingTrig = disabledDebounce.calculate(DriverStation.isEnabled());
-            estimator.setPrimaryStrategy(usingTrig ? PNP_DISTANCE_TRIG_SOLVE : CONSTRAINED_SOLVEPNP);
-
             for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
-                // Get an estimate from the PhotonPoseEstimator.
-                var estimate = estimator.update(result, Optional.empty(), Optional.empty(), constrainedPnpParams);
+                Optional<EstimatedRobotPose> estimate = null;
+
+                // If we have a pair of tags
+                if (
+                    result.targets.size() == 2
+                    && isPair(result.targets.get(0).fiducialId, result.targets.get(1).fiducialId)
+                ) {
+                    // Use multitag estimate.
+
+                    estimate = estimator.estimateCoprocMultiTagPose(result);
+
+                    if (estimate.isEmpty() || estimate.get().targetsUsed.isEmpty()) continue;
+
+                    var targetsUsed = estimate.get().targetsUsed;
+
+                    // Get the target AprilTags, and reject the measurement if either of
+                    // the tags are not configured to be utilized by the pose estimator.
+                    var firstTarget = targetsUsed.get(0);
+                    var secondTarget = targetsUsed.get(1);
+
+                    if (!useTag(firstTarget.fiducialId) || !useTag(secondTarget.fiducialId)) continue;
+
+                    // Get the locations of the tags on the field.
+                    var firstTagLocation = FieldInfo.aprilTags().getTagPose(firstTarget.fiducialId);
+                    if (firstTagLocation.isEmpty()) continue;
+
+                    var secondTagLocation = FieldInfo.aprilTags().getTagPose(secondTarget.fiducialId);
+                    if (secondTagLocation.isEmpty()) continue;
+
+                    // Push the location of the tag to the targets list for telemetry.
+                    targets.add(firstTagLocation.get());
+                    targets.add(secondTagLocation.get());
+
+                    // Determine the average distance from the camera to both tags.
+                    double firstDistance = firstTarget.bestCameraToTarget.getTranslation().getNorm();
+                    double secondDistance = firstTarget.bestCameraToTarget.getTranslation().getNorm();
+
+                    double avgDistance = (firstDistance + secondDistance) * 0.5;
+
+                    // Calculate the pose estimation weights for X/Y location. As
+                    // distance increases, the tag is trusted exponentially less.
+                    double xyStd = multitagXyStd.get() * avgDistance * avgDistance;
+
+                    // Calculate the angular pose estimation weight, similar to X/Y.
+                    double angStd = multitagAngStd.get() * avgDistance * avgDistance;
+
+                    // Apply a heuristic to the measurement's latency, that accounts for
+                    // increased translational error at high chassis velocities.
+                    double timestamp = estimate.get().timestampSeconds - (velocity * velocityLatencyFactor.get());
+
+                    // Push the measurement to the supplied measurements list.
+                    measurements.add(
+                        new VisionMeasurement(
+                            estimate.get().estimatedPose.toPose2d(),
+                            timestamp,
+                            VecBuilder.fill(xyStd, xyStd, angStd)
+                        )
+                    );
+
+                    continue;
+                }
+
+                // Fallback to using less ideal solvers.
+
+                // If we are disabled, use Constrained SolvePNP to estimate the robot's heading.
+                // See https://github.com/Greater-Rochester-Robotics/Reefscape2025-340/issues/19
+                final boolean usingTrig = disabledDebounce.calculate(DriverStation.isEnabled());
+
+                if (usingTrig) {
+                    estimate = estimator.estimatePnpDistanceTrigSolvePose(result);
+                } else {
+                    estimate = estimator.estimateLowestAmbiguityPose(result);
+                }
+
                 if (estimate.isEmpty() || estimate.get().targetsUsed.isEmpty()) continue;
 
                 // Get the target AprilTag, and reject the measurement if the
@@ -216,6 +286,9 @@ public final class Vision {
                 // Get the location of the tag on the field.
                 var tagLocation = FieldInfo.aprilTags().getTagPose(id);
                 if (tagLocation.isEmpty()) continue;
+
+                // Push the location of the tag to the targets list for telemetry.
+                targets.add(tagLocation.get());
 
                 // Determine the distance from the camera to the tag.
                 double distance = target.bestCameraToTarget.getTranslation().getNorm();
@@ -241,10 +314,19 @@ public final class Vision {
                         VecBuilder.fill(xyStd, xyStd, angStd)
                     )
                 );
-
-                // Push the location of the tag to the targets list for telemetry.
-                targets.add(tagLocation.get());
             }
+        }
+
+        private boolean isPair(final int firstTag, final int lastTag) {
+            final Pose3d firstPose = FieldInfo.aprilTags().getTagPose(firstTag).orElse(null);
+            final Pose3d secondPose = FieldInfo.aprilTags().getTagPose(lastTag).orElse(null);
+
+            if (firstPose == null || secondPose == null) return false;
+
+            return (
+                firstPose.getTranslation().getSquaredDistance(secondPose.getTranslation())
+                < PAIRED_TOLERANCE * PAIRED_TOLERANCE
+            );
         }
 
         /**
