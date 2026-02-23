@@ -23,6 +23,7 @@ import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
+import org.photonvision.targeting.MultiTargetPNPResult;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.team340.lib.math.FieldInfo;
 import org.team340.lib.math.geometry.TimestampedPose;
@@ -46,7 +47,6 @@ public final class Vision {
     private static final TunableDouble constrainedPnpAngStd = tunables.value("constrainedPnpAngStd", 0.14);
     private static final TunableDouble multitagXyStd = tunables.value("multitagXyStd", 0.0); // TODO: Add value.
     private static final TunableDouble multitagAngStd = tunables.value("multitagAngStd", 0.); // TODO: Add value.
-    private static final TunableDouble velocityLatencyFactor = tunables.value("velocityLatencyFactor", 0.06);
 
     // How close april tags have to be to count as paired.
     private static final double PAIRED_TOLERANCE = 1.0;
@@ -200,11 +200,7 @@ public final class Vision {
             for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
                 Optional<EstimatedRobotPose> estimate = null;
 
-                // If we have a pair of tags
-                if (
-                    result.targets.size() == 2
-                    && isPair(result.targets.get(0).fiducialId, result.targets.get(1).fiducialId)
-                ) {
+                if (result.multitagResult.isPresent()) {
                     // Use multitag estimate.
 
                     estimate = estimator.estimateCoprocMultiTagPose(result);
@@ -213,12 +209,12 @@ public final class Vision {
 
                     var targetsUsed = estimate.get().targetsUsed;
 
-                    // Get the target AprilTags, and reject the measurement if either of
-                    // the tags are not configured to be utilized by the pose estimator.
+                    // Get the target AprilTags, and reject the measurement if the first of
+                    // the tags is not configured to be utilized by the pose estimator.
                     var firstTarget = targetsUsed.get(0);
                     var secondTarget = targetsUsed.get(1);
 
-                    if (!useTag(firstTarget.fiducialId) || !useTag(secondTarget.fiducialId)) continue;
+                    if (!useTag(firstTarget.fiducialId)) continue;
 
                     // Get the locations of the tags on the field.
                     var firstTagLocation = FieldInfo.aprilTags().getTagPose(firstTarget.fiducialId);
@@ -244,15 +240,11 @@ public final class Vision {
                     // Calculate the angular pose estimation weight, similar to X/Y.
                     double angStd = multitagAngStd.get() * avgDistance * avgDistance;
 
-                    // Apply a heuristic to the measurement's latency, that accounts for
-                    // increased translational error at high chassis velocities.
-                    double timestamp = estimate.get().timestampSeconds - (velocity * velocityLatencyFactor.get());
-
                     // Push the measurement to the supplied measurements list.
                     measurements.add(
                         new VisionMeasurement(
                             estimate.get().estimatedPose.toPose2d(),
-                            timestamp,
+                            estimate.get().timestampSeconds,
                             VecBuilder.fill(xyStd, xyStd, angStd)
                         )
                     );
@@ -299,31 +291,15 @@ public final class Vision {
                 // essentially duplicate data. Otherwise, weight the estimate similar to X/Y.
                 double angStd = (usingTrig ? 1e5 : constrainedPnpAngStd.get()) * distance * distance;
 
-                // Apply a heuristic to the measurement's latency, that accounts for
-                // increased translational error at high chassis velocities.
-                double timestamp = estimate.get().timestampSeconds - (velocity * velocityLatencyFactor.get());
-
                 // Push the measurement to the supplied measurements list.
                 measurements.add(
                     new VisionMeasurement(
                         estimate.get().estimatedPose.toPose2d(),
-                        timestamp,
+                        estimate.get().timestampSeconds,
                         VecBuilder.fill(xyStd, xyStd, angStd)
                     )
                 );
             }
-        }
-
-        private boolean isPair(final int firstTag, final int lastTag) {
-            final Pose3d firstPose = FieldInfo.aprilTags().getTagPose(firstTag).orElse(null);
-            final Pose3d secondPose = FieldInfo.aprilTags().getTagPose(lastTag).orElse(null);
-
-            if (firstPose == null || secondPose == null) return false;
-
-            return (
-                firstPose.getTranslation().getSquaredDistance(secondPose.getTranslation())
-                < PAIRED_TOLERANCE * PAIRED_TOLERANCE
-            );
         }
 
         /**
