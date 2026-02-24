@@ -234,6 +234,8 @@ public final class Swerve extends GRRSubsystem {
                 var speeds = apf.calculate(state.pose, goal.get(), config.velocity, maxDeceleration.getAsDouble());
 
                 speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), angleToHub);
+
+                api.applySpeeds(speeds, Perspective.BLUE, true, true);
             });
     }
 
