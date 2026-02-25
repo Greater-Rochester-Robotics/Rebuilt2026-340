@@ -9,8 +9,10 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
 import org.team340.lib.tunable.TunableTable;
@@ -30,7 +32,7 @@ public final class Hood extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("hood");
 
     private static final TunableDouble manualSpeed = tunables.value("manualSpeed", 0.0);
-    private static final TunableDouble stallCurrent = tunables.value("stallCurrent", 20.0);
+    private static final TunableDouble stallVelocity = tunables.value("stallVelocity", 0.05);
     private static final TunableDouble homingVelocity = tunables.value("homingVelocity", -30.0); // In rotations per second.
     private static final TunableDouble zeroZero = tunables.value("zeroZero", 1.0); // In rotations per second.
 
@@ -50,16 +52,16 @@ public final class Hood extends GRRSubsystem {
     private final PositionVoltage positionVoltage;
     private final VelocityTorqueCurrentFOC velocityTorque;
 
-    private final StatusSignal<Current> statorCurrent;
+    private final StatusSignal<AngularVelocity> velocity;
 
     public Hood() {
         this.motor = new TalonFX(RobotMap.HOOD_MOTOR, RobotMap.CANBus);
 
         configureMotor();
 
-        statorCurrent = motor.getStatorCurrent();
+        velocity = motor.getVelocity();
 
-        PhoenixUtil.run(() -> statorCurrent.setUpdateFrequency(100.0));
+        PhoenixUtil.run(() -> velocity.setUpdateFrequency(100.0));
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, motor));
 
         positionVoltage = new PositionVoltage(0.0);
@@ -76,7 +78,7 @@ public final class Hood extends GRRSubsystem {
 
     @Override
     public void periodic() {
-        statorCurrent.refresh();
+        velocity.refresh();
     }
 
     /**
@@ -110,12 +112,15 @@ public final class Hood extends GRRSubsystem {
      * @param position The position in revolutions.
      */
     private Command goTo(final DoubleSupplier position) {
+        Debouncer debouncer = new Debouncer(0.1, DebounceType.kRising);
+
         return commandBuilder("Hood.goTo()")
+            .onInitialize(() -> debouncer.calculate(false))
             .onExecute(() -> {
                 if (!isZeroed) {
                     velocityTorque.withVelocity(homingVelocity.get());
                     motor.setControl(velocityTorque);
-                    if (statorCurrent.getValueAsDouble() < stallCurrent.get()) return;
+                    if (!debouncer.calculate(Math.abs(velocity.getValueAsDouble()) < stallVelocity.get())) return;
 
                     isZeroed = true;
                     motor.setPosition(0.0);
@@ -145,7 +150,7 @@ public final class Hood extends GRRSubsystem {
         config.Slot0.kA = 0.0;
 
         // Zeroing the hood.
-        config.Slot1.kP = 10.0;
+        config.Slot1.kP = 12.0;
         config.Slot1.kI = 0.0; // If this is anything other than zero, it should not be.
         config.Slot1.kD = 0.0;
         config.Slot1.kG = 0.0;
@@ -158,11 +163,10 @@ public final class Hood extends GRRSubsystem {
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-        // TODO: Confirm the direction in testing.
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
-        config.TorqueCurrent.PeakForwardTorqueCurrent = 20.0;
-        config.TorqueCurrent.PeakReverseTorqueCurrent = -20.0;
+        config.TorqueCurrent.PeakForwardTorqueCurrent = 10.0;
+        config.TorqueCurrent.PeakReverseTorqueCurrent = -10.0;
 
         PhoenixUtil.run(() -> motor.clearStickyFaults());
         PhoenixUtil.run(() -> motor.getConfigurator().apply(config));

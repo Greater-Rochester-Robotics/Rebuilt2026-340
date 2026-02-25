@@ -12,6 +12,7 @@ import org.team340.lib.logging.Profiler;
 import org.team340.lib.util.DisableWatchdog;
 import org.team340.robot.commands.Autos;
 import org.team340.robot.commands.Routines;
+import org.team340.robot.subsystems.Climber;
 import org.team340.robot.subsystems.Hood;
 import org.team340.robot.subsystems.Indexer;
 import org.team340.robot.subsystems.Intake;
@@ -23,6 +24,7 @@ public final class Robot extends LoggedRobot {
 
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
 
+    public final Climber climber;
     public final Hood hood;
     public final Indexer indexer;
     public final Intake intake;
@@ -37,6 +39,7 @@ public final class Robot extends LoggedRobot {
 
     public Robot() {
         // Initialize subsystems
+        climber = new Climber();
         hood = new Hood();
         indexer = new Indexer();
         intake = new Intake();
@@ -58,9 +61,12 @@ public final class Robot extends LoggedRobot {
         // Driver bindings
         driver.a().onTrue(intake.intake(driver.a()));
         driver.b().whileTrue(routines.barf());
+        driver.x().whileTrue(climber.zero());
+        driver.y().whileTrue(climber.retract());
 
         driver.leftBumper().or(driver.rightBumper()).whileTrue(routines.shoot());
 
+        driver.povRight().whileTrue(climber.climbL3(() -> true));
         driver.povLeft().onTrue(swerve.tareRotation());
         driver.povDown().whileTrue(hood.goToZero(true));
 
