@@ -8,6 +8,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
+import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.command.GRRSubsystem;
@@ -20,16 +21,18 @@ import org.team340.robot.Constants.RobotMap;
 @Logged
 public final class Indexer extends GRRSubsystem {
 
-    private enum State {
-        INTAKE(0.0, 0.0),
-        UNJAM(0.0, 0.0);
+    private static final TunableTable tunables = Tunables.getNested("indexer");
+
+    private static enum State {
+        FEED(83.0, 72.0),
+        UNJAM(-80.0, -80.0);
 
         public final TunableDouble twindexerSpeed;
         public final TunableDouble updateSpeed;
 
         private State(final double twindexerSpeed, final double updateSpeed) {
-            this.twindexerSpeed = Tunables.value("Indexer/" + name() + "/twindexerSpeed", twindexerSpeed);
-            this.updateSpeed = Tunables.value("Indexer/" + name() + "/updateSpeed", updateSpeed);
+            this.twindexerSpeed = tunables.value("twindexerSpeeds/" + name(), twindexerSpeed);
+            this.updateSpeed = tunables.value("uptakeSpeeds/" + name(), updateSpeed);
         }
     }
 
@@ -50,10 +53,13 @@ public final class Indexer extends GRRSubsystem {
         velocityControl = new VelocityVoltage(0.0);
         velocityControl.EnableFOC = true;
         velocityControl.UpdateFreqHz = 0.0;
+
+        tunables.add("twindexerMotor", twindexer);
+        tunables.add("uptakeMotor", uptake);
     }
 
-    public Command intake() {
-        return run(State.INTAKE).withName("Indexer.intake()");
+    public Command feed() {
+        return run(State.FEED).withName("Indexer.feed()");
     }
 
     public Command unjam() {
@@ -77,20 +83,20 @@ public final class Indexer extends GRRSubsystem {
     private void configureTwindexer() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.StatorCurrentLimit = 100.0;
         config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 0.0;
+        config.Slot0.kP = 0.5;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
         config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.0;
+        config.Slot0.kV = 0.127;
         config.Slot0.kA = 0.0;
 
-        // TODO: Find out the direction of the motor.
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         PhoenixUtil.run(() -> twindexer.clearStickyFaults());
@@ -100,21 +106,21 @@ public final class Indexer extends GRRSubsystem {
     private void configureUptake() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.StatorCurrentLimit = 100.0;
         config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 0.0;
+        config.Slot0.kP = 0.5;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
         config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.0;
+        config.Slot0.kV = 0.132;
         config.Slot0.kA = 0.0;
 
-        // TODO: Find out the direction of the motor.
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
         PhoenixUtil.run(() -> uptake.clearStickyFaults());
         PhoenixUtil.run(() -> uptake.getConfigurator().apply(config));

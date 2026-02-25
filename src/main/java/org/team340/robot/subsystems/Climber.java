@@ -43,7 +43,7 @@ public final class Climber extends GRRSubsystem {
     private static final TunableDouble stallCurrent = tunables.value("stallCurrent", 0.0);
     private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 0.0);
 
-    private enum Position {
+    private static enum Position {
         TOP(0.0),
         ZERO(0.0),
         RETRACTING(0.0); // This is the position we go to before we retract.
@@ -81,8 +81,7 @@ public final class Climber extends GRRSubsystem {
 
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(
-                500,
-                lead.getDutyCycle(),
+                250,
                 lead.getMotorVoltage(),
                 lead.getTorqueCurrent(),
                 zeroSwitch.getMagnetHealth()
@@ -109,8 +108,8 @@ public final class Climber extends GRRSubsystem {
         loadedPositionControl.UpdateFreqHz = 0.0;
 
         velocityControl = new VelocityTorqueCurrentFOC(0.0);
-        velocityControl.Slot = 1;
         velocityControl.UpdateFreqHz = 0.0;
+        velocityControl.Slot = 1;
 
         final Follower followControl = new Follower(lead.getDeviceID(), MotorAlignmentValue.Aligned);
         PhoenixUtil.run(() -> follow.setControl(followControl));
@@ -150,10 +149,11 @@ public final class Climber extends GRRSubsystem {
                 }
 
                 if (
-                    lead.getStatorCurrent().getValueAsDouble() > stallCurrent.get()
-                    || follow.getStatorCurrent().getValueAsDouble() > stallCurrent.get()
+                    lead.getStatorCurrent().getValueAsDouble() >= stallCurrent.get()
+                    || follow.getStatorCurrent().getValueAsDouble() >= stallCurrent.get()
                 ) {
-                    lead.setPosition(Position.TOP.value.get()); // Set here to avoid rechecking (or having the stator current change concurrently).
+                    // Set here to avoid rechecking (or having the stator current change concurrently).
+                    PhoenixUtil.run(() -> lead.setPosition(Position.TOP.value.get()));
                     isZeroed = true;
                     return true;
                 }
@@ -247,9 +247,8 @@ public final class Climber extends GRRSubsystem {
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-        config.TorqueCurrent.PeakForwardTorqueCurrent = 0.0;
-        config.TorqueCurrent.PeakReverseTorqueCurrent = 0.0;
-        config.TorqueCurrent.TorqueNeutralDeadband = 0.0;
+        config.TorqueCurrent.PeakForwardTorqueCurrent = 10.0;
+        config.TorqueCurrent.PeakReverseTorqueCurrent = -10.0;
 
         // TODO: Find out the direction of the motor.
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;

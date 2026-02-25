@@ -13,6 +13,7 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
+import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.Mutable;
@@ -26,14 +27,16 @@ import org.team340.robot.Constants.RobotMap;
 @Logged
 public final class Shooters extends GRRSubsystem {
 
-    private static final TunableDouble manualAcceleration = Tunables.value("Shooters/manualAcceleration", 0.0);
+    private static final TunableTable tunables = Tunables.getNested("shooters");
+
+    private static final TunableDouble manualAcceleration = tunables.value("manualAcceleration", 0.0);
     private static final InterpolatingDoubleTreeMap distanceVelocityMap;
 
     static {
         distanceVelocityMap = new InterpolatingDoubleTreeMap();
 
         // TODO: Populate data points.
-        distanceVelocityMap.put(0.0, 0.0);
+        distanceVelocityMap.put(0.0, 50.0);
     }
 
     private final TalonFX portLead;
@@ -52,15 +55,10 @@ public final class Shooters extends GRRSubsystem {
         configureMotors();
 
         PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(
-                500,
-                portLead.getDutyCycle(),
-                portLead.getMotorVoltage(),
-                portLead.getTorqueCurrent(),
-                starboardLead.getDutyCycle(),
-                starboardLead.getMotorVoltage(),
-                starboardLead.getTorqueCurrent()
-            )
+            BaseStatusSignal.setUpdateFrequencyForAll(250, portLead.getMotorVoltage(), starboardLead.getMotorVoltage())
+        );
+        PhoenixUtil.run(() ->
+            BaseStatusSignal.setUpdateFrequencyForAll(50, portLead.getVelocity(), starboardLead.getVelocity())
         );
         PhoenixUtil.run(() ->
             ParentDevice.optimizeBusUtilizationForAll(4, portLead, portFollow, starboardLead, starboardFollow)
@@ -75,6 +73,11 @@ public final class Shooters extends GRRSubsystem {
 
         final Follower starboardFollowControl = new Follower(starboardLead.getDeviceID(), MotorAlignmentValue.Aligned);
         PhoenixUtil.run(() -> starboardFollow.setControl(starboardFollowControl));
+
+        tunables.add("motors", portLead);
+        tunables.add("motors", portFollow);
+        tunables.add("motors", starboardLead);
+        tunables.add("motors", starboardFollow);
     }
 
     /**
@@ -122,15 +125,14 @@ public final class Shooters extends GRRSubsystem {
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 0.0;
+        config.Slot0.kP = 0.35;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
         config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.0;
+        config.Slot0.kV = 0.129;
         config.Slot0.kA = 0.0;
 
-        // TODO: Find out the direction of the motor.
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         PhoenixUtil.run(() -> portLead.clearStickyFaults());

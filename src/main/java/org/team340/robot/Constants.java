@@ -49,7 +49,6 @@ public final class Constants {
         // Hood
 
         public static final int HOOD_MOTOR = 30;
-        public static final int HOOD_ZERO_SWITCH = 31;
 
         // Indexer
 

@@ -39,7 +39,7 @@ import org.team340.robot.util.Vision.CameraConfig;
 @Logged
 public final class Swerve extends GRRSubsystem {
 
-    private static final double OFFSET = Units.inchesToMeters(12.5);
+    private static final double OFFSET = Units.inchesToMeters(10.375);
 
     private static final TunableTable tunables = Tunables.getNested("swerve");
 
@@ -49,33 +49,33 @@ public final class Swerve extends GRRSubsystem {
     private final SwerveModuleConfig frontLeft = new SwerveModuleConfig()
         .setName("frontLeft")
         .setLocation(OFFSET, OFFSET)
-        .setMoveMotor(SwerveMotors.talonFX(RobotMap.FL_MOVE, true))
-        .setTurnMotor(SwerveMotors.talonFX(RobotMap.FL_TURN, true))
-        .setEncoder(SwerveEncoders.cancoder(RobotMap.FL_ENCODER, 0.0, false));
+        .setMoveMotor(SwerveMotors.talonFX(RobotMap.FL_MOVE, false))
+        .setTurnMotor(SwerveMotors.talonFX(RobotMap.FL_TURN, false))
+        .setEncoder(SwerveEncoders.cancoder(RobotMap.FL_ENCODER, 0.076, false));
 
     private final SwerveModuleConfig frontRight = new SwerveModuleConfig()
         .setName("frontRight")
         .setLocation(OFFSET, -OFFSET)
-        .setMoveMotor(SwerveMotors.talonFX(RobotMap.FR_MOVE, true))
-        .setTurnMotor(SwerveMotors.talonFX(RobotMap.FR_TURN, true))
-        .setEncoder(SwerveEncoders.cancoder(RobotMap.FR_ENCODER, 0.0, false));
+        .setMoveMotor(SwerveMotors.talonFX(RobotMap.FR_MOVE, false))
+        .setTurnMotor(SwerveMotors.talonFX(RobotMap.FR_TURN, false))
+        .setEncoder(SwerveEncoders.cancoder(RobotMap.FR_ENCODER, 0.057, false));
 
     private final SwerveModuleConfig backLeft = new SwerveModuleConfig()
         .setName("backLeft")
         .setLocation(-OFFSET, OFFSET)
-        .setMoveMotor(SwerveMotors.talonFX(RobotMap.BL_MOVE, true))
-        .setTurnMotor(SwerveMotors.talonFX(RobotMap.BL_TURN, true))
-        .setEncoder(SwerveEncoders.cancoder(RobotMap.BL_ENCODER, 0.0, false));
+        .setMoveMotor(SwerveMotors.talonFX(RobotMap.BL_MOVE, false))
+        .setTurnMotor(SwerveMotors.talonFX(RobotMap.BL_TURN, false))
+        .setEncoder(SwerveEncoders.cancoder(RobotMap.BL_ENCODER, -0.105, false));
 
     private final SwerveModuleConfig backRight = new SwerveModuleConfig()
         .setName("backRight")
         .setLocation(-OFFSET, -OFFSET)
-        .setMoveMotor(SwerveMotors.talonFX(RobotMap.BR_MOVE, true))
-        .setTurnMotor(SwerveMotors.talonFX(RobotMap.BR_TURN, true))
-        .setEncoder(SwerveEncoders.cancoder(RobotMap.BR_ENCODER, 0.0, false));
+        .setMoveMotor(SwerveMotors.talonFX(RobotMap.BR_MOVE, false))
+        .setTurnMotor(SwerveMotors.talonFX(RobotMap.BR_TURN, false))
+        .setEncoder(SwerveEncoders.cancoder(RobotMap.BR_ENCODER, -0.290, false));
 
     private final SwerveConfig config = new SwerveConfig()
-        .setTimings(LoggedRobot.DEFAULT_PERIOD, 0.004, 0.02, 0.02)
+        .setTimings(LoggedRobot.DEFAULT_PERIOD)
         .setMovePID(0.25, 0.0, 0.0)
         .setMoveFF(0.0, 0.125)
         .setTurnPID(100.0, 0.0, 0.2)
@@ -83,7 +83,7 @@ public final class Swerve extends GRRSubsystem {
         .setLimits(5.0, 0.01, 18.0, 15.0, 45.0)
         .setDriverProfile(5.0, 1.5, 0.1, 5.4, 2.0, 0.05)
         .setPowerProperties(Constants.VOLTAGE, 80.0, 70.0, 60.0, 60.0)
-        .setMechanicalProperties(675.0 / 112.0, 287.0 / 11.0, Units.inchesToMeters(4.0))
+        .setMechanicalProperties(675.0 / 112.0, 287.0 / 11.0, Units.inchesToMeters(3.87))
         .setOdometryStd(0.1, 0.1, 0.05)
         .setIMU(SwerveIMUs.canandgyro(RobotMap.CANANDGYRO))
         .setPhoenixFeatures(RobotMap.CANBus, true, true, true)
@@ -100,8 +100,8 @@ public final class Swerve extends GRRSubsystem {
     private final PAPFController apf;
     private final ProfiledPIDController angularPID;
 
-    private double distanceToHub = 0.0;
-    private double angleToHub = 0.0;
+    private double hubDistance = 0.0;
+    private double hubAngle = 0.0;
     private boolean seesAprilTag = false;
 
     public Swerve() {
@@ -130,8 +130,8 @@ public final class Swerve extends GRRSubsystem {
         final double deltaX = state.pose.getX() - Field.HUB.get().getX();
         final double deltaY = state.pose.getY() - Field.HUB.get().getY();
 
-        distanceToHub = Math.hypot(deltaX, deltaY);
-        angleToHub = Math.atan2(deltaY, deltaX);
+        hubDistance = Math.hypot(deltaX, deltaY);
+        hubAngle = Math.atan2(deltaY, deltaX);
     }
 
     /**
@@ -233,7 +233,7 @@ public final class Swerve extends GRRSubsystem {
             .onExecute(() -> {
                 var speeds = apf.calculate(state.pose, goal.get(), config.velocity, maxDeceleration.getAsDouble());
 
-                speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), angleToHub);
+                speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), hubAngle);
 
                 api.applySpeeds(speeds, Perspective.BLUE, true, true);
             });
@@ -252,7 +252,7 @@ public final class Swerve extends GRRSubsystem {
             .onExecute(() -> {
                 final double angularVelocity = angularPID.calculate(state.rotation.getRadians(), target);
 
-                var speeds = api.calculateDriverSpeeds(distanceToHub, angleToHub, angularVelocity);
+                var speeds = api.calculateDriverSpeeds(hubDistance, hubAngle, angularVelocity);
 
                 api.applySpeeds(speeds, Perspective.BLUE, true, true);
             });
@@ -271,7 +271,7 @@ public final class Swerve extends GRRSubsystem {
      * @return True if the robot is aiming at the hub, false otherwise.
      */
     public boolean aimingAtHub() {
-        final double angleDifference = Math.abs(state.rotation.getRadians() - angleToHub);
+        final double angleDifference = Math.abs(state.rotation.getRadians() - hubAngle);
         final double angleTolerance = aimAtHubTolerance.get();
 
         return (
@@ -310,8 +310,8 @@ public final class Swerve extends GRRSubsystem {
      * @return The distance from the origin of our robot to the center of the hub, recalculated every code cycle.
      */
     @NotLogged
-    public double distanceToHub() {
-        return distanceToHub;
+    public double hubDistance() {
+        return hubDistance;
     }
 
     /**
@@ -319,7 +319,7 @@ public final class Swerve extends GRRSubsystem {
      * @return The angle from the origin of our robot to the center of the hub, recalculated every code cycle.
      */
     @NotLogged
-    public double angleToHub() {
-        return angleToHub;
+    public double hubAngle() {
+        return hubAngle;
     }
 }

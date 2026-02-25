@@ -10,6 +10,8 @@ import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.command.AutoChooser;
 import org.team340.robot.Robot;
+import org.team340.robot.subsystems.Intake;
+import org.team340.robot.subsystems.Shooters;
 import org.team340.robot.subsystems.Swerve;
 
 /**
@@ -23,12 +25,16 @@ public final class Autos {
     private static final TunableDouble deceleration = tunables.value("deceleration", 6.0);
     private static final TunableDouble tolerance = tunables.value("tolerance", 0.05);
 
+    private final Intake intake;
+    private final Shooters shooters;
     private final Swerve swerve;
     private final Routines routines;
 
     private final AutoChooser chooser;
 
     public Autos(Robot robot) {
+        intake = robot.intake;
+        shooters = robot.shooters;
         swerve = robot.swerve;
         routines = robot.routines;
 

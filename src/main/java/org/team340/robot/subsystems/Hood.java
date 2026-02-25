@@ -1,22 +1,19 @@
 package org.team340.robot.subsystems;
 
-import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.CANdiConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.VelocityVoltage;
-import com.ctre.phoenix6.hardware.CANdi;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
-import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
+import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.Mutable;
@@ -30,57 +27,56 @@ import org.team340.robot.Constants.RobotMap;
 @Logged
 public final class Hood extends GRRSubsystem {
 
-    private static final TunableDouble manualSpeed = Tunables.value("Hood/manualSpeed", 0.0);
-    private static final double homingVelocity = 0.0; // In rotations per second.
+    private static final TunableTable tunables = Tunables.getNested("hood");
+
+    private static final TunableDouble manualSpeed = tunables.value("manualSpeed", 0.0);
+    private static final TunableDouble stallCurrent = tunables.value("stallCurrent", 20.0);
+    private static final TunableDouble homingVelocity = tunables.value("homingVelocity", -30.0); // In rotations per second.
+    private static final TunableDouble zeroZero = tunables.value("zeroZero", 1.0); // In rotations per second.
+
     private static final InterpolatingDoubleTreeMap distancePositionMap;
 
     static {
         distancePositionMap = new InterpolatingDoubleTreeMap();
 
         // TODO: Populate data points.
-        distancePositionMap.put(0.0, 0.0);
+        distancePositionMap.put(0.0, 15.0);
     }
 
     private final TalonFX motor;
-    private final CANdi zeroSwitch;
 
     private boolean isZeroed = false;
 
     private final PositionVoltage positionVoltage;
-    private final VelocityVoltage velocityVoltage;
+    private final VelocityTorqueCurrentFOC velocityTorque;
 
-    private final StatusSignal<Boolean> zeroSwitchS1Closed;
+    private final StatusSignal<Current> statorCurrent;
 
     public Hood() {
-        this.motor = new TalonFX(RobotMap.HOOD_MOTOR);
-        this.zeroSwitch = new CANdi(RobotMap.HOOD_ZERO_SWITCH);
+        this.motor = new TalonFX(RobotMap.HOOD_MOTOR, RobotMap.CANBus);
 
-        this.zeroSwitchS1Closed = zeroSwitch.getS1Closed();
-
-        configureCANdi();
         configureMotor();
 
-        PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(500, zeroSwitch.getS1State(), zeroSwitch.getS1Closed())
-        );
-        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, motor, zeroSwitch));
+        statorCurrent = motor.getStatorCurrent();
+
+        PhoenixUtil.run(() -> statorCurrent.setUpdateFrequency(100.0));
+        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, motor));
 
         positionVoltage = new PositionVoltage(0.0);
         positionVoltage.EnableFOC = true;
         positionVoltage.UpdateFreqHz = 0.0;
 
-        velocityVoltage = new VelocityVoltage(0.0);
-        velocityVoltage.EnableFOC = true;
-        velocityVoltage.UpdateFreqHz = 0.0;
+        velocityTorque = new VelocityTorqueCurrentFOC(0.0);
+        velocityTorque.IgnoreSoftwareLimits = true;
+        velocityTorque.UpdateFreqHz = 0.0;
+        velocityTorque.Slot = 1;
+
+        tunables.add("motor", motor);
     }
 
     @Override
     public void periodic() {
-        zeroSwitchS1Closed.refresh();
-    }
-
-    public boolean atZero() {
-        return zeroSwitchS1Closed.getValue();
+        statorCurrent.refresh();
     }
 
     /**
@@ -92,7 +88,7 @@ public final class Hood extends GRRSubsystem {
     }
 
     public Command goToZero(boolean reZero) {
-        Command goTo = goTo(() -> 0).withName("Hood.goToZero(" + reZero + ")");
+        Command goTo = goTo(zeroZero).withName("Hood.goToZero(" + reZero + ")");
         if (reZero) goTo = goTo.beforeStarting(() -> isZeroed = false);
         return goTo;
     }
@@ -117,24 +113,18 @@ public final class Hood extends GRRSubsystem {
         return commandBuilder("Hood.goTo()")
             .onExecute(() -> {
                 if (!isZeroed) {
-                    velocityVoltage.withVelocity(homingVelocity);
-                    motor.setControl(velocityVoltage);
-                    if (!atZero()) return;
+                    velocityTorque.withVelocity(homingVelocity.get());
+                    motor.setControl(velocityTorque);
+                    if (statorCurrent.getValueAsDouble() < stallCurrent.get()) return;
 
                     isZeroed = true;
+                    motor.setPosition(0.0);
                 }
 
                 positionVoltage.withPosition(position.getAsDouble());
-                motor.setControl(positionVoltage);
+                PhoenixUtil.run(() -> motor.setControl(positionVoltage));
             })
             .onEnd(motor::stopMotor);
-    }
-
-    private void configureCANdi() {
-        // This config restores factory defaults.
-        final CANdiConfiguration candiConfig = new CANdiConfiguration();
-
-        PhoenixUtil.run(() -> zeroSwitch.getConfigurator().apply(candiConfig));
     }
 
     private void configureMotor() {
@@ -143,27 +133,36 @@ public final class Hood extends GRRSubsystem {
         config.CurrentLimits.StatorCurrentLimit = 80.0;
         config.CurrentLimits.SupplyCurrentLimit = 70.0;
 
-        config.HardwareLimitSwitch.ReverseLimitRemoteSensorID = zeroSwitch.getDeviceID();
-        config.HardwareLimitSwitch.ReverseLimitSource = ReverseLimitSourceValue.RemoteCANdiS1;
-        config.HardwareLimitSwitch.ReverseLimitType = ReverseLimitTypeValue.NormallyOpen;
-        config.HardwareLimitSwitch.ReverseLimitAutosetPositionEnable = true;
-        config.HardwareLimitSwitch.ReverseLimitAutosetPositionValue = 0.0;
-
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-        config.Slot0.kP = 0.0;
+        // Normal operations
+        config.Slot0.kP = 16.0;
         config.Slot0.kI = 0.0;
-        config.Slot0.kD = 0.0;
+        config.Slot0.kD = 0.08;
         config.Slot0.kG = 0.0;
         config.Slot0.kS = 0.0;
         config.Slot0.kV = 0.0;
         config.Slot0.kA = 0.0;
 
-        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 0.0;
+        // Zeroing the hood.
+        config.Slot1.kP = 10.0;
+        config.Slot1.kI = 0.0; // If this is anything other than zero, it should not be.
+        config.Slot1.kD = 0.0;
+        config.Slot1.kG = 0.0;
+        config.Slot1.kS = 0.0;
+        config.Slot1.kV = 0.0;
+        config.Slot1.kA = 0.0;
+
+        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 22.938;
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0;
+        config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
         // TODO: Confirm the direction in testing.
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+
+        config.TorqueCurrent.PeakForwardTorqueCurrent = 20.0;
+        config.TorqueCurrent.PeakReverseTorqueCurrent = -20.0;
 
         PhoenixUtil.run(() -> motor.clearStickyFaults());
         PhoenixUtil.run(() -> motor.getConfigurator().apply(config));

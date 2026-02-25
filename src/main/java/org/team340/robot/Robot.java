@@ -12,6 +12,10 @@ import org.team340.lib.logging.Profiler;
 import org.team340.lib.util.DisableWatchdog;
 import org.team340.robot.commands.Autos;
 import org.team340.robot.commands.Routines;
+import org.team340.robot.subsystems.Hood;
+import org.team340.robot.subsystems.Indexer;
+import org.team340.robot.subsystems.Intake;
+import org.team340.robot.subsystems.Shooters;
 import org.team340.robot.subsystems.Swerve;
 
 @Logged
@@ -19,6 +23,10 @@ public final class Robot extends LoggedRobot {
 
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
 
+    public final Hood hood;
+    public final Indexer indexer;
+    public final Intake intake;
+    public final Shooters shooters;
     public final Swerve swerve;
 
     public final Routines routines;
@@ -29,6 +37,10 @@ public final class Robot extends LoggedRobot {
 
     public Robot() {
         // Initialize subsystems
+        hood = new Hood();
+        indexer = new Indexer();
+        intake = new Intake();
+        shooters = new Shooters();
         swerve = new Swerve();
 
         // Initialize compositions
@@ -40,11 +52,17 @@ public final class Robot extends LoggedRobot {
         coDriver = new CommandXboxController(Constants.CO_DRIVER);
 
         // Set default commands
+        hood.setDefaultCommand(hood.goToZero(false));
         swerve.setDefaultCommand(swerve.drive(this::driverX, this::driverY, this::driverAngular));
 
         // Driver bindings
-        driver.a().onTrue(none());
+        driver.a().onTrue(intake.intake(driver.a()));
+        driver.b().whileTrue(routines.barf());
+
+        driver.leftBumper().or(driver.rightBumper()).whileTrue(routines.shoot());
+
         driver.povLeft().onTrue(swerve.tareRotation());
+        driver.povDown().whileTrue(hood.goToZero(true));
 
         // Co-driver bindings
         coDriver.a().onTrue(none());

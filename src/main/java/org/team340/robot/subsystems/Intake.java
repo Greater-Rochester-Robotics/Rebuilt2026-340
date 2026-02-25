@@ -1,5 +1,7 @@
 package org.team340.robot.subsystems;
 
+import static edu.wpi.first.wpilibj2.command.Commands.*;
+
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -11,6 +13,8 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
+import java.util.function.BooleanSupplier;
+import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.command.GRRSubsystem;
@@ -23,16 +27,21 @@ import org.team340.robot.Constants.RobotMap;
 @Logged
 public final class Intake extends GRRSubsystem {
 
-    private enum State {
-        DOWN(0.0, 0.0),
-        UP(0.0, 0.0);
+    private static final TunableTable tunables = Tunables.getNested("intake");
 
-        public final TunableDouble harvesterPosition;
+    private static enum State {
+        // TODO positions
+        STOW(0.0, 0.0),
+        EXTEND(0.0, 0.0),
+        INTAKE(0.0, 90.0),
+        BARF(0.0, -90.0);
+
+        public final TunableDouble position;
         public final TunableDouble rollerVelocity;
 
-        private State(final double harvesterPosition, final double rollerVelocity) {
-            this.harvesterPosition = Tunables.value("Intake/" + name() + "/harvesterPosition", harvesterPosition);
-            this.rollerVelocity = Tunables.value("Intake/" + name() + "/rollerVelocity", rollerVelocity);
+        private State(final double position, final double rollerVelocity) {
+            this.position = tunables.value("positions/" + name(), position);
+            this.rollerVelocity = tunables.value("rollerVelocities/" + name(), rollerVelocity);
         }
     }
 
@@ -66,12 +75,53 @@ public final class Intake extends GRRSubsystem {
         rollersVelocityControl = new VelocityVoltage(0.0);
         rollersVelocityControl.EnableFOC = true;
         rollersVelocityControl.UpdateFreqHz = 0.0;
+
+        tunables.add("pivotMotor", pivot);
+        tunables.add("rollersMotor", rollers);
     }
 
-    public Command intake(State state) {
+    /**
+     * Stows the intake.
+     */
+    public Command stow() {
+        return runState(State.STOW).withName("Intake.stow()");
+    }
+
+    /**
+     * Extends the intake without moving the rollers.
+     */
+    public Command extend() {
+        return runState(State.EXTEND).withName("Intake.extend()");
+    }
+
+    /**
+     * Extends the intake and runs the rollers to pick up fuel.
+     */
+    public Command intake() {
+        return runState(State.INTAKE).withName("Intake.intake()");
+    }
+
+    /**
+     * Extends the intake and runs the rollers, when {@code runRollers} returns {@code true}.
+     * @param runRollers A boolean supplier that returns {@code true} when the rollers should be powered.
+     */
+    public Command intake(BooleanSupplier runRollers) {
+        return sequence(intake().until(() -> !runRollers.getAsBoolean()), extend().until(runRollers))
+            .repeatedly()
+            .withName("Intake.intake()");
+    }
+
+    /**
+     * Extends the intake and runs the rollers to barf out fuel.
+     */
+    public Command barf() {
+        return runState(State.BARF).withName("Intake.barf()");
+    }
+
+    private Command runState(State state) {
         return commandBuilder("Intake.intake()")
-            .onInitialize(() -> {
-                pivotPositionControl.withPosition(state.harvesterPosition.getAsDouble());
+            .onExecute(() -> {
+                pivotPositionControl.withPosition(state.position.getAsDouble());
                 pivot.setControl(pivotPositionControl);
                 rollersVelocityControl.withVelocity(state.rollerVelocity.getAsDouble());
                 rollers.setControl(rollersVelocityControl);
@@ -130,15 +180,14 @@ public final class Intake extends GRRSubsystem {
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 0.0;
+        config.Slot0.kP = 0.3;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
         config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.0;
+        config.Slot0.kV = 0.124;
         config.Slot0.kA = 0.0;
 
-        // TODO: Find out the direction of the motor.
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         PhoenixUtil.run(() -> rollers.clearStickyFaults());
