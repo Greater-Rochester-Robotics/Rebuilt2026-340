@@ -4,9 +4,12 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -90,7 +93,7 @@ public final class Swerve extends GRRSubsystem {
         .setModules(frontLeft, frontRight, backLeft, backRight);
 
     // TODO: Populate camera locations.
-    private final CameraConfig[] cameras = {};
+    private final CameraConfig[] cameras = { new CameraConfig("luma-p1", new Translation3d(), new Rotation3d()) };
 
     @NotLogged
     private final SwerveState state;
@@ -123,7 +126,7 @@ public final class Swerve extends GRRSubsystem {
         api.refresh();
 
         // Apply vision estimates to the pose estimator.
-        final var measurements = vision.getUnreadResults(state.poseHistory, state.odometryPose, state.velocity);
+        final var measurements = vision.getUnreadResults(state.poseHistory, state.odometryPose);
         seesAprilTag = measurements.length > 0;
         api.addVisionMeasurements(measurements);
 
@@ -148,7 +151,10 @@ public final class Swerve extends GRRSubsystem {
      */
     public Command tareRotation() {
         return commandBuilder("Swerve.tareRotation()")
-            .onInitialize(() -> api.tareRotation(Perspective.OPERATOR))
+            .onInitialize(() -> {
+                api.tareRotation(Perspective.OPERATOR);
+                vision.resetHeadingData(state.rotation, Timer.getFPGATimestamp());
+            })
             .isFinished(true)
             .ignoringDisable(true);
     }
@@ -159,7 +165,10 @@ public final class Swerve extends GRRSubsystem {
      */
     public Command resetPose(Supplier<Pose2d> pose) {
         return commandBuilder("Swerve.resetPose()")
-            .onInitialize(() -> api.resetPose(pose.get()))
+            .onInitialize(() -> {
+                api.resetPose(pose.get());
+                vision.resetHeadingData(state.rotation, Timer.getFPGATimestamp());
+            })
             .isFinished(true)
             .ignoringDisable(true);
     }

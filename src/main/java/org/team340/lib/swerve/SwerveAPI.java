@@ -176,6 +176,9 @@ public class SwerveAPI implements Tunable, AutoCloseable {
         } finally {
             odometryMutex.unlock();
         }
+
+        state.translation = state.pose.getTranslation();
+        state.rotation = state.pose.getRotation();
     }
 
     /**
@@ -195,6 +198,9 @@ public class SwerveAPI implements Tunable, AutoCloseable {
         } finally {
             odometryMutex.unlock();
         }
+
+        state.translation = state.pose.getTranslation();
+        state.rotation = state.pose.getRotation();
     }
 
     /**
@@ -215,6 +221,9 @@ public class SwerveAPI implements Tunable, AutoCloseable {
         } finally {
             odometryMutex.unlock();
         }
+
+        state.translation = state.pose.getTranslation();
+        state.rotation = state.pose.getRotation();
     }
 
     /**
