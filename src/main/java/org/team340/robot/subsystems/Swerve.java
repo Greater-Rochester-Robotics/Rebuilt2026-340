@@ -48,10 +48,11 @@ import org.team340.robot.util.Vision.CameraConfig;
 public final class Swerve extends GRRSubsystem {
 
     private static final double OFFSET = Units.inchesToMeters(10.375);
+    private static final double SHOOTER_OFFSET = Units.inchesToMeters(9.0); // Center of robot to in between the shooters
 
     private static final TunableTable tunables = Tunables.getNested("swerve");
 
-    private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(3.0));
+    private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(15.0));
 
     private final SwerveModuleConfig frontLeft = new SwerveModuleConfig()
         .setName("frontLeft")
@@ -148,8 +149,9 @@ public final class Swerve extends GRRSubsystem {
         double deltaY = state.pose.getY() - hub.getY();
 
         var fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(state.speeds, state.rotation);
-        deltaX += fieldSpeeds.vxMetersPerSecond * TOF;
-        deltaY += fieldSpeeds.vyMetersPerSecond * TOF;
+
+        deltaX += (fieldSpeeds.vxMetersPerSecond + Math.sin(fieldSpeeds.omegaRadiansPerSecond) * SHOOTER_OFFSET) * TOF;
+        deltaY += (fieldSpeeds.vyMetersPerSecond - Math.cos(fieldSpeeds.omegaRadiansPerSecond) * SHOOTER_OFFSET) * TOF;
 
         hubDistance = Math.hypot(deltaX, deltaY);
         hubAngle = Math.atan2(deltaY, deltaX);
