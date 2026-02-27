@@ -39,12 +39,12 @@ public final class Vision {
     public static final record CameraConfig(String name, Translation3d translation, Rotation3d rotation) {}
 
     private static final TunableTable tunables = Tunables.getNested("vision");
-    private static final TunableDouble zTolerance = tunables.value("zTolerance", 1.0);
+    private static final TunableDouble zTolerance = tunables.value("zTolerance", 0.5);
 
     private static enum StrategyWeights {
-        MULTITAG(0.1, 0.5),
-        TRIG(0.1, 1e5),
-        AMBIGUITY(0.1, 0.4);
+        MULTITAG(0.1, 0.25),
+        TRIG(0.06, 1e5),
+        AMBIGUITY(0.2, 0.4);
 
         public final TunableDouble xy;
         public final TunableDouble angular;

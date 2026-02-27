@@ -10,9 +10,10 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -44,9 +45,10 @@ public final class Climber extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("climber");
 
+    private static final TunableDouble climbingVoltage = tunables.value("climbingVoltage", -3.5);
     private static final TunableDouble zeroingVelocity = tunables.value("zeroingVelocity", 6.0);
     private static final TunableDouble stallVelocity = tunables.value("stallVelocity", 0.05);
-    private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 0.5);
+    private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 0.2);
 
     private static enum Position {
         TOP(9.1),
@@ -68,9 +70,10 @@ public final class Climber extends GRRSubsystem {
 
     private boolean isZeroed = false;
 
-    private final DynamicMotionMagicVoltage unloadedPositionControl;
-    private final DynamicMotionMagicVoltage loadedPositionControl;
+    private final MotionMagicVoltage positionControl;
     private final VelocityTorqueCurrentFOC velocityControl;
+    private final VoltageOut voltageControl;
+    private final Follower followControl;
 
     private final StatusSignal<Angle> position;
     private final StatusSignal<MagnetHealthValue> seesMagnet;
@@ -92,34 +95,33 @@ public final class Climber extends GRRSubsystem {
 
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(
-                250,
+                500,
+                lead.getDutyCycle(),
                 lead.getMotorVoltage(),
                 lead.getTorqueCurrent(),
                 zeroSwitch.getMagnetHealth()
             )
         );
-        PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(100, lead.getPosition(), leadVelocity, followVelocity)
-        );
+        PhoenixUtil.run(() -> BaseStatusSignal.setUpdateFrequencyForAll(100, position, leadVelocity, followVelocity));
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, lead, follow, zeroSwitch));
 
-        unloadedPositionControl = new DynamicMotionMagicVoltage(0.0, 115.0, 800.0);
-        unloadedPositionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
-        unloadedPositionControl.EnableFOC = true;
-        unloadedPositionControl.UpdateFreqHz = 0.0;
-
-        loadedPositionControl = new DynamicMotionMagicVoltage(0.0, 70.0, 500.0);
-        loadedPositionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
-        loadedPositionControl.EnableFOC = true;
-        loadedPositionControl.UpdateFreqHz = 0.0;
+        positionControl = new MotionMagicVoltage(0.0);
+        positionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
+        positionControl.EnableFOC = true;
+        positionControl.UpdateFreqHz = 0.0;
 
         velocityControl = new VelocityTorqueCurrentFOC(0.0);
         velocityControl.IgnoreSoftwareLimits = true; // Software limits are not reliable during zeroing
         velocityControl.UpdateFreqHz = 0.0;
         velocityControl.Slot = 1;
 
-        final Follower followControl = new Follower(lead.getDeviceID(), MotorAlignmentValue.Aligned);
-        PhoenixUtil.run(() -> follow.setControl(followControl));
+        voltageControl = new VoltageOut(0.0);
+        voltageControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
+        voltageControl.EnableFOC = false;
+        voltageControl.UpdateFreqHz = 0.0;
+
+        followControl = new Follower(lead.getDeviceID(), MotorAlignmentValue.Aligned);
+        followControl.UpdateFreqHz = 0.0;
 
         tunables.add("motor", lead);
         tunables.add("motor", follow);
@@ -146,9 +148,11 @@ public final class Climber extends GRRSubsystem {
             goTo(Position.TOP, false),
             waitUntil(ready),
             goTo(Position.BOTTOM, true),
+            waitSeconds(0.25),
             goTo(Position.TOP, false),
             waitSeconds(0.25),
             goTo(Position.BOTTOM, true),
+            waitSeconds(0.25),
             goTo(Position.TOP, false),
             waitSeconds(0.25),
             goTo(Position.L3, true)
@@ -166,6 +170,7 @@ public final class Climber extends GRRSubsystem {
             .onExecute(() -> {
                 velocityControl.withVelocity(zeroingVelocity.get());
                 lead.setControl(velocityControl);
+                follow.setControl(followControl);
             })
             .isFinished(() -> {
                 if (atZero()) {
@@ -181,11 +186,16 @@ public final class Climber extends GRRSubsystem {
                 ) {
                     // Set here to avoid rechecking (or having the stator current change concurrently).
                     PhoenixUtil.run(() -> lead.setPosition(Position.TOP.value.get()));
+                    PhoenixUtil.run(() -> follow.setPosition(Position.TOP.value.get()));
                     isZeroed = true;
                     return true;
                 }
 
                 return false;
+            })
+            .onEnd(() -> {
+                lead.stopMotor();
+                follow.stopMotor();
             });
     }
 
@@ -211,20 +221,26 @@ public final class Climber extends GRRSubsystem {
             .onExecute(
                 loaded
                     ? () -> {
-                          loadedPositionControl.withPosition(position.value.get());
-                          lead.setControl(loadedPositionControl);
+                          voltageControl.withOutput(climbingVoltage.get());
+                          lead.setControl(voltageControl);
+                          follow.setControl(voltageControl);
                       }
                     : () -> {
-                          unloadedPositionControl.withPosition(position.value.get());
-                          lead.setControl(unloadedPositionControl);
+                          positionControl.withPosition(position.value.get());
+                          lead.setControl(positionControl);
+                          follow.setControl(followControl);
                       }
             )
             .onEnd(() -> {
                 lead.stopMotor();
+                follow.stopMotor();
             })
-            .isFinished(
-                () -> Math.abs(this.position.getValueAsDouble() - position.value.get()) < atPositionEpsilon.get()
-            );
+            .isFinished(() -> {
+                if (!loaded) return (
+                    Math.abs(this.position.getValueAsDouble() - position.value.get()) < atPositionEpsilon.get()
+                );
+                else return this.position.getValueAsDouble() <= position.value.get() + atPositionEpsilon.get();
+            });
 
         return sequence(zero().onlyIf(() -> !isZeroed), goTo).withName("Climber.goTo(" + position + ")");
     }
@@ -239,8 +255,9 @@ public final class Climber extends GRRSubsystem {
     private void configureMotors() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.StatorCurrentLimit = 120.0;
         config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.HardwareLimitSwitch.ReverseLimitRemoteSensorID = RobotMap.CLIMBER_CANCODER;
         config.HardwareLimitSwitch.ReverseLimitSource = ReverseLimitSourceValue.RemoteCANcoder;
@@ -248,6 +265,9 @@ public final class Climber extends GRRSubsystem {
         config.HardwareLimitSwitch.ReverseLimitAutosetPositionEnable = true;
         config.HardwareLimitSwitch.ReverseLimitAutosetPositionValue = 0.0;
         config.HardwareLimitSwitch.ReverseLimitEnable = true;
+
+        config.MotionMagic.MotionMagicCruiseVelocity = 115.0;
+        config.MotionMagic.MotionMagicAcceleration = 900.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 

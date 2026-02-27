@@ -3,6 +3,7 @@ package org.team340.robot.commands;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import java.util.function.DoubleSupplier;
 import org.team340.robot.Robot;
 import org.team340.robot.subsystems.Hood;
 import org.team340.robot.subsystems.Indexer;
@@ -32,14 +33,18 @@ public final class Routines {
 
     public Command shoot() {
         return parallel(
-            indexer.feed(),
             hood.targetDistance(swerve::hubDistance),
             shooters.targetDistance(swerve::hubDistance),
+            sequence(parallel(waitUntil(swerve::aimingAtHub), waitSeconds(0.25)), indexer.feed()),
             sequence(waitSeconds(2.0), intake.stow())
         ).withName("Routines.shoot()");
     }
 
+    public Command driverShoot(DoubleSupplier x, DoubleSupplier y) {
+        return parallel(shoot(), swerve.aimAtHub(x, y)).withName("Routines.driverShoot()");
+    }
+
     public Command barf() {
-        return parallel(indexer.unjam(), intake.barf());
+        return parallel(indexer.unjam(), intake.barf()).withName("Routines.barf()");
     }
 }

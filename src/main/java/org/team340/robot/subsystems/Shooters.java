@@ -1,5 +1,7 @@
 package org.team340.robot.subsystems;
 
+import static org.team340.robot.util.ShootParams.shootersVelocityMap;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
@@ -10,7 +12,6 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
 import org.team340.lib.tunable.TunableTable;
@@ -30,14 +31,6 @@ public final class Shooters extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("shooters");
 
     private static final TunableDouble manualAcceleration = tunables.value("manualAcceleration", 0.0);
-    private static final InterpolatingDoubleTreeMap distanceVelocityMap;
-
-    static {
-        distanceVelocityMap = new InterpolatingDoubleTreeMap();
-
-        // TODO: Populate data points.
-        distanceVelocityMap.put(0.0, 50.0);
-    }
 
     private final TalonFX portLead;
     private final TalonFX portFollow;
@@ -85,7 +78,7 @@ public final class Shooters extends GRRSubsystem {
      * @param distance The distance to target in meters.
      */
     public Command targetDistance(final DoubleSupplier distance) {
-        return runVelocity(() -> distanceVelocityMap.get(distance.getAsDouble())).withName("Shooters.targetDistance()");
+        return runVelocity(() -> shootersVelocityMap.get(distance.getAsDouble())).withName("Shooters.targetDistance()");
     }
 
     /**

@@ -1,5 +1,7 @@
 package org.team340.robot.subsystems;
 
+import static org.team340.robot.util.ShootParams.hoodPositionMap;
+
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -11,7 +13,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
@@ -35,15 +36,6 @@ public final class Hood extends GRRSubsystem {
     private static final TunableDouble stallVelocity = tunables.value("stallVelocity", 0.05);
     private static final TunableDouble homingVelocity = tunables.value("homingVelocity", -30.0); // In rotations per second.
     private static final TunableDouble zeroZero = tunables.value("zeroZero", 1.0); // In rotations per second.
-
-    private static final InterpolatingDoubleTreeMap distancePositionMap;
-
-    static {
-        distancePositionMap = new InterpolatingDoubleTreeMap();
-
-        // TODO: Populate data points.
-        distancePositionMap.put(0.0, 15.0);
-    }
 
     private final TalonFX motor;
 
@@ -86,7 +78,7 @@ public final class Hood extends GRRSubsystem {
      * @param distance The distance to target in meters.
      */
     public Command targetDistance(final DoubleSupplier distance) {
-        return goTo(() -> distancePositionMap.get(distance.getAsDouble())).withName("Hood.targetDistance()");
+        return goTo(() -> hoodPositionMap.get(distance.getAsDouble())).withName("Hood.targetDistance()");
     }
 
     public Command goToZero(boolean reZero) {

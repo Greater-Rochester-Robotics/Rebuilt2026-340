@@ -64,7 +64,7 @@ public final class Robot extends LoggedRobot {
         driver.x().whileTrue(climber.zero());
         driver.y().whileTrue(climber.retract());
 
-        driver.leftBumper().or(driver.rightBumper()).whileTrue(routines.shoot());
+        driver.leftBumper().or(driver.rightBumper()).whileTrue(routines.driverShoot(this::driverX, this::driverY));
 
         driver.povRight().whileTrue(climber.climbL3(() -> true));
         driver.povLeft().onTrue(swerve.tareRotation());
@@ -79,6 +79,9 @@ public final class Robot extends LoggedRobot {
 
         // Configure the brownout threshold to match RIO 1
         RobotController.setBrownoutVoltage(6.3);
+
+        // Enable real-time thread priority
+        enableRT(true);
     }
 
     @NotLogged
