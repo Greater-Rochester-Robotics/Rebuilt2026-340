@@ -68,7 +68,14 @@ public final class Routines {
                 waitUntil(() -> hood.atPosition() && shooters.atVelocity() && swerve.aimingAtTarget()),
                 indexer.feed()
             ),
-            sequence(waitSeconds(2.0), intake.stow())
+            sequence(
+                waitSeconds(2.0),
+                intake
+                    .stow()
+                    .asProxy()
+                    .onlyIf(() -> intake.getCurrentCommand() == intake.getDefaultCommand()),
+                waitUntil(() -> intake.getCurrentCommand() == intake.getDefaultCommand())
+            ).repeatedly()
         ).withName("Routines.shoot()");
     }
 
