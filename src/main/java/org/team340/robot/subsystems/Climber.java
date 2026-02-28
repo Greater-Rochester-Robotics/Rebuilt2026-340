@@ -27,6 +27,7 @@ import java.util.function.BooleanSupplier;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
+import org.team340.lib.util.command.CommandBuilder;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
@@ -47,7 +48,8 @@ public final class Climber extends GRRSubsystem {
         TOP(11.3),
         BOTTOM(-39.0),
         ZERO(0.0),
-        RETRACTING(-5.5); // This is the position we go to before we retract.
+        RETRACTING(-5.5), // This is the position we go to before we retract.
+        L1(-8.0);
 
         public TunableDouble value;
 
@@ -71,6 +73,7 @@ public final class Climber extends GRRSubsystem {
     private final Follower followControl;
 
     private boolean isZeroed = false;
+    private boolean climbingL1 = false;
 
     public Climber() {
         this.lead = new TalonFX(RobotMap.CLIMBER_LEAD_MOTOR, RobotMap.CANBus);
@@ -104,7 +107,7 @@ public final class Climber extends GRRSubsystem {
         );
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, lead, follow, zeroSwitch));
 
-        loadedPositionControl = new DynamicMotionMagicVoltage(0.0, 60.0, 600.0);
+        loadedPositionControl = new DynamicMotionMagicVoltage(0.0, 60.0, 300.0);
         loadedPositionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
         loadedPositionControl.EnableFOC = true;
         loadedPositionControl.UpdateFreqHz = 0.0;
@@ -136,6 +139,9 @@ public final class Climber extends GRRSubsystem {
         if (atZero()) isZeroed = true;
     }
 
+    /**
+     * {@code true} if the climber is on the hall effect sensor.
+     */
     public boolean atZero() {
         // Probably unnecessary, but also fancy looking switch.
         switch (seesMagnet.getValue()) {
@@ -147,6 +153,40 @@ public final class Climber extends GRRSubsystem {
         }
     }
 
+    /**
+     * {@code true} if the climber hooks are on L1.
+     */
+    public boolean isClimbingL1() {
+        return climbingL1;
+    }
+
+    /**
+     * Climb L1.
+     * @param ready If we are ready to start the actual climbing sequence.
+     */
+    public Command climbL1(BooleanSupplier ready) {
+        return sequence(
+            goTo(Position.TOP, false),
+            waitUntil(ready),
+            runOnce(() -> climbingL1 = true),
+            goTo(Position.L1, true, false)
+        ).withName("Climber.climbL1()");
+    }
+
+    /**
+     * Unclimb the robot from L1 if it had been climbing on L1.
+     */
+    public Command unclimbL1() {
+        return goTo(Position.TOP, true)
+            .andThen(() -> climbingL1 = false)
+            .onlyIf(this::isClimbingL1)
+            .withName("Climber.unclimbL1()");
+    }
+
+    /**
+     * Climb L3.
+     * @param ready If we are ready to start the actual climbing sequence.
+     */
     public Command climbL3(BooleanSupplier ready) {
         return sequence(
             goTo(Position.TOP, false),
@@ -160,7 +200,7 @@ public final class Climber extends GRRSubsystem {
             goTo(Position.TOP, false),
             waitSeconds(0.1),
             goTo(Position.BOTTOM, true)
-        );
+        ).withName("Climber.climbL3()");
     }
 
     /**
@@ -200,6 +240,9 @@ public final class Climber extends GRRSubsystem {
             .onEnd(lead::stopMotor);
     }
 
+    /**
+     * Moves the hooks to be retracted into the robot.
+     */
     public Command retract() {
         return sequence(
             zero().onlyIf(() -> !isZeroed),
@@ -214,10 +257,21 @@ public final class Climber extends GRRSubsystem {
 
     /**
      * Internal method to target a specified position.
+     * This command ends once it is within {@link Climber#atPositionEpsilon} of the target.
      * @param position The climber's position in rotations at the rotor (gearing not included).
      */
     private Command goTo(final Position position, final boolean loaded) {
-        Command goTo = commandBuilder()
+        return goTo(position, loaded, true);
+    }
+
+    /**
+     * Internal method to target a specified position.
+     * @param position The climber's position in rotations at the rotor (gearing not included).
+     * @param shouldFinish True if this command should finish when it is within {@link Climber#atPositionEpsilon}
+     * of the target position, false if this command should not end.
+     */
+    private Command goTo(final Position position, final boolean loaded, final boolean shouldFinish) {
+        CommandBuilder goTo = commandBuilder()
             .onExecute(
                 loaded
                     ? () -> {
@@ -229,13 +283,13 @@ public final class Climber extends GRRSubsystem {
                           lead.setControl(unloadedPositionControl);
                       }
             )
-            .isFinished(() -> {
-                if (!loaded) return (
-                    Math.abs(this.position.getValueAsDouble() - position.value.get()) < atPositionEpsilon.get()
-                );
-                else return this.position.getValueAsDouble() <= position.value.get() + atPositionEpsilon.get();
-            })
             .onEnd(lead::stopMotor);
+
+        if (shouldFinish) {
+            goTo.isFinished(
+                () -> Math.abs(this.position.getValueAsDouble() - position.value.get()) < atPositionEpsilon.get()
+            );
+        }
 
         return sequence(zero().onlyIf(() -> !isZeroed), goTo).withName("Climber.goTo(" + position + ")");
     }

@@ -7,6 +7,7 @@ import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import org.team340.lib.logging.LoggedRobot;
 import org.team340.lib.logging.Profiler;
 import org.team340.lib.util.DisableWatchdog;
@@ -55,14 +56,17 @@ public final class Robot extends LoggedRobot {
         coDriver = new CommandXboxController(Constants.CO_DRIVER);
 
         // Set default commands
+        climber.setDefaultCommand(sequence(waitUntil(swerve::isAwayFromTower), climber.retract(), idle()));
         hood.setDefaultCommand(hood.goToZero(false));
         swerve.setDefaultCommand(swerve.drive(this::driverX, this::driverY, this::driverAngular));
+
+        // Create triggers
+        RobotModeTriggers.teleop().onTrue(climber.unclimbL1());
 
         // Driver bindings
         driver.a().onTrue(intake.intake(driver.a()));
         driver.b().whileTrue(routines.barf());
-        driver.x().whileTrue(climber.zero());
-        driver.y().whileTrue(climber.retract());
+        driver.x().whileTrue(routines.climb(swerve::isLeftOfTower, false));
 
         driver
             .leftBumper()
@@ -70,8 +74,9 @@ public final class Robot extends LoggedRobot {
             .onTrue(routines.driverShoot(this::driverX, this::driverY))
             .onFalse(routines.driverShootShutdown(this::driverX, this::driverY));
 
-        driver.povRight().whileTrue(climber.climbL3(() -> true));
         driver.povLeft().onTrue(swerve.tareRotation());
+        driver.povRight().whileTrue(climber.retract());
+        driver.povUp().whileTrue(routines.climb(swerve::isLeftOfTower, true));
         driver.povDown().whileTrue(hood.goToZero(true));
 
         // Co-driver bindings

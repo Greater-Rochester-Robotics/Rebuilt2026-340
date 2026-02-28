@@ -1,12 +1,14 @@
 package org.team340.robot.util;
 
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import org.team340.lib.math.FieldInfo;
 import org.team340.lib.math.PAPFController.LateralObstacle;
 import org.team340.lib.math.PAPFController.LineObstacle;
 import org.team340.lib.math.PAPFController.LongitudinalObstacle;
 import org.team340.lib.math.PAPFController.Obstacle;
+import org.team340.lib.math.geometry.ExtPose;
 import org.team340.lib.math.geometry.ExtTranslation;
 
 public final class Field {
@@ -20,6 +22,9 @@ public final class Field {
     public static final double BLUE_ZONE = getTag(26).getX();
     /** The X coordinate of the edge of the red ALLIANCE ZONE. */
     public static final double RED_ZONE = getTag(10).getX();
+
+    public static final double BLUE_TOWER_Y = getTag(31).getY();
+    public static final double RED_TOWER_Y = getTag(15).getY();
 
     // HUB location helpers
     private static final double HUB_WIDTH = Units.inchesToMeters(47.0);
@@ -38,6 +43,21 @@ public final class Field {
     public static final ExtTranslation HUB_FAR_LEFT_CORNER = new ExtTranslation(HUB_FAR, Y_CENTER + HUB_HALF_WIDTH);
     /** The far right corner of the HUB, from the perspective of the DRIVER STATION. */
     public static final ExtTranslation HUB_FAR_RIGHT_CORNER = new ExtTranslation(HUB_FAR, Y_CENTER - HUB_HALF_WIDTH);
+
+    // TOWER location helpers
+    private static final double TOWER_LEFT_Y = 4.2;
+    private static final double TOWER_RIGHT_Y = 3.33;
+    private static final double CLIMB_APPROACH_X = 1.8;
+    private static final double CLIMBING_X = 1.47;
+
+    /** The approach location for the left TOWER UPRIGHT. */
+    public static final ExtPose TOWER_LEFT_APPROACH = new ExtPose(CLIMB_APPROACH_X, TOWER_LEFT_Y, Rotation2d.kZero);
+    /** The climbing location for the left TOWER UPRIGHT. */
+    public static final ExtPose TOWER_LEFT_CLIMB = new ExtPose(CLIMBING_X, TOWER_LEFT_Y, Rotation2d.kZero);
+    /** The approach location for the right TOWER UPRIGHT. */
+    public static final ExtPose TOWER_RIGHT_APPROACH = new ExtPose(CLIMB_APPROACH_X, TOWER_RIGHT_Y, Rotation2d.kZero);
+    /** The climbing location for the right TOWER UPRIGHT. */
+    public static final ExtPose TOWER_RIGHT_CLIMB = new ExtPose(CLIMBING_X, TOWER_RIGHT_Y, Rotation2d.kZero);
 
     // TRENCH location helpers
     private static final double TRENCH_DEPTH = Units.inchesToMeters(47.0);

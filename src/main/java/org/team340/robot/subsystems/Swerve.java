@@ -15,6 +15,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.team340.lib.logging.LoggedRobot;
@@ -35,12 +36,14 @@ import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableBoolean;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.Alliance;
+import org.team340.lib.util.command.DummySubsystem;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.robot.Constants;
 import org.team340.robot.Constants.RobotMap;
 import org.team340.robot.util.Field;
 import org.team340.robot.util.Vision;
 import org.team340.robot.util.Vision.CameraConfig;
+import org.team340.robot.util.Vision.TagMode;
 
 /**
  * The robot's swerve drivetrain.
@@ -114,6 +117,8 @@ public final class Swerve extends GRRSubsystem {
     private final Vision vision;
     private final PAPFController apf;
     private final ProfiledPIDController angularPID;
+
+    private final Subsystem tagModeMutex = new DummySubsystem();
 
     private double hubDistance = 0.0;
     private double hubAngle = 0.0;
@@ -392,6 +397,16 @@ public final class Swerve extends GRRSubsystem {
         return Alliance.isBlue() ? Field.RED_ZONE < state.pose.getX() : Field.BLUE_ZONE > state.pose.getX();
     }
 
+    public boolean isLeftOfTower() {
+        return Alliance.isBlue() ? state.pose.getY() > Field.BLUE_TOWER_Y : state.pose.getY() < Field.RED_TOWER_Y;
+    }
+
+    public boolean isAwayFromTower() {
+        return Alliance.isBlue()
+            ? state.pose.getX() > Field.TOWER_LEFT_APPROACH.getBlue().getX()
+            : state.pose.getX() < Field.TOWER_LEFT_APPROACH.getRed().getX();
+    }
+
     /**
      * Returns the distance from the origin of our robot to the center of the hub in meters.
      */
@@ -422,5 +437,13 @@ public final class Swerve extends GRRSubsystem {
     @NotLogged
     public boolean seesAprilTag() {
         return seesAprilTag;
+    }
+
+    /**
+     * A command that when running sets the tag mode to filter for.
+     * @param newMode The new AprilTag ID filtering mode.
+     */
+    public Command setTagMode(TagMode newMode) {
+        return tagModeMutex.runEnd(() -> vision.setTagMode(newMode), () -> vision.setTagMode(TagMode.HUB));
     }
 }
