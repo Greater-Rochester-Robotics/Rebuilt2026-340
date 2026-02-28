@@ -155,6 +155,11 @@ public final class Swerve extends GRRSubsystem {
         // Refresh the swerve API.
         Profiler.run("api.refresh()", api::refresh);
 
+        // Set our AprilTag mode.
+        if (tagModeMutex.getCurrentCommand() == null) {
+            vision.setTagMode(inOurZone() ? TagMode.HUB : TagMode.ALL_TAGS);
+        }
+
         // Apply vision estimates to the pose estimator.
         var measurements = Profiler.run("vision.getUnreadResults()", () ->
             vision.getUnreadResults(state.poseHistory, state.odometryPose)
@@ -456,6 +461,6 @@ public final class Swerve extends GRRSubsystem {
      * @param newMode The new AprilTag ID filtering mode.
      */
     public Command setTagMode(TagMode newMode) {
-        return tagModeMutex.runEnd(() -> vision.setTagMode(newMode), () -> vision.setTagMode(TagMode.HUB));
+        return tagModeMutex.run(() -> vision.setTagMode(newMode));
     }
 }

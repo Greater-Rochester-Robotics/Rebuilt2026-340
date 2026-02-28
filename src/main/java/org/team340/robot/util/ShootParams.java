@@ -38,7 +38,12 @@ public final class ShootParams {
             new DataPoint(3.51, 10.0, 44.0),
             new DataPoint(3.96, 12.0, 46.0),
             new DataPoint(4.59, 12.5, 48.0),
-            new DataPoint(5.15, 15.0, 52.0)
+            new DataPoint(5.15, 15.0, 52.0),
+            // Outside of alliance zone
+            new DataPoint(6.15, 15.0, 58.0),
+            new DataPoint(8.39, 12.0, 68.0),
+            new DataPoint(9.71, 12.0, 75.0),
+            new DataPoint(10.12, 12.0, 87.0)
         };
 
         // Create our lookup tables.
