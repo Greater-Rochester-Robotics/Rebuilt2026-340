@@ -64,7 +64,11 @@ public final class Robot extends LoggedRobot {
         driver.x().whileTrue(climber.zero());
         driver.y().whileTrue(climber.retract());
 
-        driver.leftBumper().or(driver.rightBumper()).whileTrue(routines.driverShoot(this::driverX, this::driverY));
+        driver
+            .leftBumper()
+            .or(driver.rightBumper())
+            .onTrue(routines.driverShoot(this::driverX, this::driverY))
+            .onFalse(routines.driverShootShutdown(this::driverX, this::driverY));
 
         driver.povRight().whileTrue(climber.climbL3(() -> true));
         driver.povLeft().onTrue(swerve.tareRotation());

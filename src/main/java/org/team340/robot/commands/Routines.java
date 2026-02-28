@@ -58,4 +58,18 @@ public final class Routines {
     public Command driverShoot(DoubleSupplier x, DoubleSupplier y) {
         return parallel(shoot(), swerve.aimAtHub(x, y)).withName("Routines.driverShoot()");
     }
+
+    /**
+     * Aim at the hub without running the indexer (to get in last shots).
+     * @param x The X value from the driver's joystick.
+     * @param y The Y value from the driver's joystick.
+     */
+    public Command driverShootShutdown(DoubleSupplier x, DoubleSupplier y) {
+        return deadline(
+            waitSeconds(0.5),
+            hood.targetDistance(swerve::hubDistance),
+            shooters.targetDistance(swerve::hubDistance),
+            swerve.aimAtHub(x, y)
+        );
+    }
 }
