@@ -130,6 +130,9 @@ public final class Climber extends GRRSubsystem {
     public void periodic() {
         BaseStatusSignal.refreshAll(seesMagnet, leadVelocity, followVelocity);
         follow.setControl(followControl);
+
+        // Allows for zeroing while disabled
+        if (atZero()) isZeroed = true;
     }
 
     public boolean atZero() {
@@ -198,7 +201,7 @@ public final class Climber extends GRRSubsystem {
 
     public Command retract() {
         return sequence(
-            either(zero(), none(), () -> !isZeroed),
+            zero().onlyIf(() -> !isZeroed),
             either(
                 goTo(Position.RETRACTING, false),
                 none(),
