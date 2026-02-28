@@ -164,7 +164,7 @@ public final class Swerve extends GRRSubsystem {
             // ball trajectories with a constant time of flight, this is trivial.
 
             deltaX += fieldSpeeds.vxMetersPerSecond * TOF;
-            deltaY = fieldSpeeds.vyMetersPerSecond * TOF;
+            deltaY += fieldSpeeds.vyMetersPerSecond * TOF;
 
             // Compensate for angular robot velocity in a similar fashion. To calculate the field-relative velocity of
             // the shooters considering their offset from the robot's center of rotation, we can take the cross product
@@ -178,8 +178,8 @@ public final class Swerve extends GRRSubsystem {
             // respectively, caused by the robot's angular velocity. Multiplying each component by the ball's time of
             // flight will produce the desired deltaX and deltaY adjustments.
 
-            deltaX -= state.rotation.getSin() * fieldSpeeds.omegaRadiansPerSecond * TOF;
-            deltaY += state.rotation.getCos() * fieldSpeeds.omegaRadiansPerSecond * TOF;
+            deltaX -= state.rotation.getSin() * fieldSpeeds.omegaRadiansPerSecond * SHOOTER_OFFSET * TOF;
+            deltaY += state.rotation.getCos() * fieldSpeeds.omegaRadiansPerSecond * SHOOTER_OFFSET * TOF;
         }
 
         // Save our hub distance and angle.
