@@ -1,6 +1,6 @@
 package org.team340.robot.subsystems;
 
-import static org.team340.robot.util.ShootParams.shootersVelocityMap;
+import static org.team340.robot.util.ShootParams.shooterVelocityMap;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -16,21 +16,17 @@ import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
-import org.team340.lib.tunable.Tunables.TunableDouble;
-import org.team340.lib.util.Mutable;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
 /**
- *  the robot's twin shooter
+ * The robot's twin shooter.
  */
 @Logged
 public final class Shooters extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("shooters");
-
-    private static final TunableDouble manualAcceleration = tunables.value("manualAcceleration", 0.0);
 
     private final TalonFX portLead;
     private final TalonFX portFollow;
@@ -38,6 +34,8 @@ public final class Shooters extends GRRSubsystem {
     private final TalonFX starboardFollow;
 
     private final VelocityVoltage velocityControl;
+    private final Follower portFollowControl;
+    private final Follower starboardFollowControl;
 
     public Shooters() {
         this.portLead = new TalonFX(RobotMap.SHOOTER_PORT_LEAD_MOTOR, RobotMap.CANBus);
@@ -48,10 +46,16 @@ public final class Shooters extends GRRSubsystem {
         configureMotors();
 
         PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(250, portLead.getMotorVoltage(), starboardLead.getMotorVoltage())
+            BaseStatusSignal.setUpdateFrequencyForAll(500, portLead.getMotorVoltage(), starboardLead.getMotorVoltage())
         );
         PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(50, portLead.getVelocity(), starboardLead.getVelocity())
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                50,
+                portLead.getVelocity(),
+                portLead.getClosedLoopReference(),
+                starboardLead.getVelocity(),
+                starboardLead.getClosedLoopReference()
+            )
         );
         PhoenixUtil.run(() ->
             ParentDevice.optimizeBusUtilizationForAll(4, portLead, portFollow, starboardLead, starboardFollow)
@@ -61,11 +65,8 @@ public final class Shooters extends GRRSubsystem {
         velocityControl.EnableFOC = true;
         velocityControl.UpdateFreqHz = 0.0;
 
-        final Follower portFollowControl = new Follower(portLead.getDeviceID(), MotorAlignmentValue.Aligned);
-        PhoenixUtil.run(() -> portFollow.setControl(portFollowControl));
-
-        final Follower starboardFollowControl = new Follower(starboardLead.getDeviceID(), MotorAlignmentValue.Aligned);
-        PhoenixUtil.run(() -> starboardFollow.setControl(starboardFollowControl));
+        portFollowControl = new Follower(portLead.getDeviceID(), MotorAlignmentValue.Aligned);
+        starboardFollowControl = new Follower(starboardLead.getDeviceID(), MotorAlignmentValue.Aligned);
 
         tunables.add("motors", portLead);
         tunables.add("motors", portFollow);
@@ -73,29 +74,25 @@ public final class Shooters extends GRRSubsystem {
         tunables.add("motors", starboardFollow);
     }
 
+    @Override
+    public void periodic() {
+        portFollow.setControl(portFollowControl);
+        starboardFollow.setControl(starboardFollowControl);
+    }
+
+    // TODO add boolean onTarget() method, using getClosedLoopError() signals
+
     /**
      * Run the shooter to target a specific distance based on a preset interpolating map.
      * @param distance The distance to target in meters.
      */
     public Command targetDistance(final DoubleSupplier distance) {
-        return runVelocity(() -> shootersVelocityMap.get(distance.getAsDouble())).withName("Shooters.targetDistance()");
+        return runVelocity(() -> shooterVelocityMap.get(distance.getAsDouble())).withName("Shooters.targetDistance()");
     }
 
     /**
-     * Manually run the shooters faster or slower using a acceleration input.
-     * @param acceleration A acceleration between [-1.0, 1.0] to drive the hood up or down. This is scaled by {@link Shooters#manualSpeed}.
-     */
-    public Command manualControl(final DoubleSupplier acceleration) {
-        final Mutable<Double> velocity = new Mutable<>(0.0);
-
-        return runVelocity(() -> velocity.value += -acceleration.getAsDouble() * manualAcceleration.get())
-            .beforeStarting(() -> velocity.value = 0.0)
-            .withName("Shooters.manualControl()");
-    }
-
-    /**
-     * Internal method to run both shooters at a velocity.
-     * @param velocity The velocity in rotations per second at the rotor (gearing not included).
+     * Internal method to run both shooters at a specified velocity.
+     * @param velocity The velocity in rotations/second at the rotor (gearing not included).
      */
     private Command runVelocity(final DoubleSupplier velocity) {
         return commandBuilder("Shooter.runVelocity()")

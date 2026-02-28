@@ -23,6 +23,8 @@ public final class Constants {
 
         public static final CANBus CANBus = new CANBus("canivore");
 
+        // Swerve
+
         public static final int FL_MOVE = 2;
         public static final int FL_TURN = 3;
         public static final int FR_MOVE = 4;
@@ -39,7 +41,7 @@ public final class Constants {
 
         public static final int CANANDGYRO = 14;
 
-        // Shooter
+        // Shooters
 
         public static final int SHOOTER_PORT_LEAD_MOTOR = 20;
         public static final int SHOOTER_PORT_FOLLOW_MOTOR = 21;

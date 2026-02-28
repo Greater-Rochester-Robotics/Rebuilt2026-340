@@ -4,9 +4,9 @@ import static org.team340.robot.util.ShootParams.TOF;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.NotLogged;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -32,6 +32,7 @@ import org.team340.lib.swerve.hardware.SwerveIMUs;
 import org.team340.lib.swerve.hardware.SwerveMotors;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
+import org.team340.lib.tunable.Tunables.TunableBoolean;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.Alliance;
 import org.team340.lib.util.command.GRRSubsystem;
@@ -48,10 +49,11 @@ import org.team340.robot.util.Vision.CameraConfig;
 public final class Swerve extends GRRSubsystem {
 
     private static final double OFFSET = Units.inchesToMeters(10.375);
-    private static final double SHOOTER_OFFSET = Units.inchesToMeters(9.0); // Center of robot to in between the shooters
+    private static final double SHOOTER_OFFSET = Units.inchesToMeters(-9.0);
 
     private static final TunableTable tunables = Tunables.getNested("swerve");
 
+    private static final TunableBoolean enableSOTM = tunables.value("enableSOTM", true);
     private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(15.0));
 
     private final SwerveModuleConfig frontLeft = new SwerveModuleConfig()
@@ -115,12 +117,14 @@ public final class Swerve extends GRRSubsystem {
 
     private double hubDistance = 0.0;
     private double hubAngle = 0.0;
+    private boolean aimingAtHub = false;
     private boolean seesAprilTag = false;
 
     public Swerve() {
         api = new SwerveAPI(config);
         vision = new Vision(cameras);
         apf = new PAPFController(6.0, 0.25, 0.01, true, new Obstacle[0]);
+
         angularPID = new ProfiledPIDController(8.0, 0.0, 0.0, new Constraints(10.0, 26.0));
         angularPID.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -135,6 +139,7 @@ public final class Swerve extends GRRSubsystem {
     public void periodic() {
         Profiler.start("Swerve.periodic()");
 
+        // Refresh the swerve API.
         Profiler.run("api.refresh()", api::refresh);
 
         // Apply vision estimates to the pose estimator.
@@ -144,27 +149,55 @@ public final class Swerve extends GRRSubsystem {
         Profiler.run("api.addVisionMeasurements()", () -> api.addVisionMeasurements(measurements));
         seesAprilTag = measurements.length > 0;
 
+        // Calculate the robot's displacement from the hub.
         Translation2d hub = Field.HUB.get();
         double deltaX = state.pose.getX() - hub.getX();
         double deltaY = state.pose.getY() - hub.getY();
 
-        var fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(state.speeds, state.rotation);
+        // If shoot on the move is enabled, perform the necessary adjustments.
+        if (enableSOTM.get()) {
+            // Get our field-relative chassis speeds.
+            var fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(state.speeds, state.rotation);
 
-        deltaX += (fieldSpeeds.vxMetersPerSecond + Math.sin(fieldSpeeds.omegaRadiansPerSecond) * SHOOTER_OFFSET) * TOF;
-        deltaY += (fieldSpeeds.vyMetersPerSecond - Math.cos(fieldSpeeds.omegaRadiansPerSecond) * SHOOTER_OFFSET) * TOF;
+            // TODO Fix rotational velocity compensation, and separate it from translation. Comments below describe new method.
 
+            // Compensate for translational robot velocity by shifting our target by the product of the robot's
+            // velocity and the ball's time of flight. Because we tuned our shot parameters to always produce
+            // ball trajectories with a constant time of flight, this is trivial.
+
+            // TODO deltaX += vx * tof
+            // ...
+
+            // Compensate for angular robot velocity in a similar fashion. To calculate the field-relative velocity of
+            // the shooters considering their offset from the robot's center of rotation, we can take the cross product
+            // of the following vectors:
+            //
+            // [   0   ]   [ offset * rotation.cos ]
+            // |   0   | x | offset * rotation.sin |
+            // [ omega ]   [           0           ]
+            //
+            // The first and second element of the resulting vector is the shooter's field-relative X and Y velocity,
+            // respectively, caused by the robot's angular velocity. Multiplying each component by the ball's time of
+            // flight will produce the desired deltaX and deltaY adjustments.
+
+            // TODO implement the above
+
+            // TODO remove these lines, as they should be implemented above.
+            deltaX +=
+                (fieldSpeeds.vxMetersPerSecond + Math.sin(fieldSpeeds.omegaRadiansPerSecond) * SHOOTER_OFFSET) * TOF;
+            deltaY +=
+                (fieldSpeeds.vyMetersPerSecond - Math.cos(fieldSpeeds.omegaRadiansPerSecond) * SHOOTER_OFFSET) * TOF;
+        }
+
+        // Save our hub distance and angle.
         hubDistance = Math.hypot(deltaX, deltaY);
         hubAngle = Math.atan2(deltaY, deltaX);
 
-        Profiler.end();
-    }
+        // Determine if the robot is aiming at the hub, using our configured tolerance.
+        double dot = Math.cos(hubAngle) * state.rotation.getCos() + Math.sin(hubAngle) * state.rotation.getSin();
+        aimingAtHub = Math.acos(MathUtil.clamp(dot, -1.0, 1.0)) < aimAtHubTolerance.get();
 
-    /**
-     * Returns {@code true} if an AprilTag has been seen since the last robot loop.
-     */
-    @NotLogged
-    public boolean seesAprilTag() {
-        return seesAprilTag;
+        Profiler.end();
     }
 
     /**
@@ -215,15 +248,60 @@ public final class Swerve extends GRRSubsystem {
     }
 
     /**
+     * Drives the robot using driver input, while aiming at the hub.
+     * @param x The X value from the driver's joystick.
+     * @param y The Y value from the driver's joystick.
+     */
+    public Command aimAtHub(DoubleSupplier x, DoubleSupplier y) {
+        return commandBuilder("Swerve.aimAtHub()")
+            .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
+            .onExecute(() -> {
+                var speeds = api.calculateDriverSpeeds(x.getAsDouble(), y.getAsDouble(), 0.0);
+                speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), hubAngle);
+
+                api.applySpeeds(speeds, Perspective.OPERATOR, true, true);
+            });
+    }
+
+    /**
+     * Drives the robot using driver input, while aiming at our alliance zone.
+     * @param x The X value from the driver's joystick.
+     * @param y The Y value from the driver's joystick.
+     */
+    public Command aimAtOurZone(DoubleSupplier x, DoubleSupplier y) {
+        return commandBuilder("Swerve.aimAtOurZone()")
+            .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
+            .onExecute(() -> {
+                var speeds = api.calculateDriverSpeeds(x.getAsDouble(), y.getAsDouble(), 0.0);
+                speeds.omegaRadiansPerSecond = angularPID.calculate(
+                    state.rotation.getRadians(),
+                    Alliance.isBlue() ? Math.PI : 0.0
+                );
+
+                api.applySpeeds(speeds, Perspective.OPERATOR, true, true);
+            });
+    }
+
+    /**
      * Drives the robot to a target position using the P-APF, until the
      * robot is positioned within a specified tolerance of the target.
      * @param goal A supplier that returns the target blue-origin relative field location.
      * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
      * @param endTolerance The tolerance in meters at which to end the command.
+     * @param endAngTolerance The tolerance in radians at which to end the command.
      */
-    public Command apfDrive(Supplier<Pose2d> goal, DoubleSupplier maxDeceleration, DoubleSupplier endTolerance) {
+    public Command apfDrive(
+        Supplier<Pose2d> goal,
+        DoubleSupplier maxDeceleration,
+        DoubleSupplier endTolerance,
+        DoubleSupplier endAngTolerance
+    ) {
         return apfDrive(goal, maxDeceleration)
-            .until(() -> Math2.isNear(goal.get().getTranslation(), state.translation, endTolerance.getAsDouble()))
+            .until(
+                () ->
+                    Math2.isNear(goal.get().getTranslation(), state.translation, endTolerance.getAsDouble())
+                    && Math2.isNear(goal.get().getRotation(), state.rotation, endAngTolerance.getAsDouble())
+            )
             .withName("Swerve.apfDrive()");
     }
 
@@ -254,75 +332,50 @@ public final class Swerve extends GRRSubsystem {
     }
 
     /**
+     * Drives the robot to a target position using the P-APF while aiming at the
+     * hub, until the robot is positioned within a specified tolerance of the target.
+     * @param goal A supplier that returns the target blue-origin relative field location.
+     * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
+     * @param endTolerance The tolerance in meters at which to end the command.
+     */
+    public Command apfAimAtHub(
+        Supplier<Translation2d> goal,
+        DoubleSupplier maxDeceleration,
+        DoubleSupplier endTolerance
+    ) {
+        return apfAimAtHub(goal, maxDeceleration)
+            .until(() -> Math2.isNear(goal.get(), state.translation, endTolerance.getAsDouble()))
+            .withName("Swerve.apfAimAtHub()");
+    }
+
+    /**
      * Drives the robot to a target position using the P-APF while aiming at the hub. This command does not end.
      * @param goal A supplier that returns the target blue-origin relative field location.
      * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
      */
-    public Command aimAtHub(final Supplier<Translation2d> goal, final DoubleSupplier maxDeceleration) {
-        return commandBuilder("Swerve.aimAtHub()")
+    public Command apfAimAtHub(Supplier<Translation2d> goal, DoubleSupplier maxDeceleration) {
+        return commandBuilder("Swerve.apfAimAtHub()")
             .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
             .onExecute(() -> {
                 var speeds = apf.calculate(state.pose, goal.get(), config.velocity, maxDeceleration.getAsDouble());
-
                 speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), hubAngle);
 
                 api.applySpeeds(speeds, Perspective.BLUE, true, true);
             });
     }
 
-    /*
-     * Drives the robot to a target position using the P-APF while aiming at the hub. This command does not end.
-     * @param goal A supplier that returns the target blue-origin relative field location.
-     * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
-     */
-    public Command aimAtHub(final DoubleSupplier x, final DoubleSupplier y) {
-        return commandBuilder("Swerve.aimAtOurZone()")
-            .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
-            .onExecute(() -> {
-                var speeds = api.calculateDriverSpeeds(x.getAsDouble(), y.getAsDouble(), 0.0);
-                speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), hubAngle);
-
-                api.applySpeeds(speeds, Perspective.OPERATOR, true, true);
-            });
-    }
-
-    /*
-     * Drives the robot to a target position using the P-APF while aiming in the direction of our alliance zone (0 or PI radians). This command does not end.
-     * @param goal A supplier that returns the target blue-origin relative field location.
-     * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
-     */
-    public Command aimAtOurZone(final DoubleSupplier x, final DoubleSupplier y) {
-        final double target = Alliance.isBlue() ? Math.PI : 0.0;
-
-        return commandBuilder("Swerve.aimAtOurZone()")
-            .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
-            .onExecute(() -> {
-                var speeds = api.calculateDriverSpeeds(x.getAsDouble(), y.getAsDouble(), 0.0);
-                speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), target);
-
-                api.applySpeeds(speeds, Perspective.OPERATOR, true, true);
-            });
-    }
-
     /**
-     * Drives the modules to stop the robot from moving.
+     * Drives the modules to stop the robot from moving. This command does not end.
      * @param lock If the wheels should be driven to an X formation to stop the robot from being pushed.
      */
     public Command stop(boolean lock) {
         return commandBuilder("Swerve.stop(" + lock + ")").onExecute(() -> api.applyStop(lock));
     }
 
-    /*
-     * Checks if the robot is aiming at the hub and not rotating within a tolerance.
-     * @return True if the robot is aiming at the hub, false otherwise.
-     */
-    public boolean aimingAtHub() {
-        return Math2.isNear(new Rotation2d(hubAngle), state.rotation, aimAtHubTolerance.get());
-    }
-
     /**
-     * Checks if the origin of the robot is in our alliance's zone (the blue zone if we are on the blue alliance, and the red zone if we are on the red alliance).
-     * @return True if we are in our zone, false otherwise.
+     * Checks if the origin of the robot is in our alliance's zone (the blue zone if
+     * we are on the blue alliance, and the red zone if we are on the red alliance).
+     * @return {@code true} if we are in our zone, {@code false} otherwise.
      */
     public boolean inOurZone() {
         return Alliance.isBlue() ? Field.BLUE_ZONE > state.pose.getX() : Field.RED_ZONE < state.pose.getX();
@@ -330,7 +383,7 @@ public final class Swerve extends GRRSubsystem {
 
     /**
      * Checks if the origin of the robot is in the neutral zone (between the blue zone and the red zone).
-     * @return True if we are in the neutral zone, false otherwise.
+     * @return {@code true} if we are in the neutral zone, {@code false} otherwise.
      */
     public boolean inNeutralZone() {
         final double x = state.pose.getX();
@@ -338,8 +391,9 @@ public final class Swerve extends GRRSubsystem {
     }
 
     /**
-     * Checks if the origin of the robot is in the opposing alliance's zone (the red zone if we are on the blue alliance, and the blue zone if we are on the red alliance).
-     * @return True if we are in the opposing alliance's zone, false otherwise.
+     * Checks if the origin of the robot is in the opposing alliance's zone (the red zone
+     * if we are on the blue alliance, and the blue zone if we are on the red alliance).
+     * @return {@code true} if we are in the opposing alliance's zone, {@code false} otherwise.
      */
     public boolean inTheirZone() {
         return Alliance.isBlue() ? Field.RED_ZONE < state.pose.getX() : Field.BLUE_ZONE > state.pose.getX();
@@ -347,7 +401,6 @@ public final class Swerve extends GRRSubsystem {
 
     /**
      * Returns the distance from the origin of our robot to the center of the hub in meters.
-     * @return The distance from the origin of our robot to the center of the hub, recalculated every code cycle.
      */
     @NotLogged
     public double hubDistance() {
@@ -356,10 +409,25 @@ public final class Swerve extends GRRSubsystem {
 
     /**
      * Returns the angle from the origin of our robot to the center of the hub in radians.
-     * @return The angle from the origin of our robot to the center of the hub, recalculated every code cycle.
      */
     @NotLogged
     public double hubAngle() {
         return hubAngle;
+    }
+
+    /**
+     * Returns {@code true} if the robot is aiming at the hub.
+     */
+    @NotLogged
+    public boolean aimingAtHub() {
+        return aimingAtHub;
+    }
+
+    /**
+     * Returns {@code true} if an AprilTag has been seen since the last robot loop.
+     */
+    @NotLogged
+    public boolean seesAprilTag() {
+        return seesAprilTag;
     }
 }

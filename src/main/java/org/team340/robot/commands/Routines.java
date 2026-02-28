@@ -31,6 +31,16 @@ public final class Routines {
         swerve = robot.swerve;
     }
 
+    /**
+     * Barfs fuel out of the intake.
+     */
+    public Command barf() {
+        return parallel(indexer.barf(), intake.barf()).withName("Routines.barf()");
+    }
+
+    /**
+     * Shoots at the hub, without commanding the drivetrain.
+     */
     public Command shoot() {
         return parallel(
             hood.targetDistance(swerve::hubDistance),
@@ -40,11 +50,12 @@ public final class Routines {
         ).withName("Routines.shoot()");
     }
 
+    /**
+     * Shoots at the hub, with driver input and automated heading aim.
+     * @param x The X value from the driver's joystick.
+     * @param y The Y value from the driver's joystick.
+     */
     public Command driverShoot(DoubleSupplier x, DoubleSupplier y) {
         return parallel(shoot(), swerve.aimAtHub(x, y)).withName("Routines.driverShoot()");
-    }
-
-    public Command barf() {
-        return parallel(indexer.unjam(), intake.barf()).withName("Routines.barf()");
     }
 }

@@ -10,6 +10,8 @@ import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.command.AutoChooser;
 import org.team340.robot.Robot;
+import org.team340.robot.subsystems.Climber;
+import org.team340.robot.subsystems.Hood;
 import org.team340.robot.subsystems.Intake;
 import org.team340.robot.subsystems.Shooters;
 import org.team340.robot.subsystems.Swerve;
@@ -22,9 +24,13 @@ import org.team340.robot.subsystems.Swerve;
 public final class Autos {
 
     private static final TunableTable tunables = Tunables.getNested("autos");
+
     private static final TunableDouble deceleration = tunables.value("deceleration", 6.0);
     private static final TunableDouble tolerance = tunables.value("tolerance", 0.05);
+    private static final TunableDouble angTolerance = tunables.value("angTolerance", Math.toRadians(4.0));
 
+    private final Climber climber;
+    private final Hood hood;
     private final Intake intake;
     private final Shooters shooters;
     private final Swerve swerve;
@@ -33,6 +39,8 @@ public final class Autos {
     private final AutoChooser chooser;
 
     public Autos(Robot robot) {
+        climber = robot.climber;
+        hood = robot.hood;
         intake = robot.intake;
         shooters = robot.shooters;
         swerve = robot.swerve;
@@ -52,8 +60,8 @@ public final class Autos {
 
         return sequence(
             swerve.resetPose(start),
-            swerve.apfDrive(middle, deceleration, tolerance),
-            swerve.apfDrive(end, deceleration, tolerance),
+            swerve.apfDrive(middle, deceleration, tolerance, angTolerance),
+            swerve.apfDrive(end, deceleration, tolerance, angTolerance),
             swerve.stop(false)
         );
     }

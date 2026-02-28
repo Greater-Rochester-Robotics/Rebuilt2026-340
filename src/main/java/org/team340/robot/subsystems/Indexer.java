@@ -1,5 +1,6 @@
 package org.team340.robot.subsystems;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -16,7 +17,7 @@ import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
 /**
- * the robot's indexer and uptake.
+ * The robot's twindexer and uptake.
  */
 @Logged
 public final class Indexer extends GRRSubsystem {
@@ -25,7 +26,7 @@ public final class Indexer extends GRRSubsystem {
 
     private static enum State {
         FEED(83.0, 72.0),
-        UNJAM(-80.0, -80.0);
+        BARF(-80.0, -80.0);
 
         public final TunableDouble twindexerSpeed;
         public final TunableDouble updateSpeed;
@@ -36,8 +37,8 @@ public final class Indexer extends GRRSubsystem {
         }
     }
 
-    final TalonFX twindexer;
-    final TalonFX uptake;
+    private final TalonFX twindexer;
+    private final TalonFX uptake;
 
     private final VelocityVoltage velocityControl;
 
@@ -48,6 +49,9 @@ public final class Indexer extends GRRSubsystem {
         configureTwindexer();
         configureUptake();
 
+        PhoenixUtil.run(() ->
+            BaseStatusSignal.setUpdateFrequencyForAll(50, twindexer.getVelocity(), uptake.getVelocity())
+        );
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, twindexer, uptake));
 
         velocityControl = new VelocityVoltage(0.0);
@@ -58,15 +62,25 @@ public final class Indexer extends GRRSubsystem {
         tunables.add("uptakeMotor", uptake);
     }
 
+    /**
+     * Feeds the shooters.
+     */
     public Command feed() {
-        return run(State.FEED).withName("Indexer.feed()");
+        return runState(State.FEED).withName("Indexer.feed()");
     }
 
-    public Command unjam() {
-        return run(State.UNJAM).withName("Indexer.unjam()");
+    /**
+     * Barfs back into the hopper.
+     */
+    public Command barf() {
+        return runState(State.BARF).withName("Indexer.unjam()");
     }
 
-    private Command run(final State state) {
+    /**
+     * Internal method to run the motors as configured for the specified state.
+     * @param state The indexer state to target.
+     */
+    private Command runState(final State state) {
         return commandBuilder("Indexer.run()")
             .onExecute(() -> {
                 velocityControl.withVelocity(state.twindexerSpeed.get());

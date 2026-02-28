@@ -2,6 +2,7 @@ package org.team340.robot.subsystems;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -11,6 +12,7 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.BooleanSupplier;
@@ -22,7 +24,7 @@ import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
 /**
- * the robot's hopper/intake
+ * The robot's intake.
  */
 @Logged
 public final class Intake extends GRRSubsystem {
@@ -45,9 +47,9 @@ public final class Intake extends GRRSubsystem {
         }
     }
 
-    private TalonFX pivot;
-    private TalonFX rollers;
-    private CANcoder wcpThroughborePoweredByCANcoderForHalfInchHex;
+    private final TalonFX pivot;
+    private final TalonFX rollers;
+    private final CANcoder wcpThroughborePoweredByCANcoderForHalfInchHex; // do not change this name
 
     private final MotionMagicVoltage pivotPositionControl;
     private final VelocityVoltage rollersVelocityControl;
@@ -64,6 +66,9 @@ public final class Intake extends GRRSubsystem {
         configurePivot();
         configureRollers();
 
+        PhoenixUtil.run(() ->
+            BaseStatusSignal.setUpdateFrequencyForAll(50, pivot.getPosition(), pivot.getClosedLoopReference())
+        );
         PhoenixUtil.run(() ->
             ParentDevice.optimizeBusUtilizationForAll(4, pivot, rollers, wcpThroughborePoweredByCANcoderForHalfInchHex)
         );
@@ -118,6 +123,10 @@ public final class Intake extends GRRSubsystem {
         return runState(State.BARF).withName("Intake.barf()");
     }
 
+    /**
+     * Internal method to run the motors as configured for the specified state.
+     * @param state The intake state to target.
+     */
     private Command runState(State state) {
         return commandBuilder("Intake.intake()")
             .onExecute(() -> {
@@ -133,8 +142,12 @@ public final class Intake extends GRRSubsystem {
     }
 
     private void configureCANcoder() {
-        // This config restores factory defaults.
         final CANcoderConfiguration wcpThroughborePoweredByCANcoderForHalfInchHexConfig = new CANcoderConfiguration();
+
+        // TODO
+        wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.MagnetOffset = 0.0;
+        wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.SensorDirection =
+            SensorDirectionValue.CounterClockwise_Positive;
 
         PhoenixUtil.run(() ->
             wcpThroughborePoweredByCANcoderForHalfInchHex

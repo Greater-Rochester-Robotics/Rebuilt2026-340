@@ -2,6 +2,7 @@ package org.team340.robot.subsystems;
 
 import static org.team340.robot.util.ShootParams.hoodPositionMap;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -19,32 +20,30 @@ import java.util.function.DoubleSupplier;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
-import org.team340.lib.util.Mutable;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
 /**
- * the robot's hood.
+ * The robot's hood.
  */
 @Logged
 public final class Hood extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("hood");
 
-    private static final TunableDouble manualSpeed = tunables.value("manualSpeed", 0.0);
     private static final TunableDouble stallVelocity = tunables.value("stallVelocity", 0.05);
     private static final TunableDouble homingVelocity = tunables.value("homingVelocity", -30.0); // In rotations per second.
     private static final TunableDouble zeroZero = tunables.value("zeroZero", 1.0); // In rotations per second.
 
     private final TalonFX motor;
 
-    private boolean isZeroed = false;
+    private final StatusSignal<AngularVelocity> velocity;
 
     private final PositionVoltage positionVoltage;
     private final VelocityTorqueCurrentFOC velocityTorque;
 
-    private final StatusSignal<AngularVelocity> velocity;
+    private boolean isZeroed = false;
 
     public Hood() {
         this.motor = new TalonFX(RobotMap.HOOD_MOTOR, RobotMap.CANBus);
@@ -53,7 +52,10 @@ public final class Hood extends GRRSubsystem {
 
         velocity = motor.getVelocity();
 
-        PhoenixUtil.run(() -> velocity.setUpdateFrequency(100.0));
+        PhoenixUtil.run(() -> velocity.setUpdateFrequency(50));
+        PhoenixUtil.run(() ->
+            BaseStatusSignal.setUpdateFrequencyForAll(50, motor.getPosition(), motor.getClosedLoopReference())
+        );
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, motor));
 
         positionVoltage = new PositionVoltage(0.0);
@@ -73,6 +75,8 @@ public final class Hood extends GRRSubsystem {
         velocity.refresh();
     }
 
+    // TODO add boolean onTarget() method, using getClosedLoopError() signals
+
     /**
      * Run the hood pivot to target a specific distance based on a preset interpolating map.
      * @param distance The distance to target in meters.
@@ -81,6 +85,10 @@ public final class Hood extends GRRSubsystem {
         return goTo(() -> hoodPositionMap.get(distance.getAsDouble())).withName("Hood.targetDistance()");
     }
 
+    /**
+     * Moves the hood to zero.
+     * @param reZero If the zeroing sequence should also be ran.
+     */
     public Command goToZero(boolean reZero) {
         Command goTo = goTo(zeroZero).withName("Hood.goToZero(" + reZero + ")");
         if (reZero) goTo = goTo.beforeStarting(() -> isZeroed = false);
@@ -88,20 +96,8 @@ public final class Hood extends GRRSubsystem {
     }
 
     /**
-     * Manually run the hood up or down using a velocity input.
-     * @param velocity A velocity between [-1.0, 1.0] to drive the hood up or down. This is scaled by {@link Hood#manualSpeed}.
-     */
-    public Command manualControl(final DoubleSupplier velocity) {
-        final Mutable<Double> position = new Mutable<>(0.0);
-
-        return goTo(() -> position.value += -velocity.getAsDouble() * manualSpeed.get())
-            .beforeStarting(() -> position.value = motor.getPosition().getValueAsDouble())
-            .withName("Hood.manualControl()");
-    }
-
-    /**
-     * Runs the hood to a position.
-     * @param position The position in revolutions.
+     * Internal method to target a specified position.
+     * @param position The hood's position in rotations at the rotor (gearing not included).
      */
     private Command goTo(final DoubleSupplier position) {
         Debouncer debouncer = new Debouncer(0.1, DebounceType.kRising);
