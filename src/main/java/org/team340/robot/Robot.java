@@ -67,6 +67,7 @@ public final class Robot extends LoggedRobot {
         driver.a().onTrue(intake.intake(driver.a()));
         driver.b().whileTrue(routines.barf());
         driver.x().whileTrue(routines.climb(swerve::isLeftOfTower, false));
+        driver.y().whileTrue(climber.testServo());
 
         driver
             .leftBumper()
@@ -75,7 +76,7 @@ public final class Robot extends LoggedRobot {
             .onFalse(routines.driverShootShutdown(this::driverX, this::driverY));
 
         driver.povLeft().onTrue(swerve.tareRotation());
-        driver.povRight().whileTrue(climber.retract());
+        driver.povRight().whileTrue(climber.zero());
         driver.povUp().whileTrue(routines.climb(swerve::isLeftOfTower, true));
         driver.povDown().whileTrue(hood.goToZero(true));
 

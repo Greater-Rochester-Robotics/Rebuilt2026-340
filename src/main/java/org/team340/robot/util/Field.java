@@ -48,7 +48,7 @@ public final class Field {
     private static final double TOWER_LEFT_Y = 4.2;
     private static final double TOWER_RIGHT_Y = 3.33;
     private static final double CLIMB_APPROACH_X = 1.8;
-    private static final double CLIMBING_X = 1.47;
+    private static final double CLIMBING_X = 1.485;
 
     /** The approach location for the left TOWER UPRIGHT. */
     public static final ExtPose TOWER_LEFT_APPROACH = new ExtPose(CLIMB_APPROACH_X, TOWER_LEFT_Y, Rotation2d.kZero);

@@ -28,7 +28,7 @@ public final class Routines {
     private static final TunableTable tunables = Tunables.getNested("routines");
 
     // spotless:off
-    private static final TunableDouble climbingMaxDeceleration = tunables.value("climbingMaxDeceleration", 6.0);
+    private static final TunableDouble climbingMaxDeceleration = tunables.value("climbingMaxDeceleration", 4.0);
     private static final TunableDouble climbingEndTolerance = tunables.value("climbingEndTolerance", 0.01);
     private static final TunableDouble climbingEndAngTolerance = tunables.value("climbingEndAngTolerance", Math.toRadians(1.0));
     // spotless:on
