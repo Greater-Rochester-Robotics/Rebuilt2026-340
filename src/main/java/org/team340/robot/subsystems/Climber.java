@@ -44,11 +44,11 @@ public final class Climber extends GRRSubsystem {
     private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 0.15);
 
     private static enum Position {
-        TOP(9.1),
-        BOTTOM(-32.598),
-        L3(-10.0),
+        TOP(11.3),
+        BOTTOM(-39.0),
+        L3(-16.7),
         ZERO(0.0),
-        RETRACTING(-5.25); // This is the position we go to before we retract.
+        RETRACTING(-5.5); // This is the position we go to before we retract.
 
         public TunableDouble value;
 
@@ -151,13 +151,13 @@ public final class Climber extends GRRSubsystem {
             goTo(Position.TOP, false),
             waitUntil(ready),
             goTo(Position.BOTTOM, true),
-            waitSeconds(0.25),
+            waitSeconds(0.1),
             goTo(Position.TOP, false),
-            waitSeconds(0.25),
+            waitSeconds(0.1),
             goTo(Position.BOTTOM, true),
-            waitSeconds(0.25),
+            waitSeconds(0.1),
             goTo(Position.TOP, false),
-            waitSeconds(0.25),
+            waitSeconds(0.1),
             goTo(Position.L3, true)
         );
     }
@@ -279,9 +279,9 @@ public final class Climber extends GRRSubsystem {
         config.Slot1.kV = 0.0;
         config.Slot1.kA = 0.0;
 
-        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 9.1;
+        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 11.3;
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -32.598;
+        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -39.9;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
         config.TorqueCurrent.PeakForwardTorqueCurrent = 15.0;
