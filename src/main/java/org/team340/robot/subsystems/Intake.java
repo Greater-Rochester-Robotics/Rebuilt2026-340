@@ -128,7 +128,7 @@ public final class Intake extends GRRSubsystem {
      * @param state The intake state to target.
      */
     private Command runState(State state) {
-        return commandBuilder("Intake.intake()")
+        return commandBuilder("Intake.runState()")
             .onExecute(() -> {
                 pivotPositionControl.withPosition(state.position.getAsDouble());
                 pivot.setControl(pivotPositionControl);

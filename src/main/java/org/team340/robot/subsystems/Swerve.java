@@ -410,14 +410,26 @@ public final class Swerve extends GRRSubsystem {
         return Alliance.isBlue() ? Field.RED_ZONE < state.pose.getX() : Field.BLUE_ZONE > state.pose.getX();
     }
 
+    /**
+     * Checks if the origin of the robot is to the left of center field (from the driver's perspective).
+     * @return {@code true} if the robot's origin is left of the center, {@code false} otherwise.
+     */
     public boolean isLeftOfCenter() {
         return Alliance.isBlue() ^ (state.pose.getY() < Field.Y_CENTER);
     }
 
+    /**
+     * Checks if the origin of the robot is to the left of the middle of our tower (from the driver's perspective).
+     * @return {@code true} if the robot's origin is left of our tower, {@code false} otherwise.
+     */
     public boolean isLeftOfTower() {
         return Alliance.isBlue() ? state.pose.getY() > Field.BLUE_TOWER_Y : state.pose.getY() < Field.RED_TOWER_Y;
     }
 
+    /**
+     * Checks if the origin of the robot is away from our side wall by a threshold.
+     * @return {@code true} if the robot's origin is away from our wall, {@code false} otherwise.
+     */
     public boolean isAwayFromTower() {
         return Alliance.isBlue()
             ? state.pose.getX() > Field.TOWER_LEFT_APPROACH.getBlue().getX()

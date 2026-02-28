@@ -102,8 +102,6 @@ public final class Shooters extends GRRSubsystem {
         );
     }
 
-    // TODO add boolean onTarget() method, using getClosedLoopError() signals
-
     /**
      * Run the shooter to target a specific distance based on a preset interpolating map.
      * @param distance The distance to target in meters.
