@@ -46,7 +46,6 @@ public final class Climber extends GRRSubsystem {
     private static enum Position {
         TOP(11.3),
         BOTTOM(-39.0),
-        L3(-16.7),
         ZERO(0.0),
         RETRACTING(-5.5); // This is the position we go to before we retract.
 
@@ -105,20 +104,22 @@ public final class Climber extends GRRSubsystem {
         );
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, lead, follow, zeroSwitch));
 
-        loadedPositionControl = new DynamicMotionMagicVoltage(0.0, 80.0, 500.0);
+        loadedPositionControl = new DynamicMotionMagicVoltage(0.0, 60.0, 600.0);
         loadedPositionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
         loadedPositionControl.EnableFOC = true;
         loadedPositionControl.UpdateFreqHz = 0.0;
+        loadedPositionControl.Slot = 0;
 
         unloadedPositionControl = new DynamicMotionMagicVoltage(0.0, 115.0, 900.0);
         unloadedPositionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
         unloadedPositionControl.EnableFOC = true;
         unloadedPositionControl.UpdateFreqHz = 0.0;
+        unloadedPositionControl.Slot = 1;
 
         velocityControl = new VelocityTorqueCurrentFOC(0.0);
         velocityControl.IgnoreSoftwareLimits = true; // Software limits are not reliable during zeroing
         velocityControl.UpdateFreqHz = 0.0;
-        velocityControl.Slot = 1;
+        velocityControl.Slot = 2;
 
         followControl = new Follower(lead.getDeviceID(), MotorAlignmentValue.Aligned);
 
@@ -158,7 +159,7 @@ public final class Climber extends GRRSubsystem {
             waitSeconds(0.1),
             goTo(Position.TOP, false),
             waitSeconds(0.1),
-            goTo(Position.L3, true)
+            goTo(Position.BOTTOM, true)
         );
     }
 
@@ -250,7 +251,7 @@ public final class Climber extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 120.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.SupplyCurrentLimit = 90.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.HardwareLimitSwitch.ReverseLimitRemoteSensorID = RobotMap.CLIMBER_CANCODER;
@@ -261,23 +262,16 @@ public final class Climber extends GRRSubsystem {
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-        // Normal operations
-        config.Slot0.kP = 12.0;
-        config.Slot0.kI = 0.0;
-        config.Slot0.kD = 0.0;
-        config.Slot0.kG = 0.0;
-        config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.15;
-        config.Slot0.kA = 0.0;
+        // Loaded control.
+        config.Slot0.kP = 16.0;
+        config.Slot0.kV = 0.18;
+
+        // Unloaded control.
+        config.Slot1.kP = 12.0;
+        config.Slot1.kV = 0.15;
 
         // Zeroing the climber.
-        config.Slot1.kP = 12.0;
-        config.Slot1.kI = 0.0;
-        config.Slot1.kD = 0.0;
-        config.Slot1.kG = 0.0;
-        config.Slot1.kS = 0.0;
-        config.Slot1.kV = 0.0;
-        config.Slot1.kA = 0.0;
+        config.Slot2.kP = 12.0;
 
         config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 11.3;
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
