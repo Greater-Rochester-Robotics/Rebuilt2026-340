@@ -23,6 +23,7 @@ import org.team340.lib.logging.Profiler;
 import org.team340.lib.math.Math2;
 import org.team340.lib.math.PAPFController;
 import org.team340.lib.math.PAPFController.Obstacle;
+import org.team340.lib.math.geometry.ExtTranslation;
 import org.team340.lib.swerve.Perspective;
 import org.team340.lib.swerve.SwerveAPI;
 import org.team340.lib.swerve.SwerveState;
@@ -52,9 +53,15 @@ import org.team340.robot.util.Vision.TagMode;
 public final class Swerve extends GRRSubsystem {
 
     private static final double OFFSET = Units.inchesToMeters(10.375);
-    private static final double SHOOTER_OFFSET = Units.inchesToMeters(-9.0);
+    private static final double SHOOTER_OFFSET = Units.inchesToMeters(-6.75);
 
     private static final TunableTable tunables = Tunables.getNested("swerve");
+
+    private static final ExtTranslation leftTarget = Tunables.add("leftTarget", new ExtTranslation(2.5, 6.0));
+    private static final ExtTranslation rightTarget = Tunables.add(
+        "rightTarget",
+        new ExtTranslation(leftTarget.getBlue(true))
+    );
 
     private static final TunableBoolean enableSOTM = tunables.value("enableSOTM", true);
     private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(15.0));
@@ -120,9 +127,10 @@ public final class Swerve extends GRRSubsystem {
 
     private final Subsystem tagModeMutex = new DummySubsystem();
 
-    private double hubDistance = 0.0;
-    private double hubAngle = 0.0;
-    private boolean aimingAtHub = false;
+    private Translation2d target = Translation2d.kZero;
+    private double targetDistance = 0.0;
+    private double targetAngle = 0.0;
+    private boolean aimingAtTarget = false;
     private boolean seesAprilTag = false;
 
     public Swerve() {
@@ -154,10 +162,10 @@ public final class Swerve extends GRRSubsystem {
         Profiler.run("api.addVisionMeasurements()", () -> api.addVisionMeasurements(measurements));
         seesAprilTag = measurements.length > 0;
 
-        // Calculate the robot's displacement from the hub.
-        Translation2d hub = Field.HUB.get();
-        double deltaX = state.pose.getX() - hub.getX();
-        double deltaY = state.pose.getY() - hub.getY();
+        // Calculate the robot's displacement from the target.
+        target = inOurZone() ? Field.HUB.get() : (isLeftOfCenter() ? leftTarget.get() : rightTarget.get());
+        double deltaX = state.pose.getX() - target.getX();
+        double deltaY = state.pose.getY() - target.getY();
 
         // If shoot on the move is enabled, perform the necessary adjustments.
         if (enableSOTM.get()) {
@@ -187,13 +195,13 @@ public final class Swerve extends GRRSubsystem {
             deltaY += state.rotation.getCos() * fieldSpeeds.omegaRadiansPerSecond * SHOOTER_OFFSET * TOF;
         }
 
-        // Save our hub distance and angle.
-        hubDistance = Math.hypot(deltaX, deltaY);
-        hubAngle = Math.atan2(deltaY, deltaX);
+        // Save our target distance and angle.
+        targetDistance = Math.hypot(deltaX, deltaY);
+        targetAngle = Math.atan2(deltaY, deltaX);
 
-        // Determine if the robot is aiming at the hub, using our configured tolerance.
-        double dot = Math.cos(hubAngle) * state.rotation.getCos() + Math.sin(hubAngle) * state.rotation.getSin();
-        aimingAtHub = Math.acos(MathUtil.clamp(dot, -1.0, 1.0)) < aimAtHubTolerance.get();
+        // Determine if the robot is aiming at the target, using our configured tolerance.
+        double dot = Math.cos(targetAngle) * state.rotation.getCos() + Math.sin(targetAngle) * state.rotation.getSin();
+        aimingAtTarget = Math.acos(MathUtil.clamp(dot, -1.0, 1.0)) < aimAtHubTolerance.get();
 
         Profiler.end();
     }
@@ -250,12 +258,12 @@ public final class Swerve extends GRRSubsystem {
      * @param x The X value from the driver's joystick.
      * @param y The Y value from the driver's joystick.
      */
-    public Command aimAtHub(DoubleSupplier x, DoubleSupplier y) {
-        return commandBuilder("Swerve.aimAtHub()")
+    public Command aimAtTarget(DoubleSupplier x, DoubleSupplier y) {
+        return commandBuilder("Swerve.aimAtTarget()")
             .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
             .onExecute(() -> {
                 var speeds = api.calculateDriverSpeeds(x.getAsDouble(), y.getAsDouble(), 0.0);
-                speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), hubAngle);
+                speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), targetAngle);
 
                 api.applySpeeds(speeds, Perspective.OPERATOR, true, true);
             });
@@ -341,7 +349,7 @@ public final class Swerve extends GRRSubsystem {
         DoubleSupplier maxDeceleration,
         DoubleSupplier endTolerance
     ) {
-        return apfAimAtHub(goal, maxDeceleration)
+        return apfAimAtTarget(goal, maxDeceleration)
             .until(() -> Math2.isNear(goal.get(), state.translation, endTolerance.getAsDouble()))
             .withName("Swerve.apfAimAtHub()");
     }
@@ -351,12 +359,12 @@ public final class Swerve extends GRRSubsystem {
      * @param goal A supplier that returns the target blue-origin relative field location.
      * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
      */
-    public Command apfAimAtHub(Supplier<Translation2d> goal, DoubleSupplier maxDeceleration) {
-        return commandBuilder("Swerve.apfAimAtHub()")
+    public Command apfAimAtTarget(Supplier<Translation2d> goal, DoubleSupplier maxDeceleration) {
+        return commandBuilder("Swerve.apfAimAtTarget()")
             .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
             .onExecute(() -> {
                 var speeds = apf.calculate(state.pose, goal.get(), config.velocity, maxDeceleration.getAsDouble());
-                speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), hubAngle);
+                speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), targetAngle);
 
                 api.applySpeeds(speeds, Perspective.BLUE, true, true);
             });
@@ -397,6 +405,10 @@ public final class Swerve extends GRRSubsystem {
         return Alliance.isBlue() ? Field.RED_ZONE < state.pose.getX() : Field.BLUE_ZONE > state.pose.getX();
     }
 
+    public boolean isLeftOfCenter() {
+        return Alliance.isBlue() ^ (state.pose.getY() < Field.Y_CENTER);
+    }
+
     public boolean isLeftOfTower() {
         return Alliance.isBlue() ? state.pose.getY() > Field.BLUE_TOWER_Y : state.pose.getY() < Field.RED_TOWER_Y;
     }
@@ -411,24 +423,24 @@ public final class Swerve extends GRRSubsystem {
      * Returns the distance from the origin of our robot to the center of the hub in meters.
      */
     @NotLogged
-    public double hubDistance() {
-        return hubDistance;
+    public double targetDistance() {
+        return targetDistance;
     }
 
     /**
      * Returns the angle from the origin of our robot to the center of the hub in radians.
      */
     @NotLogged
-    public double hubAngle() {
-        return hubAngle;
+    public double targetAngle() {
+        return targetAngle;
     }
 
     /**
      * Returns {@code true} if the robot is aiming at the hub.
      */
     @NotLogged
-    public boolean aimingAtHub() {
-        return aimingAtHub;
+    public boolean aimingAtTarget() {
+        return aimingAtTarget;
     }
 
     /**

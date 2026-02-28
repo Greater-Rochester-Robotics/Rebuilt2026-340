@@ -55,7 +55,8 @@ public final class Climber extends GRRSubsystem {
         BOTTOM(-39.0),
         ZERO(0.0),
         RETRACTING(-5.5), // This is the position we go to before we retract.
-        L1(-8.0);
+        L1(-8.0),
+        L3(-36.0);
 
         public TunableDouble value;
 
@@ -172,10 +173,9 @@ public final class Climber extends GRRSubsystem {
      */
     public Command climbL1(BooleanSupplier ready) {
         return sequence(
-            goTo(Position.TOP, false, false),
-            waitUntil(ready),
+            goTo(Position.TOP, false, false, false).until(ready),
             runOnce(() -> climbingL1 = true),
-            goTo(Position.L1, true, false)
+            goTo(Position.L1, true, false, false)
         ).withName("Climber.climbL1()");
     }
 
@@ -195,8 +195,7 @@ public final class Climber extends GRRSubsystem {
      */
     public Command climbL3(BooleanSupplier ready) {
         return sequence(
-            goTo(Position.TOP, false, true),
-            waitUntil(ready),
+            goTo(Position.TOP, false, true, false).until(ready),
             goTo(Position.BOTTOM, true, true),
             waitSeconds(0.1),
             goTo(Position.TOP, false, true),
@@ -205,7 +204,9 @@ public final class Climber extends GRRSubsystem {
             waitSeconds(0.1),
             goTo(Position.TOP, false, true),
             waitSeconds(0.1),
-            goTo(Position.BOTTOM, true, true)
+            goTo(Position.BOTTOM, true, true),
+            waitSeconds(0.1),
+            goTo(Position.L3, true, true, false)
         ).withName("Climber.climbL3()");
     }
 
@@ -218,6 +219,7 @@ public final class Climber extends GRRSubsystem {
         return commandBuilder("Climber.zero()")
             .onInitialize(() -> debouncer.calculate(false))
             .onExecute(() -> {
+                servo.setPosition(SERVO_RETRACT);
                 velocityControl.withVelocity(zeroingVelocity.get());
                 lead.setControl(velocityControl);
                 follow.setControl(followControl);
@@ -252,9 +254,7 @@ public final class Climber extends GRRSubsystem {
     public Command retract() {
         return sequence(
             zero().onlyIf(() -> !isZeroed),
-            either(
-                goTo(Position.RETRACTING, false, false),
-                none(),
+            goTo(Position.RETRACTING, false, false).onlyIf(
                 () -> position.getValueAsDouble() > Position.RETRACTING.value.get()
             ),
             goTo(Position.ZERO, false, false)

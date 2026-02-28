@@ -3,6 +3,7 @@ package org.team340.robot.subsystems;
 import static org.team340.robot.util.ShootParams.shooterVelocityMap;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -16,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
+import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
@@ -28,10 +30,15 @@ public final class Shooters extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("shooters");
 
+    private static final TunableDouble atVelocityEpsilon = tunables.value("atVelocityEpsilon", 4.0);
+
     private final TalonFX portLead;
     private final TalonFX portFollow;
     private final TalonFX starboardLead;
     private final TalonFX starboardFollow;
+
+    private final StatusSignal<Double> portClosedLoopError;
+    private final StatusSignal<Double> starboardClosedLoopError;
 
     private final VelocityVoltage velocityControl;
     private final Follower portFollowControl;
@@ -45,6 +52,12 @@ public final class Shooters extends GRRSubsystem {
 
         configureMotors();
 
+        portClosedLoopError = portLead.getClosedLoopError();
+        starboardClosedLoopError = starboardLead.getClosedLoopError();
+
+        PhoenixUtil.run(() ->
+            BaseStatusSignal.setUpdateFrequencyForAll(100, portClosedLoopError, starboardClosedLoopError)
+        );
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(500, portLead.getMotorVoltage(), starboardLead.getMotorVoltage())
         );
@@ -76,8 +89,17 @@ public final class Shooters extends GRRSubsystem {
 
     @Override
     public void periodic() {
+        BaseStatusSignal.refreshAll(portClosedLoopError, starboardClosedLoopError);
+
         portFollow.setControl(portFollowControl);
         starboardFollow.setControl(starboardFollowControl);
+    }
+
+    public boolean atVelocity() {
+        return (
+            Math.abs(portClosedLoopError.getValueAsDouble()) <= atVelocityEpsilon.get()
+            && Math.abs(starboardClosedLoopError.getValueAsDouble()) < atVelocityEpsilon.get()
+        );
     }
 
     // TODO add boolean onTarget() method, using getClosedLoopError() signals

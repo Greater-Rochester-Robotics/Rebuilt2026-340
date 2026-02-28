@@ -61,9 +61,13 @@ public final class Routines {
      */
     public Command shoot() {
         return parallel(
-            hood.targetDistance(swerve::hubDistance),
-            shooters.targetDistance(swerve::hubDistance),
-            sequence(parallel(waitUntil(swerve::aimingAtHub), waitSeconds(0.25)), indexer.feed()),
+            hood.targetDistance(swerve::targetDistance),
+            shooters.targetDistance(swerve::targetDistance),
+            sequence(
+                waitSeconds(0.05),
+                waitUntil(() -> hood.atPosition() && shooters.atVelocity() && swerve.aimingAtTarget()),
+                indexer.feed()
+            ),
             sequence(waitSeconds(2.0), intake.stow())
         ).withName("Routines.shoot()");
     }
@@ -74,7 +78,7 @@ public final class Routines {
      * @param y The Y value from the driver's joystick.
      */
     public Command driverShoot(DoubleSupplier x, DoubleSupplier y) {
-        return parallel(shoot(), swerve.aimAtHub(x, y)).withName("Routines.driverShoot()");
+        return parallel(shoot(), swerve.aimAtTarget(x, y)).withName("Routines.driverShoot()");
     }
 
     /**
@@ -85,9 +89,9 @@ public final class Routines {
     public Command driverShootShutdown(DoubleSupplier x, DoubleSupplier y) {
         return deadline(
             waitSeconds(0.5),
-            hood.targetDistance(swerve::hubDistance),
-            shooters.targetDistance(swerve::hubDistance),
-            swerve.aimAtHub(x, y)
+            hood.targetDistance(swerve::targetDistance),
+            shooters.targetDistance(swerve::targetDistance),
+            swerve.aimAtTarget(x, y)
         ).withName("Routines.driverShootShutdown()");
     }
 

@@ -32,12 +32,14 @@ public final class Hood extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("hood");
 
+    private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 2.0);
     private static final TunableDouble stallVelocity = tunables.value("stallVelocity", 0.05);
     private static final TunableDouble homingVelocity = tunables.value("homingVelocity", -30.0); // In rotations per second.
     private static final TunableDouble zeroZero = tunables.value("zeroZero", 1.0); // In rotations per second.
 
     private final TalonFX motor;
 
+    private final StatusSignal<Double> closedLoopError;
     private final StatusSignal<AngularVelocity> velocity;
 
     private final PositionVoltage positionVoltage;
@@ -50,9 +52,10 @@ public final class Hood extends GRRSubsystem {
 
         configureMotor();
 
+        closedLoopError = motor.getClosedLoopError();
         velocity = motor.getVelocity();
 
-        PhoenixUtil.run(() -> velocity.setUpdateFrequency(50));
+        PhoenixUtil.run(() -> BaseStatusSignal.setUpdateFrequencyForAll(100, closedLoopError, velocity));
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(50, motor.getPosition(), motor.getClosedLoopReference())
         );
@@ -72,10 +75,16 @@ public final class Hood extends GRRSubsystem {
 
     @Override
     public void periodic() {
-        velocity.refresh();
+        BaseStatusSignal.refreshAll(closedLoopError, velocity);
     }
 
-    // TODO add boolean onTarget() method, using getClosedLoopError() signals
+    /**
+     * Checks if the hood is at its position within {@link Hood#closedLoopError}.
+     * @return True if the hood is at the position, false if it is not.
+     */
+    public boolean atPosition() {
+        return Math.abs(closedLoopError.getValueAsDouble()) <= atPositionEpsilon.get();
+    }
 
     /**
      * Run the hood pivot to target a specific distance based on a preset interpolating map.
