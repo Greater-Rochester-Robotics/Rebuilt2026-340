@@ -67,7 +67,6 @@ public final class Robot extends LoggedRobot {
         driver.a().onTrue(intake.intake(driver.a()));
         driver.b().whileTrue(routines.barf());
         driver.x().whileTrue(routines.climb(swerve::isLeftOfTower, false));
-        driver.y().whileTrue(climber.testServo());
 
         driver
             .leftBumper()
