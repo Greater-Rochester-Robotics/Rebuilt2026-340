@@ -97,60 +97,60 @@ public final class Field {
     /** Obstacles for the P-APF. */
     public static final Obstacle[] OBSTACLES = {
         // Field boundary
-        new LongitudinalObstacle(0.0, 2.0, 2.0),
-        new LongitudinalObstacle(FieldInfo.length(), 2.0, 2.0),
-        new LateralObstacle(0.0, 2.0, 2.0),
-        new LateralObstacle(FieldInfo.width(), 2.0, 2.0),
+        new LongitudinalObstacle(0.0, 2.0, 1.5),
+        new LongitudinalObstacle(FieldInfo.length(), 2.0, 1.5),
+        new LateralObstacle(0.0, 2.0, 1.5),
+        new LateralObstacle(FieldInfo.width(), 2.0, 1.5),
 
         // Blue HUB
-        new LineObstacle(HUB_NEAR_LEFT_CORNER.getBlue(), HUB_NEAR_RIGHT_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(HUB_FAR_LEFT_CORNER.getBlue(), HUB_FAR_RIGHT_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(HUB_NEAR_LEFT_CORNER.getBlue(), HUB_FAR_LEFT_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(HUB_NEAR_RIGHT_CORNER.getBlue(), HUB_FAR_RIGHT_CORNER.getBlue(), 2.0, 2.0),
+        new LineObstacle(HUB_NEAR_LEFT_CORNER.getBlue(), HUB_NEAR_RIGHT_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(HUB_FAR_LEFT_CORNER.getBlue(), HUB_FAR_RIGHT_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(HUB_NEAR_LEFT_CORNER.getBlue(), HUB_FAR_LEFT_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(HUB_NEAR_RIGHT_CORNER.getBlue(), HUB_FAR_RIGHT_CORNER.getBlue(), 2.0, 1.5),
 
         // Red HUB
-        new LineObstacle(HUB_NEAR_LEFT_CORNER.getRed(), HUB_NEAR_RIGHT_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(HUB_FAR_LEFT_CORNER.getRed(), HUB_FAR_RIGHT_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(HUB_NEAR_LEFT_CORNER.getRed(), HUB_FAR_LEFT_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(HUB_NEAR_RIGHT_CORNER.getRed(), HUB_FAR_RIGHT_CORNER.getRed(), 2.0, 2.0),
+        new LineObstacle(HUB_NEAR_LEFT_CORNER.getRed(), HUB_NEAR_RIGHT_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(HUB_FAR_LEFT_CORNER.getRed(), HUB_FAR_RIGHT_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(HUB_NEAR_LEFT_CORNER.getRed(), HUB_FAR_LEFT_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(HUB_NEAR_RIGHT_CORNER.getRed(), HUB_FAR_RIGHT_CORNER.getRed(), 2.0, 1.5),
 
         // Blue left TRENCH base
-        new LineObstacle(LEFT_TRENCH_BASE_NEAR_BUMP_CORNER.getBlue(), LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(LEFT_TRENCH_BASE_FAR_BUMP_CORNER.getBlue(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(LEFT_TRENCH_BASE_NEAR_BUMP_CORNER.getBlue(), LEFT_TRENCH_BASE_FAR_BUMP_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 2.0),
+        new LineObstacle(LEFT_TRENCH_BASE_NEAR_BUMP_CORNER.getBlue(), LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(LEFT_TRENCH_BASE_FAR_BUMP_CORNER.getBlue(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(LEFT_TRENCH_BASE_NEAR_BUMP_CORNER.getBlue(), LEFT_TRENCH_BASE_FAR_BUMP_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 1.5),
 
         // Blue right TRENCH base
-        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_BUMP_CORNER.getBlue(), RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(RIGHT_TRENCH_BASE_FAR_BUMP_CORNER.getBlue(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_BUMP_CORNER.getBlue(), RIGHT_TRENCH_BASE_FAR_BUMP_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 2.0),
+        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_BUMP_CORNER.getBlue(), RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(RIGHT_TRENCH_BASE_FAR_BUMP_CORNER.getBlue(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_BUMP_CORNER.getBlue(), RIGHT_TRENCH_BASE_FAR_BUMP_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 1.5),
 
         // Red left TRENCH base
-        new LineObstacle(LEFT_TRENCH_BASE_NEAR_BUMP_CORNER.getRed(), LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(LEFT_TRENCH_BASE_FAR_BUMP_CORNER.getRed(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(LEFT_TRENCH_BASE_NEAR_BUMP_CORNER.getRed(), LEFT_TRENCH_BASE_FAR_BUMP_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 2.0),
+        new LineObstacle(LEFT_TRENCH_BASE_NEAR_BUMP_CORNER.getRed(), LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(LEFT_TRENCH_BASE_FAR_BUMP_CORNER.getRed(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(LEFT_TRENCH_BASE_NEAR_BUMP_CORNER.getRed(), LEFT_TRENCH_BASE_FAR_BUMP_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 1.5),
 
         // Red right TRENCH base
-        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_BUMP_CORNER.getRed(), RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(RIGHT_TRENCH_BASE_FAR_BUMP_CORNER.getRed(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_BUMP_CORNER.getRed(), RIGHT_TRENCH_BASE_FAR_BUMP_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 2.0),
+        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_BUMP_CORNER.getRed(), RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(RIGHT_TRENCH_BASE_FAR_BUMP_CORNER.getRed(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_BUMP_CORNER.getRed(), RIGHT_TRENCH_BASE_FAR_BUMP_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 1.5),
 
         // Our robot cannot fit under the TRENCH, so block off the TRENCH openings as well.
 
         // Blue TRENCH openings
-        new LineObstacle(LEFT_TRENCH_NEAR_FIELD_CORNER.getBlue(), LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(LEFT_TRENCH_FAR_FIELD_CORNER.getBlue(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(RIGHT_TRENCH_NEAR_FIELD_CORNER.getBlue(), RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), 2.0, 2.0),
-        new LineObstacle(RIGHT_TRENCH_FAR_FIELD_CORNER.getBlue(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 2.0),
+        new LineObstacle(LEFT_TRENCH_NEAR_FIELD_CORNER.getBlue(), LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(LEFT_TRENCH_FAR_FIELD_CORNER.getBlue(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(RIGHT_TRENCH_NEAR_FIELD_CORNER.getBlue(), RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), 2.0, 1.5),
+        new LineObstacle(RIGHT_TRENCH_FAR_FIELD_CORNER.getBlue(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getBlue(), 2.0, 1.5),
 
         // Red TRENCH openings
-        new LineObstacle(LEFT_TRENCH_NEAR_FIELD_CORNER.getRed(), LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(LEFT_TRENCH_FAR_FIELD_CORNER.getRed(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(RIGHT_TRENCH_NEAR_FIELD_CORNER.getRed(), RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), 2.0, 2.0),
-        new LineObstacle(RIGHT_TRENCH_FAR_FIELD_CORNER.getRed(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 2.0),
+        new LineObstacle(LEFT_TRENCH_NEAR_FIELD_CORNER.getRed(), LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(LEFT_TRENCH_FAR_FIELD_CORNER.getRed(), LEFT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(RIGHT_TRENCH_NEAR_FIELD_CORNER.getRed(), RIGHT_TRENCH_BASE_NEAR_OPENING_CORNER.getRed(), 2.0, 1.5),
+        new LineObstacle(RIGHT_TRENCH_FAR_FIELD_CORNER.getRed(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 1.5),
     };
 
     // spotless:on

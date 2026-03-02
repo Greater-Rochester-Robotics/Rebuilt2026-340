@@ -22,7 +22,6 @@ import org.team340.lib.logging.LoggedRobot;
 import org.team340.lib.logging.Profiler;
 import org.team340.lib.math.Math2;
 import org.team340.lib.math.PAPFController;
-import org.team340.lib.math.PAPFController.Obstacle;
 import org.team340.lib.math.geometry.ExtTranslation;
 import org.team340.lib.swerve.Perspective;
 import org.team340.lib.swerve.SwerveAPI;
@@ -136,7 +135,7 @@ public final class Swerve extends GRRSubsystem {
     public Swerve() {
         api = new SwerveAPI(config);
         vision = new Vision(cameras);
-        apf = new PAPFController(6.0, 0.25, 0.01, true, new Obstacle[0]);
+        apf = new PAPFController(8.0, 0.25, 0.01, true, Field.OBSTACLES);
 
         angularPID = new ProfiledPIDController(8.0, 0.0, 0.0, new Constraints(10.0, 26.0));
         angularPID.enableContinuousInput(-Math.PI, Math.PI);
