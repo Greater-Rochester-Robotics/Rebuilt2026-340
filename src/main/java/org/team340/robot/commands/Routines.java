@@ -31,6 +31,8 @@ public final class Routines {
     private static final TunableDouble climbingMaxDeceleration = tunables.value("climbingMaxDeceleration", 4.0);
     private static final TunableDouble climbingEndTolerance = tunables.value("climbingEndTolerance", 0.01);
     private static final TunableDouble climbingEndAngTolerance = tunables.value("climbingEndAngTolerance", Math.toRadians(1.0));
+    private static final TunableDouble staticShootDistance = tunables.value("Routines.staticShootDistance", 3.0);
+    private static final TunableDouble staticShootHoodPosition = tunables.value("Routines.staticShootHoodPosition", 3.0);
     // spotless:on
 
     private final Climber climber;
@@ -87,6 +89,17 @@ public final class Routines {
                     .onlyIf(() -> intake.getCurrentCommand() == intake.getDefaultCommand()),
                 waitUntil(() -> intake.getCurrentCommand() == intake.getDefaultCommand())
             ).repeatedly()
+        ).withName("Routines.shoot()");
+    }
+
+    /**
+     * Shoots at the hub from a fixed distance, as a backup.
+     */
+    public Command staticShoot() {
+        return parallel(
+            hood.targetDistance(staticShootHoodPosition),
+            shooters.targetDistance(staticShootDistance),
+            indexer.feed()
         ).withName("Routines.shoot()");
     }
 

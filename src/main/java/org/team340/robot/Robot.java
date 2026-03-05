@@ -65,7 +65,7 @@ public final class Robot extends LoggedRobot {
         // Driver bindings
         driver.a().onTrue(intake.intake(driver.a()));
         driver.b().whileTrue(routines.barf());
-        driver.x().whileTrue(routines.climb(swerve::isLeftOfTower, false)); // TODO replace with static shot
+        driver.x().whileTrue(routines.staticShoot());
         driver.y().onTrue(none()); // Reserved for shoot override
 
         driver
