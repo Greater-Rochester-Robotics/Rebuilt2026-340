@@ -6,10 +6,11 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
@@ -32,11 +33,11 @@ public final class Intake extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("intake");
 
     private static enum State {
-        // TODO positions
-        STOW(0.0, 0.0),
-        EXTEND(0.0, 0.0),
-        INTAKE(0.0, 90.0),
-        BARF(0.0, -90.0);
+        STOW(0.262, 0.0), // TODO -0.08
+        EXTEND(0.262, 0.0),
+        INTAKE(0.262, 90.0),
+        COMPRESS(0.262, 90.0), // TODO 0.05
+        BARF(0.262, -90.0);
 
         public final TunableDouble position;
         public final TunableDouble rollerVelocity;
@@ -52,7 +53,7 @@ public final class Intake extends GRRSubsystem {
     private final CANcoder wcpThroughborePoweredByCANcoderForHalfInchHex; // do not change this name
 
     private final MotionMagicVoltage pivotPositionControl;
-    private final VelocityVoltage rollersVelocityControl;
+    private final VelocityTorqueCurrentFOC rollersVelocityControl;
 
     public Intake() {
         this.pivot = new TalonFX(RobotMap.INTAKE_PIVOT_MOTOR, RobotMap.CANBus);
@@ -77,12 +78,14 @@ public final class Intake extends GRRSubsystem {
         pivotPositionControl.EnableFOC = true;
         pivotPositionControl.UpdateFreqHz = 0.0;
 
-        rollersVelocityControl = new VelocityVoltage(0.0);
-        rollersVelocityControl.EnableFOC = true;
+        rollersVelocityControl = new VelocityTorqueCurrentFOC(0.0);
         rollersVelocityControl.UpdateFreqHz = 0.0;
 
         tunables.add("pivotMotor", pivot);
         tunables.add("rollersMotor", rollers);
+
+        // Enum warmup
+        State.STOW.position.get();
     }
 
     /**
@@ -117,6 +120,14 @@ public final class Intake extends GRRSubsystem {
     }
 
     /**
+     * Retracts the intake and runs the rollers inwards. Meant to be
+     * used for compressing balls into the indexing system.
+     */
+    public Command compress() {
+        return runState(State.COMPRESS).withName("Intake.compress()");
+    }
+
+    /**
      * Extends the intake and runs the rollers to barf out fuel.
      */
     public Command barf() {
@@ -132,8 +143,13 @@ public final class Intake extends GRRSubsystem {
             .onExecute(() -> {
                 pivotPositionControl.withPosition(state.position.getAsDouble());
                 pivot.setControl(pivotPositionControl);
+
                 rollersVelocityControl.withVelocity(state.rollerVelocity.getAsDouble());
-                rollers.setControl(rollersVelocityControl);
+                if (Math.abs(rollersVelocityControl.Velocity) > 1e-6) {
+                    rollers.setControl(rollersVelocityControl);
+                } else {
+                    rollers.stopMotor();
+                }
             })
             .onEnd(() -> {
                 pivot.stopMotor();
@@ -145,7 +161,7 @@ public final class Intake extends GRRSubsystem {
         final CANcoderConfiguration wcpThroughborePoweredByCANcoderForHalfInchHexConfig = new CANcoderConfiguration();
 
         // TODO
-        wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.MagnetOffset = 0.0;
+        wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.MagnetOffset = 0.536;
         wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.SensorDirection =
             SensorDirectionValue.CounterClockwise_Positive;
 
@@ -159,27 +175,35 @@ public final class Intake extends GRRSubsystem {
     private void configurePivot() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
+        config.ClosedLoopGeneral.ContinuousWrap = true;
+
         config.CurrentLimits.StatorCurrentLimit = 80.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.SupplyCurrentLimit = 40.0;
+
+        config.Feedback.FeedbackRemoteSensorID = RobotMap.INTAKE_WCP_THROUGHBORE_POWERED_BY_CANCODER_FOR_HALF_INCH_HEX;
+        config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
+        config.Feedback.RotorToSensorRatio = (20.0 / 3.0) * 6.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 0.0;
+        config.Slot0.kP = 75.0;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
         config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.0;
+        config.Slot0.kV = 2.0;
         config.Slot0.kA = 0.0;
 
-        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 0.0;
+        config.MotionMagic.MotionMagicCruiseVelocity = 10.0;
+        config.MotionMagic.MotionMagicAcceleration = 22.0;
+
+        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 0.281;
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
 
-        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0;
+        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -0.150;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-        // TODO: Confirm the direction in testing.
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         PhoenixUtil.run(() -> pivot.clearStickyFaults());
         PhoenixUtil.run(() -> pivot.getConfigurator().apply(config));
@@ -188,17 +212,18 @@ public final class Intake extends GRRSubsystem {
     private void configureRollers() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 80.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.StatorCurrentLimit = 120.0;
+        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 0.3;
+        config.Slot0.kP = 20.0;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
-        config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.124;
+        config.Slot0.kS = 3.0;
+        config.Slot0.kV = 0.0;
         config.Slot0.kA = 0.0;
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;

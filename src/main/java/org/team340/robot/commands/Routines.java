@@ -60,18 +60,29 @@ public final class Routines {
      * Shoots at the hub, without commanding the drivetrain.
      */
     public Command shoot() {
+        return shoot(() -> false);
+    }
+
+    /**
+     * Shoots at the hub, without commanding the drivetrain.
+     * @param force A supplier that if {@code true} will force the indexer to feed the shooters.
+     */
+    public Command shoot(BooleanSupplier force) {
         return parallel(
             hood.targetDistance(swerve::targetDistance),
             shooters.targetDistance(swerve::targetDistance),
             sequence(
                 waitSeconds(0.05),
-                waitUntil(() -> hood.atPosition() && shooters.atVelocity() && swerve.aimingAtTarget()),
+                waitUntil(
+                    () ->
+                        (hood.atPosition() && shooters.atVelocity() && swerve.aimingAtTarget()) || force.getAsBoolean()
+                ),
                 indexer.feed()
             ),
             sequence(
                 waitSeconds(2.0),
                 intake
-                    .stow()
+                    .compress()
                     .asProxy()
                     .onlyIf(() -> intake.getCurrentCommand() == intake.getDefaultCommand()),
                 waitUntil(() -> intake.getCurrentCommand() == intake.getDefaultCommand())
@@ -83,9 +94,10 @@ public final class Routines {
      * Shoots at the hub, with driver input and automated heading aim.
      * @param x The X value from the driver's joystick.
      * @param y The Y value from the driver's joystick.
+     * @param force A supplier that if {@code true} will force the indexer to feed the shooters.
      */
-    public Command driverShoot(DoubleSupplier x, DoubleSupplier y) {
-        return parallel(shoot(), swerve.aimAtTarget(x, y)).withName("Routines.driverShoot()");
+    public Command driverShoot(DoubleSupplier x, DoubleSupplier y, BooleanSupplier force) {
+        return parallel(shoot(force), swerve.aimAtTarget(x, y)).withName("Routines.driverShoot()");
     }
 
     /**

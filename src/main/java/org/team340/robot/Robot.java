@@ -36,7 +36,6 @@ public final class Robot extends LoggedRobot {
     public final Autos autos;
 
     private final CommandXboxController driver;
-    private final CommandXboxController coDriver;
 
     public Robot() {
         // Initialize subsystems
@@ -53,10 +52,10 @@ public final class Robot extends LoggedRobot {
 
         // Initialize controllers
         driver = new CommandXboxController(Constants.DRIVER);
-        coDriver = new CommandXboxController(Constants.CO_DRIVER);
 
         // Set default commands
-        climber.setDefaultCommand(sequence(waitUntil(swerve::isAwayFromTower), climber.retract(), idle()));
+        intake.setDefaultCommand(intake.stow());
+        // climber.setDefaultCommand(sequence(waitUntil(swerve::isAwayFromTower), climber.retract(), idle()));
         hood.setDefaultCommand(hood.goToZero(false));
         swerve.setDefaultCommand(swerve.drive(this::driverX, this::driverY, this::driverAngular));
 
@@ -66,12 +65,13 @@ public final class Robot extends LoggedRobot {
         // Driver bindings
         driver.a().onTrue(intake.intake(driver.a()));
         driver.b().whileTrue(routines.barf());
-        driver.x().whileTrue(routines.climb(swerve::isLeftOfTower, false));
+        driver.x().whileTrue(routines.climb(swerve::isLeftOfTower, false)); // TODO replace with static shot
+        driver.y().onTrue(none()); // Reserved for shoot override
 
         driver
             .leftBumper()
             .or(driver.rightBumper())
-            .onTrue(routines.driverShoot(this::driverX, this::driverY))
+            .onTrue(routines.driverShoot(this::driverX, this::driverY, driver.y()))
             .onFalse(routines.driverShootShutdown(this::driverX, this::driverY));
 
         driver.povLeft().onTrue(swerve.tareRotation());
@@ -79,8 +79,7 @@ public final class Robot extends LoggedRobot {
         driver.povUp().whileTrue(routines.climb(swerve::isLeftOfTower, true));
         driver.povDown().whileTrue(hood.goToZero(true));
 
-        // Co-driver bindings
-        coDriver.a().onTrue(none());
+        driver.rightStick().whileTrue(climber.testServo());
 
         // Disable loop overrun warnings from the command
         // scheduler, since we already log loop timings

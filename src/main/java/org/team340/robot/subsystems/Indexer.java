@@ -2,7 +2,7 @@ package org.team340.robot.subsystems;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -25,22 +25,22 @@ public final class Indexer extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("indexer");
 
     private static enum State {
-        FEED(83.0, 72.0),
-        BARF(-80.0, -80.0);
+        FEED(85.0, 78.0),
+        BARF(-80.0, -75.0);
 
         public final TunableDouble twindexerSpeed;
-        public final TunableDouble updateSpeed;
+        public final TunableDouble uptakeSpeed;
 
-        private State(final double twindexerSpeed, final double updateSpeed) {
+        private State(final double twindexerSpeed, final double uptakeSpeed) {
             this.twindexerSpeed = tunables.value("twindexerSpeeds/" + name(), twindexerSpeed);
-            this.updateSpeed = tunables.value("uptakeSpeeds/" + name(), updateSpeed);
+            this.uptakeSpeed = tunables.value("uptakeSpeeds/" + name(), uptakeSpeed);
         }
     }
 
     private final TalonFX twindexer;
     private final TalonFX uptake;
 
-    private final VelocityVoltage velocityControl;
+    private final VelocityTorqueCurrentFOC velocityControl;
 
     public Indexer() {
         this.twindexer = new TalonFX(RobotMap.INDEXER_TWINDEXER_MOTOR, RobotMap.CANBus);
@@ -54,12 +54,14 @@ public final class Indexer extends GRRSubsystem {
         );
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, twindexer, uptake));
 
-        velocityControl = new VelocityVoltage(0.0);
-        velocityControl.EnableFOC = true;
+        velocityControl = new VelocityTorqueCurrentFOC(0.0);
         velocityControl.UpdateFreqHz = 0.0;
 
         tunables.add("twindexerMotor", twindexer);
         tunables.add("uptakeMotor", uptake);
+
+        // Enum warmup
+        State.FEED.twindexerSpeed.get();
     }
 
     /**
@@ -85,7 +87,8 @@ public final class Indexer extends GRRSubsystem {
             .onExecute(() -> {
                 velocityControl.withVelocity(state.twindexerSpeed.get());
                 twindexer.setControl(velocityControl);
-                velocityControl.withVelocity(state.updateSpeed.get());
+
+                velocityControl.withVelocity(state.uptakeSpeed.get());
                 uptake.setControl(velocityControl);
             })
             .onEnd(() -> {
@@ -97,21 +100,24 @@ public final class Indexer extends GRRSubsystem {
     private void configureTwindexer() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 100.0;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.StatorCurrentLimit = 120.0;
+        config.CurrentLimits.SupplyCurrentLimit = 70.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 0.5;
+        config.Slot0.kP = 16.0;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
-        config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.127;
+        config.Slot0.kS = 6.0;
+        config.Slot0.kV = 0.0;
         config.Slot0.kA = 0.0;
 
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+
+        config.TorqueCurrent.PeakForwardTorqueCurrent = 100.0;
+        config.TorqueCurrent.PeakReverseTorqueCurrent = -100.0;
 
         PhoenixUtil.run(() -> twindexer.clearStickyFaults());
         PhoenixUtil.run(() -> twindexer.getConfigurator().apply(config));
@@ -120,21 +126,24 @@ public final class Indexer extends GRRSubsystem {
     private void configureUptake() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 100.0;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.StatorCurrentLimit = 120.0;
+        config.CurrentLimits.SupplyCurrentLimit = 70.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 0.5;
+        config.Slot0.kP = 11.0;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
-        config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.132;
+        config.Slot0.kS = 8.0;
+        config.Slot0.kV = 0.0;
         config.Slot0.kA = 0.0;
 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+
+        config.TorqueCurrent.PeakForwardTorqueCurrent = 100.0;
+        config.TorqueCurrent.PeakReverseTorqueCurrent = -100.0;
 
         PhoenixUtil.run(() -> uptake.clearStickyFaults());
         PhoenixUtil.run(() -> uptake.getConfigurator().apply(config));

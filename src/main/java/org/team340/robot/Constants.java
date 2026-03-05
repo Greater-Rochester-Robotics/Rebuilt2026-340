@@ -13,7 +13,6 @@ public final class Constants {
 
     // Controller ports
     public static final int DRIVER = 0;
-    public static final int CO_DRIVER = 1;
 
     /**
      * The RobotMap class defines CAN IDs, CAN bus names, DIO/PWM/PH/PCM channel

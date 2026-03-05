@@ -47,7 +47,7 @@ public final class Climber extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("climber");
 
     private static final TunableDouble zeroingVelocity = tunables.value("zeroingVelocity", 6.0);
-    private static final TunableDouble stallVelocity = tunables.value("stallVelocity", 0.025);
+    private static final TunableDouble stallVelocity = tunables.value("stallVelocity", 0.05);
     private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 0.15);
 
     private static enum Position {
@@ -135,6 +135,9 @@ public final class Climber extends GRRSubsystem {
 
         tunables.add("motor", lead);
         tunables.add("motor", follow);
+
+        // Enum warmup
+        Position.TOP.value.get();
     }
 
     @Override
@@ -325,7 +328,7 @@ public final class Climber extends GRRSubsystem {
     private void configureMotors() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 120.0;
+        config.CurrentLimits.StatorCurrentLimit = 100.0;
         config.CurrentLimits.SupplyCurrentLimit = 90.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 

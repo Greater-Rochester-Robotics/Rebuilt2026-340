@@ -82,6 +82,9 @@ public final class Vision {
 
         cameras = RobotBase.isSimulation() && !ENABLE_SIM ? new CameraConfig[0] : cameras;
         this.cameras = Arrays.stream(cameras).map(Camera::new).toArray(Camera[]::new);
+
+        // Enum warmup
+        StrategyWeights.MULTITAG.xy.get();
     }
 
     /**

@@ -133,7 +133,7 @@ public final class Hood extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 80.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.SupplyCurrentLimit = 50.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 

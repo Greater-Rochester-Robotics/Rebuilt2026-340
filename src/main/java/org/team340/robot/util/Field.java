@@ -23,8 +23,8 @@ public final class Field {
     /** The X coordinate of the edge of the red ALLIANCE ZONE. */
     public static final double RED_ZONE = getTag(10).getX();
 
-    public static final double BLUE_TOWER_Y = getTag(31).getY();
-    public static final double RED_TOWER_Y = getTag(15).getY();
+    public static final double BLUE_BUMP_FAR = BLUE_ZONE + Units.inchesToMeters(47.0);
+    public static final double RED_BUMP_FAR = RED_ZONE - Units.inchesToMeters(47.0);
 
     // HUB location helpers
     private static final double HUB_WIDTH = Units.inchesToMeters(47.0);
@@ -47,9 +47,13 @@ public final class Field {
     // TOWER location helpers
     private static final double TOWER_LEFT_Y = 4.2;
     private static final double TOWER_RIGHT_Y = 3.33;
-    private static final double CLIMB_APPROACH_X = 1.8;
+    private static final double CLIMB_APPROACH_X = 1.65;
     private static final double CLIMBING_X = 1.475;
 
+    /** The Y coordinate of the center of the blue TOWER. */
+    public static final double BLUE_TOWER_Y = getTag(31).getY();
+    /** The Y coordinate of the center of the red TOWER. */
+    public static final double RED_TOWER_Y = getTag(15).getY();
     /** The approach location for the left TOWER UPRIGHT. */
     public static final ExtPose TOWER_LEFT_APPROACH = new ExtPose(CLIMB_APPROACH_X, TOWER_LEFT_Y, Rotation2d.kZero);
     /** The climbing location for the left TOWER UPRIGHT. */
