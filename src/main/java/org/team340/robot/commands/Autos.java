@@ -33,9 +33,10 @@ public final class Autos {
     public static final TunableDouble intakeVelocity = tunables.value("intakeVelocity", 1.75);
     public static final TunableDouble shootingVelocity = tunables.value("shootingVelocity", 1.0);
 
+    private static final TunableDouble velocity = tunables.value("velocity", 4.5);
     private static final TunableDouble deceleration = tunables.value("deceleration", 6.0);
-    private static final TunableDouble tolerance = tunables.value("tolerance", 0.1);
-    private static final TunableDouble angTolerance = tunables.value("angTolerance", Math.toRadians(6.0));
+    private static final TunableDouble endTolerance = tunables.value("endTolerance", 0.1);
+    private static final TunableDouble endAngTolerance = tunables.value("endAngTolerance", Math.toRadians(6.0));
 
     private final Climber climber;
     private final Hood hood;
@@ -63,6 +64,9 @@ public final class Autos {
         chooser.add("Tower Time Left", towerTime(true));
     }
 
+    /**
+     * The "Turkiye Special" auto routine.
+     */
     private Command turkiyeSpecial() {
         var shoot = new ExtTranslation(2.875, 2.85);
         var prePickup = new ExtTranslation(0.75, 1.5);
@@ -70,23 +74,39 @@ public final class Autos {
 
         return sequence(
             grab(false),
-            deadline(apfShooting(shoot).withTimeout(0.5), routines.shoot().asProxy()),
+            deadline(swerve.aimAtTarget().withTimeout(0.5), routines.shoot().asProxy()),
             deadline(apfShooting(prePickup).withTimeout(3.0), routines.shoot().asProxy()),
-            deadline(swerve.apfDrive(pickup, deceleration).withTimeout(2.5), getReady()),
+            deadline(swerve.apfDrive(pickup, velocity, deceleration).withTimeout(2.5), getReady()),
             deadline(apfShooting(shoot), routines.shoot().asProxy())
         );
     }
 
+    /**
+     * The "Tower Time" auto routine.
+     * @param left {@code true} if the auto should run on the left side of the field
+     *             (from the perspective of the current alliance's driver station),
+     *             {@code false} to run on the right side.
+     */
     private Command towerTime(boolean left) {
         return sequence(
             deadline(
                 waitSeconds(15.0),
-                sequence(grab(left), parallel(swerve.aimAtTarget(() -> 0.0, () -> 0.0), routines.shoot().asProxy()))
+                sequence(grab(left), parallel(swerve.aimAtTarget(), routines.shoot().asProxy()))
             ),
             new ScheduleCommand(routines.climb(() -> left, false))
         );
     }
 
+    // ********** Helper Methods **********
+
+    /**
+     * Sweeps the neutral zone to intake fuel, then returns to a shooting position in the
+     * alliance zone while preparing the hood and flywheels. Ends when it reaches that
+     * location. Does not run the indexer to actually shoot.
+     * @param left {@code true} if the robot should be on the left side of the field
+     *             (from the perspective of the current alliance's driver station),
+     *             {@code false} to run on the right side.
+     */
     private Command grab(boolean left) {
         var preIntake = new ExtPose(7.7, 1.8, Rotation2d.fromDegrees(-135.0));
         var sweep = new ExtPose(7.7, 5.75, Rotation2d.fromDegrees(90.0));
@@ -98,7 +118,7 @@ public final class Autos {
             deadline(
                 sequence(
                     apfIntaking(() -> sweep.get(left)),
-                    swerve.apfDrive(() -> sweep2.get(left), deceleration, () -> 0.75, angTolerance)
+                    swerve.apfDrive(() -> sweep2.get(left), velocity, deceleration, () -> 0.75, endAngTolerance)
                 ),
                 intake.intake().asProxy()
             ),
@@ -106,18 +126,40 @@ public final class Autos {
         );
     }
 
+    /**
+     * Drives the robot to a target position using the P-APF, until the robot is
+     * positioned within the default tolerances of the specified goal location.
+     * Uses the default velocity and deceleration values.
+     * @param goal A supplier that returns the target blue-origin relative field location.
+     */
     private Command apfDefaults(Supplier<Pose2d> goal) {
-        return swerve.apfDrive(goal, deceleration, tolerance, angTolerance);
+        return swerve.apfDrive(goal, velocity, deceleration, endTolerance, endAngTolerance);
     }
 
+    /**
+     * Drives the robot to a target position using the P-APF, until the robot is
+     * positioned within the default tolerances of the specified goal location.
+     * Uses {@code intakeVelocity} and the default deceleration rate.
+     * @param goal A supplier that returns the target blue-origin relative field location.
+     */
     private Command apfIntaking(Supplier<Pose2d> goal) {
-        return swerve.apfDrive(goal, intakeVelocity, deceleration, tolerance, angTolerance);
+        return swerve.apfDrive(goal, intakeVelocity, deceleration, endTolerance, endAngTolerance);
     }
 
+    /**
+     * Drives the robot to a target position using the P-APF while aiming at
+     * the hub. Uses {@code shootingVelocity} and the default deceleration
+     * rate. This command does not end.
+     * @param goal A supplier that returns the target blue-origin relative field location.
+     */
     private Command apfShooting(Supplier<Translation2d> goal) {
         return swerve.apfAimAtTarget(goal, shootingVelocity, deceleration);
     }
 
+    /**
+     * Prepares the hood and shooters to score fuel, and keeps the
+     * intake extended. The returned command is already proxied.
+     */
     private Command getReady() {
         return parallel(
             intake.extend(),

@@ -55,7 +55,7 @@ public final class Robot extends LoggedRobot {
 
         // Set default commands
         intake.setDefaultCommand(intake.stow());
-        // climber.setDefaultCommand(sequence(waitUntil(swerve::isAwayFromTower), climber.retract(), idle()));
+        // climber.setDefaultCommand(sequence(waitUntil(swerve::isAwayFromTower), climber.retract(), idle())); TODO
         hood.setDefaultCommand(hood.goToZero(false));
         swerve.setDefaultCommand(swerve.drive(this::driverX, this::driverY, this::driverAngular));
 

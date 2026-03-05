@@ -213,34 +213,6 @@ public final class Swerve extends GRRSubsystem {
     }
 
     /**
-     * Tares the rotation of the robot. Useful for
-     * fixing an out of sync or drifting IMU.
-     */
-    public Command tareRotation() {
-        return commandBuilder("Swerve.tareRotation()")
-            .onInitialize(() -> {
-                api.tareRotation(Perspective.OPERATOR);
-                vision.resetHeadingData(state.rotation, Timer.getFPGATimestamp());
-            })
-            .isFinished(true)
-            .ignoringDisable(true);
-    }
-
-    /**
-     * Resets the pose of the robot, inherently seeding field-relative movement.
-     * @param pose A supplier that returns the new blue origin relative pose to apply to the pose estimator.
-     */
-    public Command resetPose(Supplier<Pose2d> pose) {
-        return commandBuilder("Swerve.resetPose()")
-            .onInitialize(() -> {
-                api.resetPose(pose.get());
-                vision.resetHeadingData(state.rotation, Timer.getFPGATimestamp());
-            })
-            .isFinished(true)
-            .ignoringDisable(true);
-    }
-
-    /**
      * Drives the robot using driver input.
      * @param x The X value from the driver's joystick.
      * @param y The Y value from the driver's joystick.
@@ -257,6 +229,13 @@ public final class Swerve extends GRRSubsystem {
                 true
             )
         );
+    }
+
+    /**
+     * Commands a translational velocity of zero while aiming at the hub.
+     */
+    public Command aimAtTarget() {
+        return aimAtTarget(() -> 0.0, () -> 0.0);
     }
 
     /**
@@ -278,6 +257,7 @@ public final class Swerve extends GRRSubsystem {
     /**
      * Drives the robot to a target position using the P-APF while aiming at the hub. This command does not end.
      * @param goal A supplier that returns the target blue-origin relative field location.
+     * @param velocity The desired cruise velocity of the robot, in m/s.
      * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
      */
     public Command apfAimAtTarget(
@@ -288,23 +268,6 @@ public final class Swerve extends GRRSubsystem {
         return apfDrive(() -> new Pose2d(goal.get(), new Rotation2d(targetAngle)), velocity, maxDeceleration).withName(
             "Swerve.apfAimAtTarget()"
         );
-    }
-
-    /**
-     * Drives the robot to a target position using the P-APF, until the
-     * robot is positioned within a specified tolerance of the target.
-     * @param goal A supplier that returns the target blue-origin relative field location.
-     * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
-     * @param endTolerance The tolerance in meters at which to end the command.
-     * @param endAngTolerance The tolerance in radians at which to end the command.
-     */
-    public Command apfDrive(
-        Supplier<Pose2d> goal,
-        DoubleSupplier maxDeceleration,
-        DoubleSupplier endTolerance,
-        DoubleSupplier endAngTolerance
-    ) {
-        return apfDrive(goal, () -> config.velocity, maxDeceleration, endTolerance, endAngTolerance);
     }
 
     /**
@@ -324,21 +287,14 @@ public final class Swerve extends GRRSubsystem {
         DoubleSupplier endAngTolerance
     ) {
         return apfDrive(goal, velocity, maxDeceleration)
-            .until(
-                () ->
-                    Math2.isNear(goal.get().getTranslation(), state.translation, endTolerance.getAsDouble())
-                    && Math2.isNear(goal.get().getRotation(), state.rotation, endAngTolerance.getAsDouble())
-            )
+            .until(() -> {
+                var next = goal.get();
+                return (
+                    Math2.isNear(next.getTranslation(), state.translation, endTolerance.getAsDouble())
+                    && Math2.isNear(next.getRotation(), state.rotation, endAngTolerance.getAsDouble())
+                );
+            })
             .withName("Swerve.apfDrive()");
-    }
-
-    /**
-     * Drives the robot to a target position using the P-APF. This command does not end.
-     * @param goal A supplier that returns the target blue-origin relative field location.
-     * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
-     */
-    public Command apfDrive(Supplier<Pose2d> goal, DoubleSupplier maxDeceleration) {
-        return apfDrive(goal, () -> config.velocity, maxDeceleration);
     }
 
     /**
@@ -356,12 +312,8 @@ public final class Swerve extends GRRSubsystem {
                     bumpSpeed = true;
                 } else {
                     double t = (Math.abs(state.speeds.vxMetersPerSecond) - apfBumpVelocity.get()) / config.slipAccel;
-
-                    if (t >= 0) {
-                        double projected_x = state.pose.getX() + t * state.speeds.vxMetersPerSecond;
-                        if (xPositionInBump(projected_x)) {
-                            bumpSpeed = true;
-                        }
+                    if (t >= 0 && xPositionInBump(state.pose.getX() + t * state.speeds.vxMetersPerSecond)) {
+                        bumpSpeed = true;
                     }
                 }
 
@@ -388,6 +340,34 @@ public final class Swerve extends GRRSubsystem {
      */
     public Command stop(boolean lock) {
         return commandBuilder("Swerve.stop(" + lock + ")").onExecute(() -> api.applyStop(lock));
+    }
+
+    /**
+     * Tares the rotation of the robot. Useful for
+     * fixing an out of sync or drifting IMU.
+     */
+    public Command tareRotation() {
+        return commandBuilder("Swerve.tareRotation()")
+            .onInitialize(() -> {
+                api.tareRotation(Perspective.OPERATOR);
+                vision.resetHeadingData(state.rotation, Timer.getFPGATimestamp());
+            })
+            .isFinished(true)
+            .ignoringDisable(true);
+    }
+
+    /**
+     * Resets the pose of the robot, inherently seeding field-relative movement.
+     * @param pose A supplier that returns the new blue origin relative pose to apply to the pose estimator.
+     */
+    public Command resetPose(Supplier<Pose2d> pose) {
+        return commandBuilder("Swerve.resetPose()")
+            .onInitialize(() -> {
+                api.resetPose(pose.get());
+                vision.resetHeadingData(state.rotation, Timer.getFPGATimestamp());
+            })
+            .isFinished(true)
+            .ignoringDisable(true);
     }
 
     /**
@@ -434,7 +414,7 @@ public final class Swerve extends GRRSubsystem {
     }
 
     /**
-     * Checks if the origin of the robot is away from our side wall by a threshold.
+     * Checks if the origin of the robot is away from our driver station wall by a threshold.
      * @return {@code true} if the robot's origin is away from our wall, {@code false} otherwise.
      */
     public boolean isAwayFromTower() {
@@ -488,7 +468,7 @@ public final class Swerve extends GRRSubsystem {
      * @param x The x value to check.
      * @return True if the x value is in the one of the bumps, false otherwise.
      */
-    private static boolean xPositionInBump(double x) {
+    private boolean xPositionInBump(double x) {
         return (x > Field.BLUE_ZONE && x < Field.BLUE_BUMP_FAR) || (x > Field.RED_BUMP_FAR && x < Field.RED_ZONE);
     }
 }

@@ -202,50 +202,50 @@ public final class Vision {
                 double xyWeight = 1e5;
                 double angularWeight = 1e5;
 
-                // Fancy switch! Falls through until a suitable solve
-                // strategy is found that returns a pose estimate.
-                switch (0) {
-                    case 0:
-                        var multitag = result.getMultiTagResult();
-                        if (
-                            multitag.isPresent()
-                            && !multitag.get().fiducialIDsUsed.isEmpty()
-                            && useTag(multitag.get().fiducialIDsUsed.get(0))
-                            && (estimate = estimator.estimateCoprocMultiTagPose(result)).isPresent()
-                        ) {
-                            xyWeight = StrategyWeights.MULTITAG.xy.get();
-                            angularWeight = StrategyWeights.MULTITAG.angular.get();
-                            break;
-                        }
-                    case 1:
-                        if (
-                            enabled
-                            && useTag(result.getBestTarget().fiducialId)
-                            && (estimate = estimator.estimatePnpDistanceTrigSolvePose(result)).isPresent()
-                        ) {
-                            xyWeight = StrategyWeights.TRIG.xy.get();
-                            angularWeight = StrategyWeights.TRIG.angular.get();
-                            break;
-                        }
-                    case 2:
-                        if (!enabled && (estimate = estimator.estimateLowestAmbiguityPose(result)).isPresent()) {
-                            boolean invalidTag = false;
-                            for (var target : estimate.get().targetsUsed) {
-                                if (!useTag(target.fiducialId)) invalidTag = true;
-                            }
+                // Falls through until a suitable solve strategy is found.
+                do {
+                    var multitag = result.getMultiTagResult();
 
-                            if (invalidTag) continue;
+                    if (
+                        multitag.isPresent()
+                        && !multitag.get().fiducialIDsUsed.isEmpty()
+                        && useTag(multitag.get().fiducialIDsUsed.get(0))
+                        && (estimate = estimator.estimateCoprocMultiTagPose(result)).isPresent()
+                    ) {
+                        xyWeight = StrategyWeights.MULTITAG.xy.get();
+                        angularWeight = StrategyWeights.MULTITAG.angular.get();
+                        break;
+                    }
 
-                            xyWeight = StrategyWeights.AMBIGUITY.xy.get();
-                            angularWeight = StrategyWeights.AMBIGUITY.angular.get();
-                            break;
+                    if (
+                        enabled
+                        && useTag(result.getBestTarget().fiducialId)
+                        && (estimate = estimator.estimatePnpDistanceTrigSolvePose(result)).isPresent()
+                    ) {
+                        xyWeight = StrategyWeights.TRIG.xy.get();
+                        angularWeight = StrategyWeights.TRIG.angular.get();
+                        break;
+                    }
+
+                    if (!enabled && (estimate = estimator.estimateLowestAmbiguityPose(result)).isPresent()) {
+                        boolean invalidTag = false;
+                        for (var target : estimate.get().targetsUsed) {
+                            if (!useTag(target.fiducialId)) invalidTag = true;
                         }
-                    default:
-                        continue;
-                }
+
+                        if (invalidTag) continue;
+
+                        xyWeight = StrategyWeights.AMBIGUITY.xy.get();
+                        angularWeight = StrategyWeights.AMBIGUITY.angular.get();
+                        break;
+                    }
+                } while (false);
+
+                // Escape if we couldn't retrieve a suitable estimate.
+                if (estimate.isEmpty()) continue;
 
                 // Escape if the estimate has no targets (this shouldn't happen).
-                if (estimate.isEmpty() || estimate.get().targetsUsed.isEmpty()) {
+                if (estimate.get().targetsUsed.isEmpty()) {
                     DriverStation.reportWarning("Encountered EstimatedRobotPose with no targets", false);
                     continue;
                 }
