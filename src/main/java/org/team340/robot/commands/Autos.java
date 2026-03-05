@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import java.util.function.Supplier;
 import org.team340.lib.math.geometry.ExtPose;
 import org.team340.lib.math.geometry.ExtTranslation;
@@ -58,6 +59,8 @@ public final class Autos {
 
         // Add autonomous modes to the dashboard
         chooser.add("Turkiye Special", turkiyeSpecial());
+        chooser.add("Tower Time Right", towerTime(false));
+        chooser.add("Tower Time Left", towerTime(true));
     }
 
     private Command turkiyeSpecial() {
@@ -71,6 +74,16 @@ public final class Autos {
             deadline(apfShooting(prePickup).withTimeout(3.0), routines.shoot().asProxy()),
             deadline(swerve.apfDrive(pickup, deceleration).withTimeout(2.5), getReady()),
             deadline(apfShooting(shoot), routines.shoot().asProxy())
+        );
+    }
+
+    private Command towerTime(boolean left) {
+        return sequence(
+            deadline(
+                waitSeconds(15.0),
+                sequence(grab(left), parallel(swerve.aimAtTarget(() -> 0.0, () -> 0.0), routines.shoot().asProxy()))
+            ),
+            new ScheduleCommand(routines.climb(() -> left, false))
         );
     }
 

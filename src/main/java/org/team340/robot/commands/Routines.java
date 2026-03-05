@@ -27,12 +27,15 @@ public final class Routines {
 
     private static final TunableTable tunables = Tunables.getNested("routines");
 
+    private static final TunableDouble staticShootDistance = tunables.value("staticShootDistance", 2.0);
+    private static final TunableDouble staticShootHoodPosition = tunables.value("staticShootHoodPosition", 3.0);
+
     // spotless:off
-    private static final TunableDouble climbingMaxDeceleration = tunables.value("climbingMaxDeceleration", 4.0);
-    private static final TunableDouble climbingEndTolerance = tunables.value("climbingEndTolerance", 0.01);
-    private static final TunableDouble climbingEndAngTolerance = tunables.value("climbingEndAngTolerance", Math.toRadians(1.0));
-    private static final TunableDouble staticShootDistance = tunables.value("Routines.staticShootDistance", 3.0);
-    private static final TunableDouble staticShootHoodPosition = tunables.value("Routines.staticShootHoodPosition", 3.0);
+    private static final TunableTable climbingTunables = tunables.getNested("climbing");
+    private static final TunableDouble climbingVelocity = climbingTunables.value("velocity",3.5);
+    private static final TunableDouble climbingDeceleration = climbingTunables.value("deceleration", 4.0);
+    private static final TunableDouble climbingEndTolerance = climbingTunables.value("endTolerance", 0.01);
+    private static final TunableDouble climbingEndAngTolerance = climbingTunables.value("endAngTolerance", Math.toRadians(1.0));
     // spotless:on
 
     private final Climber climber;
@@ -140,14 +143,16 @@ public final class Routines {
             sequence(
                 swerve.apfDrive(
                     () -> left.getAsBoolean() ? Field.TOWER_LEFT_APPROACH.get() : Field.TOWER_RIGHT_APPROACH.get(),
-                    climbingMaxDeceleration,
+                    climbingVelocity,
+                    climbingDeceleration,
                     climbingEndTolerance,
                     climbingEndAngTolerance
                 ),
                 swerve.stop(false).withTimeout(0.1),
                 swerve.apfDrive(
                     () -> left.getAsBoolean() ? Field.TOWER_LEFT_CLIMB.get() : Field.TOWER_RIGHT_CLIMB.get(),
-                    climbingMaxDeceleration,
+                    climbingVelocity,
+                    climbingDeceleration,
                     climbingEndTolerance,
                     climbingEndAngTolerance
                 ),
