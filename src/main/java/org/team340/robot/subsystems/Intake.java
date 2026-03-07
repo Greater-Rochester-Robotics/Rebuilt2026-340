@@ -3,6 +3,7 @@ package org.team340.robot.subsystems;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
@@ -15,6 +16,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.BooleanSupplier;
 import org.team340.lib.tunable.TunableTable;
@@ -33,9 +35,11 @@ public final class Intake extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("intake");
 
     private static final TunableDouble pivotAcceleration = tunables.value("pivotAcceleration", 22.0);
+    private static final TunableDouble pivotStowed = tunables.value("pivotStowed", 0.0); // TODO
 
     private static enum State {
         STOW(-0.08, 6.0, 0.0),
+        PURGE(-0.08, 6.0, -90.0),
         EXTEND(0.262, 9.0, 0.0),
         INTAKE(0.262, 9.0, 90.0),
         COMPRESS(0.05, 2.0, 90.0),
@@ -56,6 +60,8 @@ public final class Intake extends GRRSubsystem {
     private final TalonFX rollers;
     private final CANcoder wcpThroughborePoweredByCANcoderForHalfInchHex; // do not change this name
 
+    private final StatusSignal<Angle> pivotPosition;
+
     private final DynamicMotionMagicVoltage pivotPositionControl;
     private final VelocityTorqueCurrentFOC rollersVelocityControl;
 
@@ -71,8 +77,10 @@ public final class Intake extends GRRSubsystem {
         configurePivot();
         configureRollers();
 
+        pivotPosition = pivot.getPosition();
+
         PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(50, pivot.getPosition(), pivot.getClosedLoopReference())
+            BaseStatusSignal.setUpdateFrequencyForAll(100, pivotPosition, pivot.getClosedLoopReference())
         );
         PhoenixUtil.run(() ->
             ParentDevice.optimizeBusUtilizationForAll(4, pivot, rollers, wcpThroughborePoweredByCANcoderForHalfInchHex)
@@ -92,11 +100,23 @@ public final class Intake extends GRRSubsystem {
         State.STOW.position.get();
     }
 
+    @Override
+    public void periodic() {
+        pivotPosition.refresh();
+    }
+
     /**
      * Stows the intake.
      */
     public Command stow() {
         return runState(State.STOW).withName("Intake.stow()");
+    }
+
+    /**
+     * intake stows and barfs at the same time
+     */
+    public Command purge() {
+        return runState(State.PURGE).withName("Intake.purge");
     }
 
     /**
@@ -161,6 +181,10 @@ public final class Intake extends GRRSubsystem {
                 pivot.stopMotor();
                 rollers.stopMotor();
             });
+    }
+
+    public boolean isStowed() {
+        return pivotPosition.getValueAsDouble() <= pivotStowed.get();
     }
 
     private void configureCANcoder() {

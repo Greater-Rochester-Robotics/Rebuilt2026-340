@@ -147,26 +147,28 @@ public final class Routines {
 
         return parallel(
             either(climber.climbL3(atPosition::get), climber.climbL1(atPosition::get), () -> l3),
-            sequence(
-                swerve.apfDrive(
-                    () -> left.getAsBoolean() ? Field.TOWER_LEFT_APPROACH.get() : Field.TOWER_RIGHT_APPROACH.get(),
-                    climbingVelocity,
-                    climbingDeceleration,
-                    climbingEndTolerance,
-                    climbingEndAngTolerance,
-                    false
+            parallel(
+                sequence(
+                    swerve.apfDrive(
+                        () -> left.getAsBoolean() ? Field.TOWER_LEFT_APPROACH.get() : Field.TOWER_RIGHT_APPROACH.get(),
+                        climbingVelocity,
+                        climbingDeceleration,
+                        climbingEndTolerance,
+                        climbingEndAngTolerance,
+                        false
+                    ),
+                    swerve.stop(false).withTimeout(0.25),
+                    swerve.apfDrive(
+                        () -> left.getAsBoolean() ? Field.TOWER_LEFT_CLIMB.get() : Field.TOWER_RIGHT_CLIMB.get(),
+                        climbingVelocity,
+                        climbingDeceleration,
+                        climbingEndTolerance,
+                        climbingEndAngTolerance,
+                        false
+                    )
                 ),
-                swerve.stop(false).withTimeout(0.25),
-                swerve.apfDrive(
-                    () -> left.getAsBoolean() ? Field.TOWER_LEFT_CLIMB.get() : Field.TOWER_RIGHT_CLIMB.get(),
-                    climbingVelocity,
-                    climbingDeceleration,
-                    climbingEndTolerance,
-                    climbingEndAngTolerance,
-                    false
-                ),
-                runOnce(() -> atPosition.value = true)
-            ),
+                intake.purge().until(intake::isStowed).asProxy()
+            ).andThen(() -> atPosition.value = true),
             swerve.setTagMode(TagMode.TOWER)
         )
             .beforeStarting(() -> atPosition.value = false)
