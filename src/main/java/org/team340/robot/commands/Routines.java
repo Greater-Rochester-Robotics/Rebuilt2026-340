@@ -8,6 +8,7 @@ import java.util.function.DoubleSupplier;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
+import org.team340.lib.tunable.Tunables.TunableInteger;
 import org.team340.lib.util.Mutable;
 import org.team340.robot.Robot;
 import org.team340.robot.subsystems.Climber;
@@ -37,6 +38,8 @@ public final class Routines {
     private static final TunableDouble climbingEndTolerance = climbingTunables.value("endTolerance", 0.01);
     private static final TunableDouble climbingEndAngTolerance = climbingTunables.value("endAngTolerance", Math.toRadians(1.0));
     // spotless:on
+
+    private static final TunableInteger shootingMinRqTagsSeen = tunables.value("shootingMinRqTagsSeen", 25);
 
     private final Climber climber;
     private final Hood hood;
@@ -80,7 +83,11 @@ public final class Routines {
                 waitSeconds(0.05),
                 waitUntil(
                     () ->
-                        (hood.atPosition() && shooters.atVelocity() && swerve.aimingAtTarget()) || force.getAsBoolean()
+                        (hood.atPosition()
+                            && shooters.atVelocity()
+                            && swerve.aimingAtTarget()
+                            && swerve.tagsSeen() >= shootingMinRqTagsSeen.get())
+                        || force.getAsBoolean()
                 ),
                 indexer.feed()
             ),

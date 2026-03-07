@@ -13,6 +13,7 @@ import org.team340.lib.math.geometry.ExtTranslation;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
+import org.team340.lib.tunable.Tunables.TunableInteger;
 import org.team340.lib.util.command.AutoChooser;
 import org.team340.robot.Robot;
 import org.team340.robot.subsystems.Climber;
@@ -29,13 +30,20 @@ public final class Autos {
 
     private static final TunableTable tunables = Tunables.getNested("autos");
 
-    public static final TunableDouble intakeVelocity = tunables.value("intakeVelocity", 2.0);
-    public static final TunableDouble shootingVelocity = tunables.value("shootingVelocity", 1.25);
+    private static final TunableDouble shootingVelocity = tunables.value("shootingVelocity", 1.25);
+    private static final TunableInteger intakeMinRqTagsSeen = tunables.value("intakeMinRqTagsSeen", 20);
 
-    private static final TunableDouble velocity = tunables.value("velocity", 4.5);
-    private static final TunableDouble deceleration = tunables.value("deceleration", 6.0);
-    private static final TunableDouble endTolerance = tunables.value("endTolerance", 0.1);
-    private static final TunableDouble endAngTolerance = tunables.value("endAngTolerance", Math.toRadians(6.0));
+    private static final TunableTable intakeTunables = tunables.getNested("intake");
+    private static final TunableDouble intakeVelocity = intakeTunables.value("velocity", 2.0);
+    private static final TunableDouble intakeDeceleration = intakeTunables.value("deceleration", 12.0);
+    private static final TunableDouble intakeEndTolerance = intakeTunables.value("endTolerance", 0.4);
+    private static final TunableDouble intakeEndAngTolerance = intakeTunables.value("endAngTolerance", 0.175);
+
+    private static final TunableTable defaultTunables = tunables.getNested("default");
+    private static final TunableDouble velocity = defaultTunables.value("velocity", 4.5);
+    private static final TunableDouble deceleration = defaultTunables.value("deceleration", 6.0);
+    private static final TunableDouble endTolerance = defaultTunables.value("endTolerance", 0.1);
+    private static final TunableDouble endAngTolerance = defaultTunables.value("endAngTolerance", Math.toRadians(6.0));
 
     @SuppressWarnings("unused")
     private final Climber climber;
@@ -101,8 +109,7 @@ public final class Autos {
      */
     private Command secondHelping(boolean left) {
         return sequence(
-            grab(left),
-            parallel(swerve.aimAtTarget(), routines.shoot().asProxy()).withTimeout(4.0),
+            sequence(grab(left), parallel(swerve.aimAtTarget(), routines.shoot().asProxy())).withTimeout(10.0),
             grabMore(left),
             parallel(swerve.aimAtTarget(), routines.shoot().asProxy())
         );
@@ -139,17 +146,28 @@ public final class Autos {
      *             {@code false} to run on the right side.
      */
     private Command grab(boolean left) {
-        var preIntake = new ExtPose(7.6, 0.8, Rotation2d.k180deg);
-        var sweep = new ExtPose(7.6, 4.4, Rotation2d.fromDegrees(90.0));
-        var sweep2 = new ExtPose(6.8, 2.6, Rotation2d.fromDegrees(-135.0));
+        var preIntake = new ExtPose(7.7, 0.9, Rotation2d.fromDegrees(-135.0));
+        var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(90.0));
+        var sweep = new ExtPose(7.7, 4.75, Rotation2d.fromDegrees(90.0));
+        var sweep2 = new ExtPose(6.8, 2.7, Rotation2d.fromDegrees(-145.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
 
         return sequence(
             deadline(
                 sequence(
-                    swerve.apfDrive(() -> preIntake.get(left), velocity, 30.0, 0.5, 1e5, true),
+                    swerve.apfDrive(
+                        () ->
+                            swerve.inNeutralZone() && swerve.tagsSeen() >= intakeMinRqTagsSeen.get()
+                                ? preIntakeCrossed.get(left)
+                                : preIntake.get(left),
+                        velocity,
+                        30.0,
+                        0.5,
+                        1e5,
+                        true
+                    ),
                     apfIntaking(() -> sweep.get(left)),
-                    swerve.apfDrive(() -> sweep2.get(left), velocity, 14.0, 0.5, 1e5, false)
+                    apfIntaking(() -> sweep2.get(left))
                 ),
                 sequence(waitSeconds(1.5), intake.intake().asProxy())
             ),
@@ -166,10 +184,10 @@ public final class Autos {
      *             {@code false} to run on the right side.
      */
     private Command grabMore(boolean left) {
-        var preIntake = new ExtPose(6.8, 0.8, Rotation2d.k180deg);
-        var sweep = new ExtPose(6.8, 4.75, Rotation2d.fromDegrees(90.0));
-        var preSweep2 = new ExtPose(6.2, 4.75, Rotation2d.fromDegrees(-120.0));
-        var sweep2 = new ExtPose(6.2, 2.6, Rotation2d.fromDegrees(-120.0));
+        var preIntake = new ExtPose(6.7, 2.0, Rotation2d.fromDegrees(-135.0));
+        var sweep = new ExtPose(6.7, 5.0, Rotation2d.fromDegrees(90.0));
+        var preSweep2 = new ExtPose(6.0, 5.0, Rotation2d.fromDegrees(-120.0));
+        var sweep2 = new ExtPose(6.0, 2.6, Rotation2d.fromDegrees(-120.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
 
         return sequence(
@@ -177,7 +195,7 @@ public final class Autos {
                 sequence(
                     swerve.apfDrive(() -> preIntake.get(left), velocity, 30.0, 0.5, 1e5, true),
                     apfIntaking(() -> sweep.get(left)),
-                    swerve.apfDrive(() -> preSweep2.get(left), velocity, 14.0, 0.5, 1e5, false),
+                    swerve.apfDrive(() -> preSweep2.get(left), velocity, 14.0, 0.25, 1e5, false),
                     apfIntaking(() -> sweep2.get(left))
                 ),
                 sequence(waitSeconds(1.5), intake.intake().asProxy())
@@ -198,12 +216,19 @@ public final class Autos {
 
     /**
      * Drives the robot to a target position using the P-APF, until the robot is
-     * positioned within the default tolerances of the specified goal location.
-     * Uses {@code intakeVelocity} and the default deceleration rate.
+     * positioned within the default intaking tolerances of the specified goal location.
+     * Uses the default intaking velocity and deceleration values.
      * @param goal A supplier that returns the target blue-origin relative field location.
      */
     private Command apfIntaking(Supplier<Pose2d> goal) {
-        return swerve.apfDrive(goal, intakeVelocity, deceleration, endTolerance, endAngTolerance, false);
+        return swerve.apfDrive(
+            goal,
+            intakeVelocity,
+            intakeDeceleration,
+            intakeEndTolerance,
+            intakeEndAngTolerance,
+            false
+        );
     }
 
     /**

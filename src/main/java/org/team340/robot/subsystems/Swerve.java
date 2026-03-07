@@ -60,6 +60,7 @@ public final class Swerve extends GRRSubsystem {
     private static final TunableBoolean enableSOTM = tunables.value("enableSOTM", true);
     private static final TunableDouble apfBumpVelocity = tunables.value("apfBumpVelocity", 1.6);
     private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(15.0));
+    private static final TunableDouble flatTolerance = tunables.value("flatTolerance", Math.toRadians(5.0));
 
     // spotless:off
     private static final TunableTable ferryTargets = tunables.getNested("ferryTargets");
@@ -133,13 +134,15 @@ public final class Swerve extends GRRSubsystem {
     private double targetAngle = 0.0;
     private boolean aimingAtTarget = false;
     private boolean seesAprilTag = false;
+    private boolean atAngle = false;
+    private int tagsSeen = 0;
 
     public Swerve() {
         api = new SwerveAPI(config);
         vision = new Vision(cameras);
         apf = new PAPFController(8.0, 0.25, 0.01, true, Field.OBSTACLES);
 
-        angularPID = new ProfiledPIDController(8.0, 0.0, 0.0, new Constraints(10.0, 24.0));
+        angularPID = new ProfiledPIDController(6.0, 0.0, 0.0, new Constraints(10.0, 24.0));
         angularPID.enableContinuousInput(-Math.PI, Math.PI);
 
         state = api.state;
@@ -167,6 +170,17 @@ public final class Swerve extends GRRSubsystem {
         );
         Profiler.run("api.addVisionMeasurements()", () -> api.addVisionMeasurements(measurements));
         seesAprilTag = measurements.length > 0;
+
+        if (
+            Math.abs(state.pitch.getRadians()) > flatTolerance.get()
+            || Math.abs(state.roll.getRadians()) > flatTolerance.get()
+        ) {
+            atAngle = true;
+            tagsSeen = 0;
+        } else {
+            atAngle = false;
+            tagsSeen += measurements.length;
+        }
 
         // Calculate the robot's displacement from the target.
         target = inOurZone() ? Field.HUB.get() : (isLeftOfCenter() ? leftFerryTarget.get() : rightFerryTarget.get());
@@ -493,6 +507,23 @@ public final class Swerve extends GRRSubsystem {
     @NotLogged
     public boolean seesAprilTag() {
         return seesAprilTag;
+    }
+
+    /**
+     * Returns {@code true} if the robot is at an angle.
+     */
+    @NotLogged
+    public boolean atAngle() {
+        return atAngle;
+    }
+
+    /**
+     * Returns the tags seen since the robot was at an angle.
+     * This can be used to determined if the robot's odometry is accurate.
+     */
+    @NotLogged
+    public int tagsSeen() {
+        return tagsSeen;
     }
 
     /**
