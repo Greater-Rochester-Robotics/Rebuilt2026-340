@@ -5,7 +5,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -32,18 +32,22 @@ public final class Intake extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("intake");
 
+    private static final TunableDouble pivotAcceleration = tunables.value("pivotAcceleration", 22.0);
+
     private static enum State {
-        STOW(0.262, 0.0), // TODO -0.08
-        EXTEND(0.262, 0.0),
-        INTAKE(0.262, 90.0),
-        COMPRESS(0.262, 90.0), // TODO 0.05
-        BARF(0.262, -90.0);
+        STOW(-0.08, 6.0, 0.0),
+        EXTEND(0.262, 9.0, 0.0),
+        INTAKE(0.262, 9.0, 90.0),
+        COMPRESS(0.05, 2.0, 90.0),
+        BARF(0.262, 9.0, -90.0);
 
         public final TunableDouble position;
+        public final TunableDouble pivotVelocity;
         public final TunableDouble rollerVelocity;
 
-        private State(final double position, final double rollerVelocity) {
+        private State(final double position, final double pivotVelocity, final double rollerVelocity) {
             this.position = tunables.value("positions/" + name(), position);
+            this.pivotVelocity = tunables.value("pivotVelocity/" + name(), pivotVelocity);
             this.rollerVelocity = tunables.value("rollerVelocities/" + name(), rollerVelocity);
         }
     }
@@ -52,7 +56,7 @@ public final class Intake extends GRRSubsystem {
     private final TalonFX rollers;
     private final CANcoder wcpThroughborePoweredByCANcoderForHalfInchHex; // do not change this name
 
-    private final MotionMagicVoltage pivotPositionControl;
+    private final DynamicMotionMagicVoltage pivotPositionControl;
     private final VelocityTorqueCurrentFOC rollersVelocityControl;
 
     public Intake() {
@@ -74,7 +78,7 @@ public final class Intake extends GRRSubsystem {
             ParentDevice.optimizeBusUtilizationForAll(4, pivot, rollers, wcpThroughborePoweredByCANcoderForHalfInchHex)
         );
 
-        pivotPositionControl = new MotionMagicVoltage(0.0);
+        pivotPositionControl = new DynamicMotionMagicVoltage(0.0, 0.0, 0.0);
         pivotPositionControl.EnableFOC = true;
         pivotPositionControl.UpdateFreqHz = 0.0;
 
@@ -142,6 +146,8 @@ public final class Intake extends GRRSubsystem {
         return commandBuilder("Intake.runState()")
             .onExecute(() -> {
                 pivotPositionControl.withPosition(state.position.getAsDouble());
+                pivotPositionControl.withVelocity(state.pivotVelocity.get());
+                pivotPositionControl.withAcceleration(pivotAcceleration.get());
                 pivot.setControl(pivotPositionControl);
 
                 rollersVelocityControl.withVelocity(state.rollerVelocity.getAsDouble());
@@ -160,7 +166,6 @@ public final class Intake extends GRRSubsystem {
     private void configureCANcoder() {
         final CANcoderConfiguration wcpThroughborePoweredByCANcoderForHalfInchHexConfig = new CANcoderConfiguration();
 
-        // TODO
         wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.MagnetOffset = 0.536;
         wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.SensorDirection =
             SensorDirectionValue.CounterClockwise_Positive;
@@ -193,9 +198,6 @@ public final class Intake extends GRRSubsystem {
         config.Slot0.kS = 0.0;
         config.Slot0.kV = 2.0;
         config.Slot0.kA = 0.0;
-
-        config.MotionMagic.MotionMagicCruiseVelocity = 10.0;
-        config.MotionMagic.MotionMagicAcceleration = 22.0;
 
         config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 0.281;
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;

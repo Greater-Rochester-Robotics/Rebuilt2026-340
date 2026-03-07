@@ -31,7 +31,7 @@ public final class Autos {
     private static final TunableTable tunables = Tunables.getNested("autos");
 
     private static final TunableDouble shootingVelocity = tunables.value("shootingVelocity", 1.25);
-    private static final TunableInteger intakeMinRqTagsSeen = tunables.value("intakeMinRqTagsSeen", 20);
+    private static final TunableInteger intakeMinRqTagsSeen = tunables.value("intakeMinRqTagsSeen", 15);
 
     private static final TunableTable intakeTunables = tunables.getNested("intake");
     private static final TunableDouble intakeVelocity = intakeTunables.value("velocity", 2.0);
@@ -149,7 +149,8 @@ public final class Autos {
         var preIntake = new ExtPose(7.7, 0.9, Rotation2d.fromDegrees(-135.0));
         var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(90.0));
         var sweep = new ExtPose(7.7, 4.75, Rotation2d.fromDegrees(90.0));
-        var sweep2 = new ExtPose(6.8, 2.7, Rotation2d.fromDegrees(-145.0));
+        var preSweep2 = new ExtPose(6.7, 4.75, Rotation2d.fromDegrees(-145.0));
+        var sweep2 = new ExtPose(6.5, 2.7, Rotation2d.fromDegrees(-145.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
 
         return sequence(
@@ -166,8 +167,9 @@ public final class Autos {
                         1e5,
                         true
                     ),
-                    apfIntaking(() -> sweep.get(left)),
-                    apfIntaking(() -> sweep2.get(left))
+                    apfIntaking(() -> sweep.get(left)).withTimeout(4.0),
+                    swerve.apfDrive(() -> preSweep2.get(left), velocity, 14.0, 0.25, 1e5, false),
+                    apfIntaking(() -> sweep2.get(left)).withTimeout(4.0)
                 ),
                 sequence(waitSeconds(1.5), intake.intake().asProxy())
             ),
@@ -186,17 +188,17 @@ public final class Autos {
     private Command grabMore(boolean left) {
         var preIntake = new ExtPose(6.7, 2.0, Rotation2d.fromDegrees(-135.0));
         var sweep = new ExtPose(6.7, 5.0, Rotation2d.fromDegrees(90.0));
-        var preSweep2 = new ExtPose(6.0, 5.0, Rotation2d.fromDegrees(-120.0));
-        var sweep2 = new ExtPose(6.0, 2.6, Rotation2d.fromDegrees(-120.0));
+        var preSweep2 = new ExtPose(6.3, 5.0, Rotation2d.fromDegrees(-120.0));
+        var sweep2 = new ExtPose(6.2, 2.6, Rotation2d.fromDegrees(-120.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
 
         return sequence(
             deadline(
                 sequence(
                     swerve.apfDrive(() -> preIntake.get(left), velocity, 30.0, 0.5, 1e5, true),
-                    apfIntaking(() -> sweep.get(left)),
+                    apfIntaking(() -> sweep.get(left)).withTimeout(4.0),
                     swerve.apfDrive(() -> preSweep2.get(left), velocity, 14.0, 0.25, 1e5, false),
-                    apfIntaking(() -> sweep2.get(left))
+                    apfIntaking(() -> sweep2.get(left)).withTimeout(4.0)
                 ),
                 sequence(waitSeconds(1.5), intake.intake().asProxy())
             ),
