@@ -123,7 +123,7 @@ public final class Routines {
      */
     public Command driverShootShutdown(DoubleSupplier x, DoubleSupplier y) {
         return deadline(
-            waitSeconds(0.25),
+            waitSeconds(0.4),
             hood.targetDistance(swerve::targetDistance),
             shooters.targetDistance(swerve::targetDistance),
             swerve.aimAtTarget(x, y)
