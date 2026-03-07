@@ -123,7 +123,7 @@ public final class Routines {
      */
     public Command driverShootShutdown(DoubleSupplier x, DoubleSupplier y) {
         return deadline(
-            waitSeconds(0.5),
+            waitSeconds(0.25),
             hood.targetDistance(swerve::targetDistance),
             shooters.targetDistance(swerve::targetDistance),
             swerve.aimAtTarget(x, y)
@@ -146,15 +146,17 @@ public final class Routines {
                     climbingVelocity,
                     climbingDeceleration,
                     climbingEndTolerance,
-                    climbingEndAngTolerance
+                    climbingEndAngTolerance,
+                    false
                 ),
-                swerve.stop(false).withTimeout(0.1),
+                swerve.stop(false).withTimeout(0.25),
                 swerve.apfDrive(
                     () -> left.getAsBoolean() ? Field.TOWER_LEFT_CLIMB.get() : Field.TOWER_RIGHT_CLIMB.get(),
                     climbingVelocity,
                     climbingDeceleration,
                     climbingEndTolerance,
-                    climbingEndAngTolerance
+                    climbingEndAngTolerance,
+                    false
                 ),
                 runOnce(() -> atPosition.value = true)
             ),

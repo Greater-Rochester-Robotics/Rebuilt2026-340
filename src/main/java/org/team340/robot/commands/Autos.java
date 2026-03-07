@@ -25,20 +25,21 @@ import org.team340.robot.subsystems.Swerve;
  * The Autos class declares autonomous modes, and adds them
  * to the dashboard to be selected by the drive team.
  */
-@SuppressWarnings("unused")
 public final class Autos {
 
     private static final TunableTable tunables = Tunables.getNested("autos");
 
-    public static final TunableDouble intakeVelocity = tunables.value("intakeVelocity", 1.75);
-    public static final TunableDouble shootingVelocity = tunables.value("shootingVelocity", 1.0);
+    public static final TunableDouble intakeVelocity = tunables.value("intakeVelocity", 2.0);
+    public static final TunableDouble shootingVelocity = tunables.value("shootingVelocity", 1.25);
 
     private static final TunableDouble velocity = tunables.value("velocity", 4.5);
     private static final TunableDouble deceleration = tunables.value("deceleration", 6.0);
     private static final TunableDouble endTolerance = tunables.value("endTolerance", 0.1);
     private static final TunableDouble endAngTolerance = tunables.value("endAngTolerance", Math.toRadians(6.0));
 
+    @SuppressWarnings("unused")
     private final Climber climber;
+
     private final Hood hood;
     private final Intake intake;
     private final Shooters shooters;
@@ -59,9 +60,21 @@ public final class Autos {
         chooser = new AutoChooser();
 
         // Add autonomous modes to the dashboard
+        chooser.add("Mashup Monday", mashupMonday());
         chooser.add("Turkiye Special", turkiyeSpecial());
+        chooser.add("Second Helping Right", secondHelping(false));
+        chooser.add("Second Helping Left", secondHelping(true));
         chooser.add("Tower Time Right", towerTime(false));
         chooser.add("Tower Time Left", towerTime(true));
+        chooser.add("Simple Sally Right", simpleSally(false));
+        chooser.add("Simple Sally Left", simpleSally(true));
+    }
+
+    /**
+     * The "Mashup Monday" auto routine.
+     */
+    private Command mashupMonday() {
+        return turkiyeSpecial().withTimeout(15.0).andThen(new ScheduleCommand(routines.climb(() -> false, false)));
     }
 
     /**
@@ -74,10 +87,24 @@ public final class Autos {
 
         return sequence(
             grab(false),
-            deadline(swerve.aimAtTarget().withTimeout(0.5), routines.shoot().asProxy()),
-            deadline(apfShooting(prePickup).withTimeout(3.0), routines.shoot().asProxy()),
-            deadline(swerve.apfDrive(pickup, velocity, deceleration).withTimeout(2.5), getReady()),
+            deadline(apfShooting(prePickup).withTimeout(2.1), routines.shoot().asProxy()),
+            deadline(swerve.apfDrive(pickup, velocity, deceleration, false).withTimeout(2.5), getReady()),
             deadline(apfShooting(shoot), routines.shoot().asProxy())
+        );
+    }
+
+    /**
+     * The "Second Helping" auto routine.
+     * @param left {@code true} if the auto should run on the left side of the field
+     *             (from the perspective of the current alliance's driver station),
+     *             {@code false} to run on the right side.
+     */
+    private Command secondHelping(boolean left) {
+        return sequence(
+            grab(left),
+            parallel(swerve.aimAtTarget(), routines.shoot().asProxy()).withTimeout(4.0),
+            grabMore(left),
+            parallel(swerve.aimAtTarget(), routines.shoot().asProxy())
         );
     }
 
@@ -88,13 +115,17 @@ public final class Autos {
      *             {@code false} to run on the right side.
      */
     private Command towerTime(boolean left) {
-        return sequence(
-            deadline(
-                waitSeconds(15.0),
-                sequence(grab(left), parallel(swerve.aimAtTarget(), routines.shoot().asProxy()))
-            ),
-            new ScheduleCommand(routines.climb(() -> left, false))
-        );
+        return simpleSally(left).withTimeout(15.0).andThen(new ScheduleCommand(routines.climb(() -> left, false)));
+    }
+
+    /**
+     * The "Simple Sally" auto routine.
+     * @param left {@code true} if the auto should run on the left side of the field
+     *             (from the perspective of the current alliance's driver station),
+     *             {@code false} to run on the right side.
+     */
+    private Command simpleSally(boolean left) {
+        return sequence(grab(left), parallel(swerve.aimAtTarget(), routines.shoot().asProxy()));
     }
 
     // ********** Helper Methods **********
@@ -108,21 +139,50 @@ public final class Autos {
      *             {@code false} to run on the right side.
      */
     private Command grab(boolean left) {
-        var preIntake = new ExtPose(7.7, 1.8, Rotation2d.fromDegrees(-135.0));
-        var sweep = new ExtPose(7.7, 5.75, Rotation2d.fromDegrees(90.0));
-        var sweep2 = new ExtPose(6.4, 2.4, Rotation2d.fromDegrees(-135.0));
+        var preIntake = new ExtPose(7.6, 0.8, Rotation2d.k180deg);
+        var sweep = new ExtPose(7.6, 4.4, Rotation2d.fromDegrees(90.0));
+        var sweep2 = new ExtPose(6.8, 2.6, Rotation2d.fromDegrees(-135.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
 
         return sequence(
-            apfDefaults(() -> preIntake.get(left)),
             deadline(
                 sequence(
+                    swerve.apfDrive(() -> preIntake.get(left), velocity, 30.0, 0.5, 1e5, true),
                     apfIntaking(() -> sweep.get(left)),
-                    swerve.apfDrive(() -> sweep2.get(left), velocity, deceleration, () -> 0.75, endAngTolerance)
+                    swerve.apfDrive(() -> sweep2.get(left), velocity, 14.0, 0.5, 1e5, false)
                 ),
-                intake.intake().asProxy()
+                sequence(waitSeconds(1.5), intake.intake().asProxy())
             ),
-            deadline(apfDefaults(() -> shoot.get(left)), getReady())
+            apfDefaults(() -> shoot.get(left)).deadlineFor(getReady())
+        );
+    }
+
+    /**
+     * Sweeps the neutral zone farther in to intake fuel, then returns to a shooting position in the
+     * alliance zone while preparing the hood and flywheels. Ends when it reaches that
+     * location. Does not run the indexer to actually shoot.
+     * @param left {@code true} if the robot should be on the left side of the field
+     *             (from the perspective of the current alliance's driver station),
+     *             {@code false} to run on the right side.
+     */
+    private Command grabMore(boolean left) {
+        var preIntake = new ExtPose(6.8, 0.8, Rotation2d.k180deg);
+        var sweep = new ExtPose(6.8, 4.75, Rotation2d.fromDegrees(90.0));
+        var preSweep2 = new ExtPose(6.2, 4.75, Rotation2d.fromDegrees(-120.0));
+        var sweep2 = new ExtPose(6.2, 2.6, Rotation2d.fromDegrees(-120.0));
+        var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
+
+        return sequence(
+            deadline(
+                sequence(
+                    swerve.apfDrive(() -> preIntake.get(left), velocity, 30.0, 0.5, 1e5, true),
+                    apfIntaking(() -> sweep.get(left)),
+                    swerve.apfDrive(() -> preSweep2.get(left), velocity, 14.0, 0.5, 1e5, false),
+                    apfIntaking(() -> sweep2.get(left))
+                ),
+                sequence(waitSeconds(1.5), intake.intake().asProxy())
+            ),
+            apfDefaults(() -> shoot.get(left)).deadlineFor(getReady())
         );
     }
 
@@ -133,7 +193,7 @@ public final class Autos {
      * @param goal A supplier that returns the target blue-origin relative field location.
      */
     private Command apfDefaults(Supplier<Pose2d> goal) {
-        return swerve.apfDrive(goal, velocity, deceleration, endTolerance, endAngTolerance);
+        return swerve.apfDrive(goal, velocity, deceleration, endTolerance, endAngTolerance, false);
     }
 
     /**
@@ -143,7 +203,7 @@ public final class Autos {
      * @param goal A supplier that returns the target blue-origin relative field location.
      */
     private Command apfIntaking(Supplier<Pose2d> goal) {
-        return swerve.apfDrive(goal, intakeVelocity, deceleration, endTolerance, endAngTolerance);
+        return swerve.apfDrive(goal, intakeVelocity, deceleration, endTolerance, endAngTolerance, false);
     }
 
     /**

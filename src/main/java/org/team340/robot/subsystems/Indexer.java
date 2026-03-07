@@ -116,9 +116,6 @@ public final class Indexer extends GRRSubsystem {
 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
-        config.TorqueCurrent.PeakForwardTorqueCurrent = 100.0;
-        config.TorqueCurrent.PeakReverseTorqueCurrent = -100.0;
-
         PhoenixUtil.run(() -> twindexer.clearStickyFaults());
         PhoenixUtil.run(() -> twindexer.getConfigurator().apply(config));
     }
@@ -141,9 +138,6 @@ public final class Indexer extends GRRSubsystem {
         config.Slot0.kA = 0.0;
 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-
-        config.TorqueCurrent.PeakForwardTorqueCurrent = 100.0;
-        config.TorqueCurrent.PeakReverseTorqueCurrent = -100.0;
 
         PhoenixUtil.run(() -> uptake.clearStickyFaults());
         PhoenixUtil.run(() -> uptake.getConfigurator().apply(config));

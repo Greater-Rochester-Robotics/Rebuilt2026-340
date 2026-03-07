@@ -63,7 +63,7 @@ public final class Swerve extends GRRSubsystem {
 
     // spotless:off
     private static final TunableTable ferryTargets = tunables.getNested("ferryTargets");
-    private static final ExtTranslation leftFerryTarget = ferryTargets.add("left", new ExtTranslation(2.5, 6.0));
+    private static final ExtTranslation leftFerryTarget = ferryTargets.add("left", new ExtTranslation(2.5, 7.0));
     private static final ExtTranslation rightFerryTarget = ferryTargets.add("right",new ExtTranslation(leftFerryTarget.getBlue(true)));
     // spotless:on
 
@@ -101,9 +101,9 @@ public final class Swerve extends GRRSubsystem {
         .setMoveFF(0.0, 0.125)
         .setTurnPID(100.0, 0.0, 0.2)
         .setBrakeMode(true, true)
-        .setLimits(4.5, 0.01, 17.0, 14.0, 45.0)
+        .setLimits(4.5, 0.01, 16.0, 12.5, 36.0)
         .setDriverProfile(4.5, 1.5, 0.1, 5.4, 2.0, 0.05)
-        .setPowerProperties(Constants.VOLTAGE, 80.0, 60.0, 60.0, 60.0)
+        .setPowerProperties(Constants.VOLTAGE, 80.0, 40.0, 60.0, 40.0)
         .setMechanicalProperties(675.0 / 112.0, 287.0 / 11.0, Units.inchesToMeters(3.87))
         .setOdometryStd(0.1, 0.1, 0.05)
         .setIMU(SwerveIMUs.canandgyro(RobotMap.CANANDGYRO))
@@ -139,7 +139,7 @@ public final class Swerve extends GRRSubsystem {
         vision = new Vision(cameras);
         apf = new PAPFController(8.0, 0.25, 0.01, true, Field.OBSTACLES);
 
-        angularPID = new ProfiledPIDController(8.0, 0.0, 0.0, new Constraints(10.0, 26.0));
+        angularPID = new ProfiledPIDController(8.0, 0.0, 0.0, new Constraints(10.0, 24.0));
         angularPID.enableContinuousInput(-Math.PI, Math.PI);
 
         state = api.state;
@@ -158,12 +158,12 @@ public final class Swerve extends GRRSubsystem {
 
         // Set our AprilTag mode.
         if (tagModeMutex.getCurrentCommand() == null) {
-            vision.setTagMode(inOurZone() ? TagMode.HUB : TagMode.ALL_TAGS);
+            vision.setTagMode(inOurZone() ? TagMode.HUB : TagMode.BOTH_HUBS);
         }
 
         // Apply vision estimates to the pose estimator.
         var measurements = Profiler.run("vision.getUnreadResults()", () ->
-            vision.getUnreadResults(state.poseHistory, state.odometryPose)
+            vision.getUnreadResults(state.poseHistory, state.odometryPose, state.velocity)
         );
         Profiler.run("api.addVisionMeasurements()", () -> api.addVisionMeasurements(measurements));
         seesAprilTag = measurements.length > 0;
@@ -265,9 +265,12 @@ public final class Swerve extends GRRSubsystem {
         DoubleSupplier velocity,
         DoubleSupplier maxDeceleration
     ) {
-        return apfDrive(() -> new Pose2d(goal.get(), new Rotation2d(targetAngle)), velocity, maxDeceleration).withName(
-            "Swerve.apfAimAtTarget()"
-        );
+        return apfDrive(
+            () -> new Pose2d(goal.get(), new Rotation2d(targetAngle)),
+            velocity,
+            maxDeceleration,
+            false
+        ).withName("Swerve.apfAimAtTarget()");
     }
 
     /**
@@ -278,15 +281,45 @@ public final class Swerve extends GRRSubsystem {
      * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
      * @param endTolerance The tolerance in meters at which to end the command.
      * @param endAngTolerance The tolerance in radians at which to end the command.
+     * @param enableFuel If the fuel staged in the neutral zone should be treated as an obstacle.
+     */
+    public Command apfDrive(
+        Supplier<Pose2d> goal,
+        DoubleSupplier velocity,
+        double maxDeceleration,
+        double endTolerance,
+        double endAngTolerance,
+        boolean enableFuel
+    ) {
+        return apfDrive(
+            goal,
+            velocity,
+            () -> maxDeceleration,
+            () -> endTolerance,
+            () -> endAngTolerance,
+            enableFuel
+        ).withName("Swerve.apfDrive()");
+    }
+
+    /**
+     * Drives the robot to a target position using the P-APF, until the
+     * robot is positioned within a specified tolerance of the target.
+     * @param goal A supplier that returns the target blue-origin relative field location.
+     * @param velocity The desired cruise velocity of the robot, in m/s.
+     * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
+     * @param endTolerance The tolerance in meters at which to end the command.
+     * @param endAngTolerance The tolerance in radians at which to end the command.
+     * @param enableFuel If the fuel staged in the neutral zone should be treated as an obstacle.
      */
     public Command apfDrive(
         Supplier<Pose2d> goal,
         DoubleSupplier velocity,
         DoubleSupplier maxDeceleration,
         DoubleSupplier endTolerance,
-        DoubleSupplier endAngTolerance
+        DoubleSupplier endAngTolerance,
+        boolean enableFuel
     ) {
-        return apfDrive(goal, velocity, maxDeceleration)
+        return apfDrive(goal, velocity, maxDeceleration, enableFuel)
             .until(() -> {
                 var next = goal.get();
                 return (
@@ -302,8 +335,14 @@ public final class Swerve extends GRRSubsystem {
      * @param goal A supplier that returns the target blue-origin relative field location.
      * @param velocity The desired cruise velocity of the robot, in m/s.
      * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
+     * @param enableFuel If the fuel staged in the neutral zone should be treated as an obstacle.
      */
-    public Command apfDrive(Supplier<Pose2d> goal, DoubleSupplier velocity, DoubleSupplier maxDeceleration) {
+    public Command apfDrive(
+        Supplier<Pose2d> goal,
+        DoubleSupplier velocity,
+        DoubleSupplier maxDeceleration,
+        boolean enableFuel
+    ) {
         return commandBuilder("Swerve.apfDrive()")
             .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
             .onExecute(() -> {
@@ -322,7 +361,8 @@ public final class Swerve extends GRRSubsystem {
                     state.pose,
                     next.getTranslation(),
                     bumpSpeed ? apfBumpVelocity.getAsDouble() : velocity.getAsDouble(),
-                    maxDeceleration.getAsDouble()
+                    maxDeceleration.getAsDouble(),
+                    enableFuel ? Field.FUEL_OBSTACLES : null
                 );
 
                 speeds.omegaRadiansPerSecond = angularPID.calculate(

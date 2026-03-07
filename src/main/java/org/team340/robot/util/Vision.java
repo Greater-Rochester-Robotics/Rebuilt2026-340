@@ -40,11 +40,13 @@ public final class Vision {
 
     private static final TunableTable tunables = Tunables.getNested("vision");
     private static final TunableDouble zTolerance = tunables.value("zTolerance", 0.5);
+    private static final TunableDouble velLatencyFactor = tunables.value("velLatencyFactor", 0.045);
+    private static final TunableDouble velAngFalloff = tunables.value("velAngFalloff", 0.6);
 
     private static enum StrategyWeights {
-        MULTITAG(0.1, 0.25),
-        TRIG(0.06, 1e5),
-        AMBIGUITY(0.2, 0.4);
+        MULTITAG(0.16, 0.35),
+        TRIG(0.12, 1e5),
+        AMBIGUITY(0.2, 0.5);
 
         public final TunableDouble xy;
         public final TunableDouble angular;
@@ -101,8 +103,13 @@ public final class Vision {
      * Gets unread results from all cameras.
      * @param poseHistory Robot pose estimates from the last robot cycle.
      * @param odometryPose The uncorrected odometry pose of the robot. Used for simulation.
+     * @param velocity The directionless velocity of the robot in m/s.
      */
-    public VisionMeasurement[] getUnreadResults(List<TimestampedPose> poseHistory, Pose2d odometryPose) {
+    public VisionMeasurement[] getUnreadResults(
+        List<TimestampedPose> poseHistory,
+        Pose2d odometryPose,
+        double velocity
+    ) {
         if (sim != null) {
             // Update sim, if applicable.
             sim.update(odometryPose);
@@ -124,7 +131,7 @@ public final class Vision {
             camera.addReferencePoses(poseHistory);
 
             // Populate our lists with vision data from the camera.
-            camera.refresh(measurements, estimates, targets);
+            camera.refresh(measurements, estimates, targets, velocity);
         }
 
         // Convert the vision measurement list to an array and return it.
@@ -187,8 +194,14 @@ public final class Vision {
          * @param measurements A list of vision measurements to add to.
          * @param estimates A list of pose estimates to add to for telemetry.
          * @param targets A list of targets to add to for telemetry.
+         * @param velocity The directionless velocity of the robot in m/s.
          */
-        private void refresh(List<VisionMeasurement> measurements, List<Pose3d> estimates, List<Pose3d> targets) {
+        private void refresh(
+            List<VisionMeasurement> measurements,
+            List<Pose3d> estimates,
+            List<Pose3d> targets,
+            double velocity
+        ) {
             boolean enabled = enabledDebounce.calculate(DriverStation.isEnabled());
 
             for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
@@ -268,11 +281,18 @@ public final class Vision {
                 // Calculate the angular pose estimation weight, similar to X/Y.
                 double angularStd = angularWeight * avgDistance * avgDistance;
 
+                // Apply a heuristic to the angular pose estimation weight based on velocity.
+                angularStd *= 1.0 - Math.max(velocity / velAngFalloff.get(), 1.0);
+
+                // Apply a heuristic to the measurement's latency, that accounts for
+                // increased translational error at high chassis velocities.
+                double timestamp = estimate.get().timestampSeconds - (velocity * velLatencyFactor.get());
+
                 // Push the measurement to the supplied measurements list.
                 measurements.add(
                     new VisionMeasurement(
                         estimate.get().estimatedPose.toPose2d(),
-                        estimate.get().timestampSeconds,
+                        timestamp,
                         VecBuilder.fill(xyStd, xyStd, angularStd)
                     )
                 );
@@ -295,8 +315,8 @@ public final class Vision {
 
     /** AprilTag ID filtering mode. */
     public static enum TagMode {
-        /** Use all AprilTags on the field. */
-        ALL_TAGS,
+        /** Use the tags on either hub. */
+        BOTH_HUBS,
         /** Use only our alliance's hub tags. */
         HUB,
         /** Use only our alliance's tower tags. */
@@ -319,13 +339,12 @@ public final class Vision {
         boolean invalidAlliance = DriverStation.getAlliance().isEmpty();
 
         switch (tagMode) {
-            case ALL_TAGS:
-                return id >= 1 && id <= 32;
+            case BOTH_HUBS:
             case HUB:
                 boolean blueHub = (id >= 18 && id <= 21) || (id >= 24 && id <= 27);
                 boolean redHub = (id >= 2 && id <= 5) || (id >= 8 && id <= 11);
 
-                if (invalidAlliance) return blueHub || redHub;
+                if (invalidAlliance || tagMode.equals(TagMode.BOTH_HUBS)) return blueHub || redHub;
                 else return Alliance.isBlue() ? blueHub : redHub;
             case TOWER:
                 boolean blueTower = id == 31 || id == 32;

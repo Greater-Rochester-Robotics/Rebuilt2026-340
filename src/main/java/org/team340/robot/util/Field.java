@@ -2,6 +2,7 @@ package org.team340.robot.util;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import org.team340.lib.math.FieldInfo;
 import org.team340.lib.math.PAPFController.LateralObstacle;
@@ -23,7 +24,9 @@ public final class Field {
     /** The X coordinate of the edge of the red ALLIANCE ZONE. */
     public static final double RED_ZONE = getTag(10).getX();
 
+    /** The X coordinate of the far edge of the blue BUMP, from the perspective of the blue DRIVER STATION. */
     public static final double BLUE_BUMP_FAR = BLUE_ZONE + Units.inchesToMeters(47.0);
+    /** The X coordinate of the far edge of the red BUMP, from the perspective of the red DRIVER STATION. */
     public static final double RED_BUMP_FAR = RED_ZONE - Units.inchesToMeters(47.0);
 
     // HUB location helpers
@@ -47,7 +50,7 @@ public final class Field {
     // TOWER location helpers
     private static final double TOWER_LEFT_Y = 4.2;
     private static final double TOWER_RIGHT_Y = 3.33;
-    private static final double CLIMB_APPROACH_X = 1.65;
+    private static final double CLIMB_APPROACH_X = 1.75;
     private static final double CLIMBING_X = 1.475;
 
     /** The Y coordinate of the center of the blue TOWER. */
@@ -157,7 +160,28 @@ public final class Field {
         new LineObstacle(RIGHT_TRENCH_FAR_FIELD_CORNER.getRed(), RIGHT_TRENCH_BASE_FAR_OPENING_CORNER.getRed(), 2.0, 1.5),
     };
 
+    // NEUTRAL ZONE FUEL helpers
+    private static final double FUEL_HALF_WIDTH = 2.31;
+    private static final double FUEL_HALF_DEPTH = 0.913;
+
+    /** The left near corner of the NEUTRAL ZONE FUEL, from the perspective of the blue DRIVER STATION. */
+    private static final Translation2d FUEL_LEFT_NEAR = new Translation2d(X_CENTER - FUEL_HALF_DEPTH, Y_CENTER + FUEL_HALF_WIDTH);
+    /** The left far corner of the NEUTRAL ZONE FUEL, from the perspective of the blue DRIVER STATION. */
+    private static final Translation2d FUEL_LEFT_FAR = new Translation2d(X_CENTER + FUEL_HALF_DEPTH, Y_CENTER + FUEL_HALF_WIDTH);
+    /** The right near corner of the NEUTRAL ZONE FUEL, from the perspective of the blue DRIVER STATION. */
+    private static final Translation2d FUEL_RIGHT_NEAR = new Translation2d(X_CENTER - FUEL_HALF_DEPTH, Y_CENTER - FUEL_HALF_WIDTH);
+    /** The right far corner of the NEUTRAL ZONE FUEL, from the perspective of the blue DRIVER STATION. */
+    private static final Translation2d FUEL_RIGHT_FAR = new Translation2d(X_CENTER + FUEL_HALF_DEPTH, Y_CENTER - FUEL_HALF_WIDTH);
+
     // spotless:on
+
+    /** NEUTRAL ZONE FUEL obstacles for the P-APF. */
+    public static final Obstacle[] FUEL_OBSTACLES = {
+        new LineObstacle(FUEL_LEFT_NEAR, FUEL_LEFT_FAR, 2.0, 1.5),
+        new LineObstacle(FUEL_RIGHT_NEAR, FUEL_RIGHT_FAR, 2.0, 1.5),
+        new LineObstacle(FUEL_LEFT_NEAR, FUEL_RIGHT_NEAR, 2.0, 1.5),
+        new LineObstacle(FUEL_LEFT_FAR, FUEL_RIGHT_FAR, 2.0, 1.5)
+    };
 
     /**
      * Returns the pose of the specified AprilTag on the field.
