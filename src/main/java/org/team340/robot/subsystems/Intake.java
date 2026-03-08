@@ -34,16 +34,16 @@ public final class Intake extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("intake");
 
-    private static final TunableDouble pivotAcceleration = tunables.value("pivotAcceleration", 22.0);
-    private static final TunableDouble pivotStowed = tunables.value("pivotStowed", 0.0); // TODO
+    private static final TunableDouble pivotAcceleration = tunables.value("pivotAcceleration", 18.0);
+    private static final TunableDouble pivotStowed = tunables.value("pivotStowed", -0.1);
 
     private static enum State {
-        STOW(-0.08, 6.0, 0.0),
-        PURGE(-0.08, 6.0, -90.0),
-        EXTEND(0.262, 9.0, 0.0),
-        INTAKE(0.262, 9.0, 90.0),
-        COMPRESS(0.05, 2.0, 90.0),
-        BARF(0.262, 9.0, -90.0);
+        STOW(-0.115, 1.0, 0.0),
+        EXTEND(0.25, 1.0, 0.0),
+        INTAKE(0.25, 1.0, 90.0),
+        COMPRESS(0.0, 0.25, 40.0),
+        BARF(0.25, 1.0, -90.0),
+        PURGE(-0.115, 1.0, -90.0);
 
         public final TunableDouble position;
         public final TunableDouble pivotVelocity;
@@ -113,13 +113,6 @@ public final class Intake extends GRRSubsystem {
     }
 
     /**
-     * intake stows and barfs at the same time
-     */
-    public Command purge() {
-        return runState(State.PURGE).withName("Intake.purge");
-    }
-
-    /**
      * Extends the intake without moving the rollers.
      */
     public Command extend() {
@@ -159,6 +152,13 @@ public final class Intake extends GRRSubsystem {
     }
 
     /**
+     * Retracts the intake and barfs out fuel.
+     */
+    public Command purge() {
+        return runState(State.PURGE).withName("Intake.purge()");
+    }
+
+    /**
      * Internal method to run the motors as configured for the specified state.
      * @param state The intake state to target.
      */
@@ -183,6 +183,9 @@ public final class Intake extends GRRSubsystem {
             });
     }
 
+    /**
+     * Returns {@code true} when the intake is stowed inside the frame perimeter.
+     */
     public boolean isStowed() {
         return pivotPosition.getValueAsDouble() <= pivotStowed.get();
     }
@@ -190,7 +193,7 @@ public final class Intake extends GRRSubsystem {
     private void configureCANcoder() {
         final CANcoderConfiguration wcpThroughborePoweredByCANcoderForHalfInchHexConfig = new CANcoderConfiguration();
 
-        wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.MagnetOffset = 0.536;
+        wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.MagnetOffset = 0.677;
         wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.SensorDirection =
             SensorDirectionValue.CounterClockwise_Positive;
 
@@ -206,8 +209,8 @@ public final class Intake extends GRRSubsystem {
 
         config.ClosedLoopGeneral.ContinuousWrap = true;
 
-        config.CurrentLimits.StatorCurrentLimit = 80.0;
-        config.CurrentLimits.SupplyCurrentLimit = 35.0;
+        config.CurrentLimits.StatorCurrentLimit = 60.0;
+        config.CurrentLimits.SupplyCurrentLimit = 30.0;
 
         config.Feedback.FeedbackRemoteSensorID = RobotMap.INTAKE_WCP_THROUGHBORE_POWERED_BY_CANCODER_FOR_HALF_INCH_HEX;
         config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
@@ -215,7 +218,7 @@ public final class Intake extends GRRSubsystem {
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 75.0;
+        config.Slot0.kP = 85.0;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;

@@ -61,21 +61,24 @@ public final class Routines {
      * Barfs fuel out of the intake.
      */
     public Command barf() {
-        return parallel(indexer.barf(), intake.barf()).withName("Routines.barf()");
+        return parallel(sequence(waitSeconds(0.25), indexer.barf().asProxy()), intake.barf()).withName(
+            "Routines.barf()"
+        );
     }
 
     /**
      * Shoots at the hub, without commanding the drivetrain.
      */
     public Command shoot() {
-        return shoot(() -> false);
+        return shoot(() -> false, () -> false);
     }
 
     /**
      * Shoots at the hub, without commanding the drivetrain.
+     * @param runIntake Whether the intake should also be intaking.
      * @param force A supplier that if {@code true} will force the indexer to feed the shooters.
      */
-    public Command shoot(BooleanSupplier force) {
+    public Command shoot(BooleanSupplier runIntake, BooleanSupplier force) {
         return parallel(
             hood.targetDistance(swerve::targetDistance),
             shooters.targetDistance(swerve::targetDistance),
@@ -92,12 +95,8 @@ public final class Routines {
                 indexer.feed()
             ),
             sequence(
-                waitSeconds(2.0),
-                intake
-                    .compress()
-                    .asProxy()
-                    .onlyIf(() -> intake.getCurrentCommand() == intake.getDefaultCommand()),
-                waitUntil(() -> intake.getCurrentCommand() == intake.getDefaultCommand())
+                race(waitUntil(runIntake), waitSeconds(3.5)),
+                either(intake.intake().onlyWhile(runIntake), intake.compress().until(runIntake), runIntake)
             ).repeatedly()
         ).withName("Routines.shoot()");
     }
@@ -117,10 +116,11 @@ public final class Routines {
      * Shoots at the hub, with driver input and automated heading aim.
      * @param x The X value from the driver's joystick.
      * @param y The Y value from the driver's joystick.
+     * @param runIntake Whether the intake should also be intaking.
      * @param force A supplier that if {@code true} will force the indexer to feed the shooters.
      */
-    public Command driverShoot(DoubleSupplier x, DoubleSupplier y, BooleanSupplier force) {
-        return parallel(shoot(force), swerve.aimAtTarget(x, y)).withName("Routines.driverShoot()");
+    public Command driverShoot(DoubleSupplier x, DoubleSupplier y, BooleanSupplier runIntake, BooleanSupplier force) {
+        return parallel(shoot(runIntake, force), swerve.aimAtTarget(x, y)).withName("Routines.driverShoot()");
     }
 
     /**
@@ -143,10 +143,10 @@ public final class Routines {
      * @param l3 {@code true} to climb L3, {@code false} to climb L1.
      */
     public Command climb(BooleanSupplier left, boolean l3) {
-        Mutable<Boolean> atPosition = new Mutable<>(false);
+        Mutable<Boolean> ready = new Mutable<>(false);
 
         return parallel(
-            either(climber.climbL3(atPosition::get), climber.climbL1(atPosition::get), () -> l3),
+            either(climber.climbL3(ready::get), climber.climbL1(ready::get), () -> l3),
             parallel(
                 sequence(
                     swerve.apfDrive(
@@ -165,13 +165,18 @@ public final class Routines {
                         climbingEndTolerance,
                         climbingEndAngTolerance,
                         false
-                    )
+                    ),
+                    swerve.stop(false).until(intake::isStowed),
+                    runOnce(() -> ready.value = true)
                 ),
-                intake.purge().until(intake::isStowed).asProxy()
-            ).andThen(() -> atPosition.value = true),
+                sequence(
+                    waitUntil(intake::isStowed).andThen(waitSeconds(0.75)).deadlineFor(intake.purge()),
+                    intake.stow()
+                )
+            ),
             swerve.setTagMode(TagMode.TOWER)
         )
-            .beforeStarting(() -> atPosition.value = false)
+            .beforeStarting(() -> ready.value = false)
             .withName("Routines.climbL3(" + l3 + ")");
     }
 }

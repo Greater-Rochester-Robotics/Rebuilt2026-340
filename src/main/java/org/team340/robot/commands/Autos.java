@@ -34,7 +34,7 @@ public final class Autos {
     private static final TunableInteger intakeMinRqTagsSeen = tunables.value("intakeMinRqTagsSeen", 15);
 
     private static final TunableTable intakeTunables = tunables.getNested("intake");
-    private static final TunableDouble intakeVelocity = intakeTunables.value("velocity", 2.0);
+    private static final TunableDouble intakeVelocity = intakeTunables.value("velocity", 2.75);
     private static final TunableDouble intakeDeceleration = intakeTunables.value("deceleration", 12.0);
     private static final TunableDouble intakeEndTolerance = intakeTunables.value("endTolerance", 0.4);
     private static final TunableDouble intakeEndAngTolerance = intakeTunables.value("endAngTolerance", 0.175);
@@ -150,7 +150,7 @@ public final class Autos {
         var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(90.0));
         var sweep = new ExtPose(7.7, 4.75, Rotation2d.fromDegrees(90.0));
         var preSweep2 = new ExtPose(6.7, 4.75, Rotation2d.fromDegrees(-145.0));
-        var sweep2 = new ExtPose(6.5, 2.7, Rotation2d.fromDegrees(-145.0));
+        var sweep2 = new ExtPose(6.25, 2.7, Rotation2d.fromDegrees(-145.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
 
         return sequence(

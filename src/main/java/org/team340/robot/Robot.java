@@ -65,27 +65,26 @@ public final class Robot extends LoggedRobot {
         driver = new CommandXboxController(Constants.DRIVER);
 
         // Set default commands
+        climber.setDefaultCommand(sequence(waitUntil(swerve::isAwayFromTower), climber.retract(), idle()));
         intake.setDefaultCommand(intake.stow());
-        // climber.setDefaultCommand(sequence(waitUntil(swerve::isAwayFromTower), climber.retract(), idle())); TODO
         hood.setDefaultCommand(hood.goToZero(false));
         swerve.setDefaultCommand(swerve.drive(this::driverX, this::driverY, this::driverAngular));
 
         // Create triggers
+        var shoot = driver.leftBumper().or(driver.rightBumper());
         RobotModeTriggers.teleop().onTrue(climber.unclimbL1());
         new Trigger(() -> shiftTracker.shiftTimeLeft() < 5.0)
             .onTrue(new RumbleCommand(driver, 1.0).withTimeout(0.3).onlyIf(this::isTeleop))
             .onFalse(new RumbleCommand(driver, 1.0).withTimeout(0.6).onlyIf(this::isTeleop));
 
         // Driver bindings
-        driver.a().onTrue(intake.intake(driver.a()));
+        driver.a().and(shoot.negate()).onTrue(intake.intake(driver.a()));
         driver.b().whileTrue(routines.barf());
         driver.x().whileTrue(routines.staticShoot());
         driver.y().onTrue(none()); // Reserved for shoot override
 
-        driver
-            .leftBumper()
-            .or(driver.rightBumper())
-            .onTrue(routines.driverShoot(this::driverX, this::driverY, driver.y()))
+        shoot
+            .onTrue(routines.driverShoot(this::driverX, this::driverY, driver.a(), driver.y()))
             .onFalse(routines.driverShootShutdown(this::driverX, this::driverY));
 
         driver.povLeft().onTrue(swerve.tareRotation());

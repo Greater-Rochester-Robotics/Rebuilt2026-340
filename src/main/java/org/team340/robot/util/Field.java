@@ -11,8 +11,12 @@ import org.team340.lib.math.PAPFController.LongitudinalObstacle;
 import org.team340.lib.math.PAPFController.Obstacle;
 import org.team340.lib.math.geometry.ExtPose;
 import org.team340.lib.math.geometry.ExtTranslation;
+import org.team340.lib.tunable.TunableTable;
+import org.team340.lib.tunable.Tunables;
 
 public final class Field {
+
+    private static final TunableTable tunables = Tunables.getNested("field");
 
     /** The center of the field over its length (X direction). Also the CENTER LINE. */
     public static final double X_CENTER = FieldInfo.length() / 2.0;
@@ -48,10 +52,10 @@ public final class Field {
     public static final ExtTranslation HUB_FAR_RIGHT_CORNER = new ExtTranslation(HUB_FAR, Y_CENTER - HUB_HALF_WIDTH);
 
     // TOWER location helpers
-    private static final double TOWER_LEFT_Y = 4.2;
+    private static final double TOWER_LEFT_Y = 4.18;
     private static final double TOWER_RIGHT_Y = 3.33;
     private static final double CLIMB_APPROACH_X = 1.75;
-    private static final double CLIMBING_X = 1.475;
+    private static final double CLIMBING_X = 1.4;
 
     /** The Y coordinate of the center of the blue TOWER. */
     public static final double BLUE_TOWER_Y = getTag(31).getY();
@@ -65,6 +69,11 @@ public final class Field {
     public static final ExtPose TOWER_RIGHT_APPROACH = new ExtPose(CLIMB_APPROACH_X, TOWER_RIGHT_Y, Rotation2d.kZero);
     /** The climbing location for the right TOWER UPRIGHT. */
     public static final ExtPose TOWER_RIGHT_CLIMB = new ExtPose(CLIMBING_X, TOWER_RIGHT_Y, Rotation2d.kZero);
+
+    static {
+        tunables.add("towerLeftClimb", TOWER_LEFT_CLIMB);
+        tunables.add("towerRightClimb", TOWER_RIGHT_CLIMB);
+    }
 
     // TRENCH location helpers
     private static final double TRENCH_DEPTH = Units.inchesToMeters(47.0);

@@ -51,12 +51,12 @@ public final class Climber extends GRRSubsystem {
     private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 0.15);
 
     private static enum Position {
-        TOP(11.3),
-        BOTTOM(-39.0),
-        ZERO(0.0),
+        TOP(9.97),
+        BOTTOM(-39.6),
+        ZERO(0.32),
         RETRACTING(-5.5), // This is the position we go to before we retract.
         L1(-8.0),
-        L3(-36.0);
+        L3(-36.95);
 
         public TunableDouble value;
 
@@ -142,7 +142,7 @@ public final class Climber extends GRRSubsystem {
 
     @Override
     public void periodic() {
-        BaseStatusSignal.refreshAll(seesMagnet, leadVelocity, followVelocity);
+        BaseStatusSignal.refreshAll(position, seesMagnet, leadVelocity, followVelocity);
         follow.setControl(followControl);
 
         // Allows for zeroing while disabled
@@ -351,9 +351,9 @@ public final class Climber extends GRRSubsystem {
         // Zeroing the climber.
         config.Slot2.kP = 12.0;
 
-        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 11.3;
+        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 9.97;
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -39.9;
+        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -40.44;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
         config.TorqueCurrent.PeakForwardTorqueCurrent = 15.0;
