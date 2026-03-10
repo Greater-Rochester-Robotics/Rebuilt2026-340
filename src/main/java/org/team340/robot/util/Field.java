@@ -55,7 +55,7 @@ public final class Field {
     private static final double TOWER_LEFT_Y = 4.18;
     private static final double TOWER_RIGHT_Y = 3.33;
     private static final double CLIMB_APPROACH_X = 1.75;
-    private static final double CLIMBING_X = 1.4;
+    private static final double CLIMBING_X = 1.415;
 
     /** The Y coordinate of the center of the blue TOWER. */
     public static final double BLUE_TOWER_Y = getTag(31).getY();
@@ -69,11 +69,6 @@ public final class Field {
     public static final ExtPose TOWER_RIGHT_APPROACH = new ExtPose(CLIMB_APPROACH_X, TOWER_RIGHT_Y, Rotation2d.kZero);
     /** The climbing location for the right TOWER UPRIGHT. */
     public static final ExtPose TOWER_RIGHT_CLIMB = new ExtPose(CLIMBING_X, TOWER_RIGHT_Y, Rotation2d.kZero);
-
-    static {
-        tunables.add("towerLeftClimb", TOWER_LEFT_CLIMB);
-        tunables.add("towerRightClimb", TOWER_RIGHT_CLIMB);
-    }
 
     // TRENCH location helpers
     private static final double TRENCH_DEPTH = Units.inchesToMeters(47.0);
@@ -191,6 +186,12 @@ public final class Field {
         new LineObstacle(FUEL_LEFT_NEAR, FUEL_RIGHT_NEAR, 2.0, 1.5),
         new LineObstacle(FUEL_LEFT_FAR, FUEL_RIGHT_FAR, 2.0, 1.5)
     };
+
+    static {
+        tunables.add("hub", HUB);
+        tunables.add("towerLeftClimb", TOWER_LEFT_CLIMB);
+        tunables.add("towerRightClimb", TOWER_RIGHT_CLIMB);
+    }
 
     /**
      * Returns the pose of the specified AprilTag on the field.

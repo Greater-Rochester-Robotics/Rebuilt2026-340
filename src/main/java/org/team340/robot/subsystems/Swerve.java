@@ -5,14 +5,13 @@ import static org.team340.robot.util.ShootParams.TOF;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -58,6 +57,7 @@ public final class Swerve extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("swerve");
 
     private static final TunableBoolean enableSOTM = tunables.value("enableSOTM", true);
+    private static final TunableDouble distanceFudge = tunables.value("distanceFudge", 0.0);
     private static final TunableDouble apfBumpVelocity = tunables.value("apfBumpVelocity", 1.6);
     private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(15.0));
     private static final TunableDouble flatTolerance = tunables.value("flatTolerance", Math.toRadians(5.0));
@@ -102,7 +102,7 @@ public final class Swerve extends GRRSubsystem {
         .setMoveFF(0.0, 0.125)
         .setTurnPID(100.0, 0.0, 0.2)
         .setBrakeMode(true, true)
-        .setLimits(4.5, 0.01, 16.0, 12.0, 36.0)
+        .setLimits(4.5, 0.01, 16.0, 12.0, 32.0)
         .setDriverProfile(4.5, 1.5, 0.1, 5.4, 2.0, 0.05)
         .setPowerProperties(Constants.VOLTAGE, 80.0, 40.0, 60.0, 40.0)
         .setMechanicalProperties(675.0 / 112.0, 287.0 / 11.0, Units.inchesToMeters(3.87))
@@ -125,24 +125,25 @@ public final class Swerve extends GRRSubsystem {
     private final SwerveAPI api;
     private final Vision vision;
     private final PAPFController apf;
-    private final ProfiledPIDController angularPID;
+    private final PIDController angularPID;
 
     private final Subsystem tagModeMutex = new DummySubsystem();
 
     private Translation2d target = Translation2d.kZero;
     private double targetDistance = 0.0;
     private double targetAngle = 0.0;
-    private boolean aimingAtTarget = false;
-    private boolean seesAprilTag = false;
-    private boolean atAngle = false;
+
     private int tagsSeen = 0;
+    private boolean seesAprilTag = false;
+    private boolean aimingAtTarget = false;
+    private boolean atAngle = false;
 
     public Swerve() {
         api = new SwerveAPI(config);
         vision = new Vision(cameras);
         apf = new PAPFController(8.0, 0.25, 0.01, true, Field.OBSTACLES);
 
-        angularPID = new ProfiledPIDController(6.0, 0.0, 0.0, new Constraints(10.0, 24.0));
+        angularPID = new PIDController(6.0, 0.0, 0.0);
         angularPID.enableContinuousInput(-Math.PI, Math.PI);
 
         state = api.state;
@@ -170,17 +171,6 @@ public final class Swerve extends GRRSubsystem {
         );
         Profiler.run("api.addVisionMeasurements()", () -> api.addVisionMeasurements(measurements));
         seesAprilTag = measurements.length > 0;
-
-        if (
-            Math.abs(state.pitch.getRadians()) > flatTolerance.get()
-            || Math.abs(state.roll.getRadians()) > flatTolerance.get()
-        ) {
-            atAngle = true;
-            tagsSeen = 0;
-        } else {
-            atAngle = false;
-            tagsSeen += measurements.length;
-        }
 
         // Calculate the robot's displacement from the target.
         target = inOurZone() ? Field.HUB.get() : (isLeftOfCenter() ? leftFerryTarget.get() : rightFerryTarget.get());
@@ -216,12 +206,24 @@ public final class Swerve extends GRRSubsystem {
         }
 
         // Save our target distance and angle.
-        targetDistance = Math.hypot(deltaX, deltaY);
+        targetDistance = Math.hypot(deltaX, deltaY) + distanceFudge.get();
         targetAngle = Math.atan2(deltaY, deltaX);
 
         // Determine if the robot is aiming at the target, using our configured tolerance.
         double dot = Math.cos(targetAngle) * state.rotation.getCos() + Math.sin(targetAngle) * state.rotation.getSin();
         aimingAtTarget = Math.acos(MathUtil.clamp(dot, -1.0, 1.0)) < aimAtHubTolerance.get();
+
+        // Determine if the robot is at an angle (pitch/roll is non-zero).
+        if (
+            Math.abs(state.pitch.getRadians()) > flatTolerance.get()
+            || Math.abs(state.roll.getRadians()) > flatTolerance.get()
+        ) {
+            atAngle = true;
+            tagsSeen = 0;
+        } else {
+            atAngle = false;
+            tagsSeen += measurements.length;
+        }
 
         Profiler.end();
     }
@@ -258,14 +260,12 @@ public final class Swerve extends GRRSubsystem {
      * @param y The Y value from the driver's joystick.
      */
     public Command aimAtTarget(DoubleSupplier x, DoubleSupplier y) {
-        return commandBuilder("Swerve.aimAtTarget()")
-            .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
-            .onExecute(() -> {
-                var speeds = api.calculateDriverSpeeds(x.getAsDouble(), y.getAsDouble(), 0.0);
-                speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), targetAngle);
+        return commandBuilder("Swerve.aimAtTarget()").onExecute(() -> {
+            var speeds = api.calculateDriverSpeeds(x.getAsDouble(), y.getAsDouble(), 0.0);
+            speeds.omegaRadiansPerSecond = angularPID.calculate(state.rotation.getRadians(), targetAngle);
 
-                api.applySpeeds(speeds, Perspective.OPERATOR, true, true);
-            });
+            api.applySpeeds(speeds, Perspective.OPERATOR, true, true);
+        });
     }
 
     /**
@@ -285,34 +285,6 @@ public final class Swerve extends GRRSubsystem {
             maxDeceleration,
             false
         ).withName("Swerve.apfAimAtTarget()");
-    }
-
-    /**
-     * Drives the robot to a target position using the P-APF, until the
-     * robot is positioned within a specified tolerance of the target.
-     * @param goal A supplier that returns the target blue-origin relative field location.
-     * @param velocity The desired cruise velocity of the robot, in m/s.
-     * @param maxDeceleration A supplier that returns the desired deceleration rate of the robot, in m/s/s.
-     * @param endTolerance The tolerance in meters at which to end the command.
-     * @param endAngTolerance The tolerance in radians at which to end the command.
-     * @param enableFuel If the fuel staged in the neutral zone should be treated as an obstacle.
-     */
-    public Command apfDrive(
-        Supplier<Pose2d> goal,
-        DoubleSupplier velocity,
-        double maxDeceleration,
-        double endTolerance,
-        double endAngTolerance,
-        boolean enableFuel
-    ) {
-        return apfDrive(
-            goal,
-            velocity,
-            () -> maxDeceleration,
-            () -> endTolerance,
-            () -> endAngTolerance,
-            enableFuel
-        ).withName("Swerve.apfDrive()");
     }
 
     /**
@@ -357,35 +329,33 @@ public final class Swerve extends GRRSubsystem {
         DoubleSupplier maxDeceleration,
         boolean enableFuel
     ) {
-        return commandBuilder("Swerve.apfDrive()")
-            .onInitialize(() -> angularPID.reset(state.rotation.getRadians(), state.speeds.omegaRadiansPerSecond))
-            .onExecute(() -> {
-                boolean bumpSpeed = false;
-                if (xPositionInBump(state.pose.getX())) {
+        return commandBuilder("Swerve.apfDrive()").onExecute(() -> {
+            boolean bumpSpeed = false;
+            if (xPositionInBump(state.pose.getX())) {
+                bumpSpeed = true;
+            } else {
+                double t = (Math.abs(state.speeds.vxMetersPerSecond) - apfBumpVelocity.get()) / config.slipAccel;
+                if (t >= 0 && xPositionInBump(state.pose.getX() + t * state.speeds.vxMetersPerSecond)) {
                     bumpSpeed = true;
-                } else {
-                    double t = (Math.abs(state.speeds.vxMetersPerSecond) - apfBumpVelocity.get()) / config.slipAccel;
-                    if (t >= 0 && xPositionInBump(state.pose.getX() + t * state.speeds.vxMetersPerSecond)) {
-                        bumpSpeed = true;
-                    }
                 }
+            }
 
-                Pose2d next = goal.get();
-                var speeds = apf.calculate(
-                    state.pose,
-                    next.getTranslation(),
-                    bumpSpeed ? apfBumpVelocity.getAsDouble() : velocity.getAsDouble(),
-                    maxDeceleration.getAsDouble(),
-                    enableFuel ? Field.FUEL_OBSTACLES : null
-                );
+            Pose2d next = goal.get();
+            var speeds = apf.calculate(
+                state.pose,
+                next.getTranslation(),
+                bumpSpeed ? apfBumpVelocity.getAsDouble() : velocity.getAsDouble(),
+                maxDeceleration.getAsDouble(),
+                enableFuel ? Field.FUEL_OBSTACLES : null
+            );
 
-                speeds.omegaRadiansPerSecond = angularPID.calculate(
-                    state.rotation.getRadians(),
-                    next.getRotation().getRadians()
-                );
+            speeds.omegaRadiansPerSecond = angularPID.calculate(
+                state.rotation.getRadians(),
+                next.getRotation().getRadians()
+            );
 
-                api.applySpeeds(speeds, Perspective.BLUE, true, true);
-            });
+            api.applySpeeds(speeds, Perspective.BLUE, true, true);
+        });
     }
 
     /**
@@ -510,7 +480,7 @@ public final class Swerve extends GRRSubsystem {
     }
 
     /**
-     * Returns {@code true} if the robot is at an angle.
+     * Returns {@code true} if the robot is at an angle (pitch/roll is non-zero).
      */
     @NotLogged
     public boolean atAngle() {
@@ -531,7 +501,10 @@ public final class Swerve extends GRRSubsystem {
      * @param newMode The new AprilTag ID filtering mode.
      */
     public Command setTagMode(TagMode newMode) {
-        return tagModeMutex.run(() -> vision.setTagMode(newMode));
+        return tagModeMutex
+            .run(() -> vision.setTagMode(newMode))
+            .ignoringDisable(true)
+            .withName("Swerve.setTagMode(" + newMode.name() + ")");
     }
 
     /**

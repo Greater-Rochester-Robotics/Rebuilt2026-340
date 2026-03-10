@@ -41,7 +41,7 @@ public final class Vision {
     private static final TunableTable tunables = Tunables.getNested("vision");
     private static final TunableDouble zTolerance = tunables.value("zTolerance", 0.5);
     private static final TunableDouble velLatencyFactor = tunables.value("velLatencyFactor", 0.045);
-    private static final TunableDouble velAngFalloff = tunables.value("velAngFalloff", 0.6);
+    private static final TunableDouble velAngThreshold = tunables.value("velAngThreshold", 0.8);
 
     private static enum StrategyWeights {
         MULTITAG(0.16, 0.35),
@@ -281,8 +281,8 @@ public final class Vision {
                 // Calculate the angular pose estimation weight, similar to X/Y.
                 double angularStd = angularWeight * avgDistance * avgDistance;
 
-                // Apply a heuristic to the angular pose estimation weight based on velocity.
-                angularStd *= 1.0 - Math.max(velocity / velAngFalloff.get(), 1.0);
+                // Discard our angular pose estimate if the robot's velocity is above an arbitrary threshold.
+                if (velocity > velAngThreshold.get()) angularStd = 1e5;
 
                 // Apply a heuristic to the measurement's latency, that accounts for
                 // increased translational error at high chassis velocities.

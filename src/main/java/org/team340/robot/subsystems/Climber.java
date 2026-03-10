@@ -48,15 +48,16 @@ public final class Climber extends GRRSubsystem {
 
     private static final TunableDouble zeroingVelocity = tunables.value("zeroingVelocity", 6.0);
     private static final TunableDouble stallVelocity = tunables.value("stallVelocity", 0.05);
+    private static final TunableDouble stallPosition = tunables.value("stallPosition", 13.31);
     private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 0.15);
 
     private static enum Position {
-        TOP(9.97),
-        BOTTOM(-39.6),
+        TOP(13.25),
+        BOTTOM(-52.5),
         ZERO(0.32),
-        RETRACTING(-5.5), // This is the position we go to before we retract.
-        L1(-8.0),
-        L3(-36.95);
+        RETRACTING(-7.5), // This is the position we go to before we retract.
+        L1(-11.0),
+        L3(-28.0);
 
         public TunableDouble value;
 
@@ -114,7 +115,7 @@ public final class Climber extends GRRSubsystem {
         );
         PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, lead, follow, zeroSwitch));
 
-        loadedPositionControl = new DynamicMotionMagicVoltage(0.0, 65.0, 300.0);
+        loadedPositionControl = new DynamicMotionMagicVoltage(0.0, 75.0, 500.0);
         loadedPositionControl.IgnoreHardwareLimits = true; // Hardware limits are only used for zeroing.
         loadedPositionControl.EnableFOC = true;
         loadedPositionControl.UpdateFreqHz = 0.0;
@@ -207,8 +208,6 @@ public final class Climber extends GRRSubsystem {
             waitSeconds(0.1),
             goTo(Position.TOP, false, true),
             waitSeconds(0.1),
-            goTo(Position.BOTTOM, true, true),
-            waitSeconds(0.1),
             goTo(Position.L3, true, true, false)
         ).withName("Climber.climbL3()");
     }
@@ -240,8 +239,8 @@ public final class Climber extends GRRSubsystem {
                     )
                 ) {
                     // Set here to avoid rechecking (or having the stator current change concurrently).
-                    PhoenixUtil.run(() -> lead.setPosition(Position.TOP.value.get()));
-                    PhoenixUtil.run(() -> follow.setPosition(Position.TOP.value.get()));
+                    PhoenixUtil.run(() -> lead.setPosition(stallPosition.get()));
+                    PhoenixUtil.run(() -> follow.setPosition(stallPosition.get()));
                     isZeroed = true;
                     return true;
                 }
@@ -351,9 +350,9 @@ public final class Climber extends GRRSubsystem {
         // Zeroing the climber.
         config.Slot2.kP = 12.0;
 
-        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 9.97;
+        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 13.318;
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -40.44;
+        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -53.862;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
         config.TorqueCurrent.PeakForwardTorqueCurrent = 15.0;

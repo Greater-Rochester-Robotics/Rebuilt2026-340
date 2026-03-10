@@ -100,7 +100,7 @@ public final class Indexer extends GRRSubsystem {
     private void configureTwindexer() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 120.0;
+        config.CurrentLimits.StatorCurrentLimit = 150.0;
         config.CurrentLimits.SupplyCurrentLimit = 60.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
@@ -123,7 +123,7 @@ public final class Indexer extends GRRSubsystem {
     private void configureUptake() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 160.0;
+        config.CurrentLimits.StatorCurrentLimit = 180.0;
         config.CurrentLimits.SupplyCurrentLimit = 70.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 

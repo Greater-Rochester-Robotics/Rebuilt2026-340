@@ -67,6 +67,13 @@ public final class Routines {
     }
 
     /**
+     * Finishes barfing fuel by purging then stowing.
+     */
+    public Command finishBarf() {
+        return sequence(intake.purge().until(intake::isStowed), intake.stow());
+    }
+
+    /**
      * Shoots at the hub, without commanding the drivetrain.
      */
     public Command shoot() {
@@ -83,20 +90,22 @@ public final class Routines {
             hood.targetDistance(swerve::targetDistance),
             shooters.targetDistance(swerve::targetDistance),
             sequence(
-                waitSeconds(0.05),
-                waitUntil(
-                    () ->
-                        (hood.atPosition()
-                            && shooters.atVelocity()
-                            && swerve.aimingAtTarget()
-                            && swerve.tagsSeen() >= shootingMinRqTagsSeen.get())
-                        || force.getAsBoolean()
-                ),
+                sequence(
+                    waitSeconds(0.05),
+                    waitUntil(
+                        () ->
+                            (hood.atPosition()
+                                && shooters.atVelocity()
+                                && swerve.aimingAtTarget()
+                                && swerve.tagsSeen() >= shootingMinRqTagsSeen.get())
+                            || force.getAsBoolean()
+                    )
+                ).deadlineFor(indexer.barf().withTimeout(0.25)),
                 indexer.feed()
             ),
             sequence(
-                race(waitUntil(runIntake), waitSeconds(3.5)),
-                either(intake.intake().onlyWhile(runIntake), intake.compress().until(runIntake), runIntake)
+                race(waitUntil(runIntake), waitSeconds(0.75)),
+                either(intake.intake().onlyWhile(runIntake), intake.agitate().until(runIntake), runIntake)
             ).repeatedly()
         ).withName("Routines.shoot()");
     }

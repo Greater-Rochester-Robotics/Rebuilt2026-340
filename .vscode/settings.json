@@ -64,6 +64,9 @@
     "**/*~": true
   },
   "wpilib.autoStartRioLog": false,
+  "chat.disableAIFeatures": true,
+  "inlineChat.lineNaturalLanguageHint": false,
+  "notebook.experimental.generate": false,
   "cSpell.words": [
     "Accl",
     "Accum",

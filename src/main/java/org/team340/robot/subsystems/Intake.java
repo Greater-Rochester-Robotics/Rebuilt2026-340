@@ -18,7 +18,6 @@ import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
-import java.util.function.BooleanSupplier;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
@@ -39,10 +38,11 @@ public final class Intake extends GRRSubsystem {
 
     private static enum State {
         STOW(-0.115, 1.0, 0.0),
-        EXTEND(0.25, 1.0, 0.0),
-        INTAKE(0.25, 1.0, 90.0),
-        COMPRESS(0.0, 0.25, 40.0),
-        BARF(0.25, 1.0, -90.0),
+        EXTEND(0.254, 1.0, 0.0),
+        INTAKE(0.254, 1.0, 90.0),
+        AGITATE_UP(0.17, 2.0, 70.0),
+        AGITATE_DOWN(0.254, 2.0, 70.0),
+        BARF(0.254, 1.0, -90.0),
         PURGE(-0.115, 1.0, -90.0);
 
         public final TunableDouble position;
@@ -127,21 +127,12 @@ public final class Intake extends GRRSubsystem {
     }
 
     /**
-     * Extends the intake and runs the rollers, when {@code runRollers} returns {@code true}.
-     * @param runRollers A boolean supplier that returns {@code true} when the rollers should be powered.
+     * Agitates the hopper by jostling the intake up and down while pulling balls inwards.
      */
-    public Command intake(BooleanSupplier runRollers) {
-        return sequence(intake().until(() -> !runRollers.getAsBoolean()), extend().until(runRollers))
+    public Command agitate() {
+        return sequence(runState(State.AGITATE_UP).withTimeout(0.4), runState(State.AGITATE_DOWN).withTimeout(0.4))
             .repeatedly()
-            .withName("Intake.intake()");
-    }
-
-    /**
-     * Retracts the intake and runs the rollers inwards. Meant to be
-     * used for compressing balls into the indexing system.
-     */
-    public Command compress() {
-        return runState(State.COMPRESS).withName("Intake.compress()");
+            .withName("Intake.agitate()");
     }
 
     /**
@@ -241,8 +232,8 @@ public final class Intake extends GRRSubsystem {
     private void configureRollers() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 120.0;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.StatorCurrentLimit = 180.0;
+        config.CurrentLimits.SupplyCurrentLimit = 65.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;

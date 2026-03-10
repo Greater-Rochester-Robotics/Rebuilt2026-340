@@ -66,7 +66,7 @@ public final class Robot extends LoggedRobot {
 
         // Set default commands
         climber.setDefaultCommand(sequence(waitUntil(swerve::isAwayFromTower), climber.retract(), idle()));
-        intake.setDefaultCommand(intake.stow());
+        intake.setDefaultCommand(intake.extend());
         hood.setDefaultCommand(hood.goToZero(false));
         swerve.setDefaultCommand(swerve.drive(this::driverX, this::driverY, this::driverAngular));
 
@@ -78,8 +78,8 @@ public final class Robot extends LoggedRobot {
             .onFalse(new RumbleCommand(driver, 1.0).withTimeout(0.6).onlyIf(this::isTeleop));
 
         // Driver bindings
-        driver.a().and(shoot.negate()).onTrue(intake.intake(driver.a()));
-        driver.b().whileTrue(routines.barf());
+        driver.a().and(shoot.negate()).whileTrue(intake.intake());
+        driver.b().onTrue(routines.barf()).onFalse(routines.finishBarf());
         driver.x().whileTrue(routines.staticShoot());
         driver.y().onTrue(none()); // Reserved for shoot override
 
@@ -92,7 +92,7 @@ public final class Robot extends LoggedRobot {
         driver.povUp().whileTrue(routines.climb(swerve::isLeftOfTower, true));
         driver.povDown().whileTrue(hood.goToZero(true));
 
-        driver.rightStick().whileTrue(climber.testServo()); // TODO
+        driver.rightStick().whileTrue(climber.climbL3(() -> false)).onFalse(climber.climbL3(() -> true));
 
         // Disable loop overrun warnings from the command
         // scheduler, since we already log loop timings
