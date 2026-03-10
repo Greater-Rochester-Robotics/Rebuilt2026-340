@@ -2,6 +2,7 @@ package org.team340.robot.commands;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -197,5 +198,25 @@ public final class Routines {
      */
     public Command lightsPreMatch() {
         return lights.preMatch(swerve::getPose, swerve::seesAprilTag).withName("Routines.lightsPreMatch()");
+    }
+
+    /**
+     * Runs all subsystems to check functionality.
+     */
+    public Command testSequence() {
+        Timer timer = new Timer();
+
+        final double SHOOT_TIME = 4.0;
+        DoubleSupplier targetDistance = () -> timer.get() * (12.0 / SHOOT_TIME);
+
+        return sequence(
+            intake.intake().asProxy().withTimeout(2.0),
+            parallel(indexer.feed(), intake.agitate()).asProxy().withTimeout(2.0),
+            parallel(intake.stow(), hood.targetDistance(targetDistance), shooters.targetDistance(targetDistance))
+                .beforeStarting(timer::restart)
+                .asProxy()
+                .withTimeout(SHOOT_TIME),
+            parallel(intake.stow(), climber.climbL3(() -> timer.get() > 1.0)).asProxy()
+        ).withName("Routines.testSequence()");
     }
 }

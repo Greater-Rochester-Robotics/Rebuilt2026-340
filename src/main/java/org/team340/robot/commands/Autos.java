@@ -32,8 +32,12 @@ public final class Autos {
     private static final TunableDouble shootingVelocity = tunables.value("shootingVelocity", 1.25);
     private static final TunableInteger intakeMinRqTagsSeen = tunables.value("intakeMinRqTagsSeen", 15);
 
+    private static final TunableTable grabTunables = tunables.getNested("grabSpeeds");
+    private static final TunableDouble turkiyeSpecialGrabSpeed = grabTunables.value("turkiyeSpecial", 2.0);
+    private static final TunableDouble secondHelpingFirstGrabSpeed = grabTunables.value("secondHelpingFirst", 2.5);
+    private static final TunableDouble secondHelpingSecondGrabSpeed = grabTunables.value("secondHelpingSecond", 2.75);
+
     private static final TunableTable intakeTunables = tunables.getNested("intake");
-    private static final TunableDouble intakeVelocity = intakeTunables.value("velocity", 2.0);
     private static final TunableDouble intakeDeceleration = intakeTunables.value("deceleration", 12.0);
     private static final TunableDouble intakeEndTolerance = intakeTunables.value("endTolerance", 0.4);
 
@@ -84,12 +88,12 @@ public final class Autos {
      */
     private Command turkiyeSpecial() {
         var shoot = new ExtTranslation(2.875, 2.85);
-        var prePickup = new ExtTranslation(0.6, 1.5);
+        var prePickup = new ExtTranslation(1.25, 1.25);
         var pickup = new ExtPose(0.3, 0.7, Rotation2d.k180deg);
 
         return sequence(
-            grab(false),
-            deadline(apfShooting(prePickup).withTimeout(2.1), routines.shoot().asProxy()),
+            grab(false, turkiyeSpecialGrabSpeed.get()),
+            deadline(apfShooting(prePickup).withTimeout(2.15), routines.shoot().asProxy()),
             deadline(apfDefaultsForever(pickup).withTimeout(2.5), getReady()),
             deadline(apfShooting(shoot), routines.shoot().asProxy())
         );
@@ -103,8 +107,8 @@ public final class Autos {
      */
     private Command secondHelping(boolean left) {
         return sequence(
-            sequence(grab(left), parallel(swerve.aimAtTarget(), routines.shoot().asProxy())).withTimeout(10.0),
-            grabMore(left),
+            sequence(grab(left, secondHelpingFirstGrabSpeed.get()), parallel(swerve.aimAtTarget(), routines.shoot().asProxy())).withTimeout(10.0),
+            grabMore(left, secondHelpingSecondGrabSpeed.get()),
             parallel(swerve.aimAtTarget(), routines.shoot().asProxy())
         );
     }
@@ -126,7 +130,7 @@ public final class Autos {
      *             {@code false} to run on the right side.
      */
     private Command simpleSally(boolean left) {
-        return sequence(grab(left), parallel(swerve.aimAtTarget(), routines.shoot().asProxy()));
+        return sequence(grab(left, 2.0), parallel(swerve.aimAtTarget(), routines.shoot().asProxy()));
     }
 
     // ********** Helper Methods **********
@@ -138,11 +142,12 @@ public final class Autos {
      * @param left {@code true} if the robot should be on the left side of the field
      *             (from the perspective of the current alliance's driver station),
      *             {@code false} to run on the right side.
+     * @param intakeVelocity The desired cruise velocity of the robot while intaking, in m/s.
      */
-    private Command grab(boolean left) {
+    private Command grab(boolean left, double intakeVelocity) {
         var preIntake = new ExtPose(7.7, 0.9, Rotation2d.fromDegrees(-135.0));
-        var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(90.0));
-        var sweep = new ExtPose(7.7, 4.75, Rotation2d.fromDegrees(90.0));
+        var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(95.0));
+        var sweep = new ExtPose(7.7, 4.75, Rotation2d.fromDegrees(95.0));
         var preSweep2 = new ExtPose(7.25, 4.75, Rotation2d.fromDegrees(-145.0));
         var sweep2 = new ExtPose(6.25, 2.8, Rotation2d.fromDegrees(-145.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
@@ -154,9 +159,9 @@ public final class Autos {
                         ? preIntakeCrossed.get(left)
                         : preIntake.get(left)
                 ),
-                apfIntaking(() -> sweep.get(left)).withTimeout(4.0),
+                apfIntaking(() -> sweep.get(left), intakeVelocity).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
-                apfIntaking(() -> sweep2.get(left)).withTimeout(4.0),
+                apfIntaking(() -> sweep2.get(left), intakeVelocity).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
             ),
             sequence(
@@ -174,10 +179,11 @@ public final class Autos {
      * @param left {@code true} if the robot should be on the left side of the field
      *             (from the perspective of the current alliance's driver station),
      *             {@code false} to run on the right side.
+     * @param intakeVelocity The desired cruise velocity of the robot while intaking, in m/s.
      */
-    private Command grabMore(boolean left) {
+    private Command grabMore(boolean left, double intakeVelocity) {
         var preIntake = new ExtPose(6.7, 2.0, Rotation2d.fromDegrees(-135.0));
-        var sweep = new ExtPose(6.7, 5.0, Rotation2d.fromDegrees(90.0));
+        var sweep = new ExtPose(6.7, 5.0, Rotation2d.fromDegrees(95.0));
         var preSweep2 = new ExtPose(6.35, 5.0, Rotation2d.fromDegrees(-120.0));
         var sweep2 = new ExtPose(6.2, 2.8, Rotation2d.fromDegrees(-120.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
@@ -185,9 +191,9 @@ public final class Autos {
         return deadline(
             sequence(
                 apfFuelApproach(() -> preIntake.get(left)),
-                apfIntaking(() -> sweep.get(left)).withTimeout(4.0),
+                apfIntaking(() -> sweep.get(left), intakeVelocity).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
-                apfIntaking(() -> sweep2.get(left)).withTimeout(4.0),
+                apfIntaking(() -> sweep2.get(left), intakeVelocity).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
             ),
             sequence(waitSeconds(2.0), intake.intake().asProxy().until(swerve::atAngle), getReady())
@@ -216,11 +222,12 @@ public final class Autos {
     /**
      * Drives the robot to a target position using the P-APF, until the robot is
      * positioned within the default intaking tolerances of the specified goal location.
-     * Uses the default intaking velocity and deceleration values.
+     * Uses the default intaking deceleration rate.
      * @param goal A supplier that returns the target blue-origin relative field location.
+     * @param velocity The desired cruise velocity of the robot, in m/s.
      */
-    private Command apfIntaking(Supplier<Pose2d> goal) {
-        return swerve.apfDrive(goal, intakeVelocity, intakeDeceleration, intakeEndTolerance, () -> 1e5, false);
+    private Command apfIntaking(Supplier<Pose2d> goal, double velocity) {
+        return swerve.apfDrive(goal, () -> velocity, intakeDeceleration, intakeEndTolerance, () -> 1e5, false);
     }
 
     /**

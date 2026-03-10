@@ -97,8 +97,10 @@ public final class Robot extends LoggedRobot {
 
         driver.rightStick().whileTrue(climber.climbL3(() -> false)).onFalse(climber.climbL3(() -> true));
 
+        driver.start().and(driver.back()).whileTrue(routines.testSequence());
+
         // Setup lights
-        routines.lightsPreMatch().schedule();
+        scheduler.schedule(routines.lightsPreMatch());
 
         RobotModeTriggers.disabled().whileTrue(routines.lightsPreMatch());
         lights.setDefaultCommand(lights.hubDisplay(shiftTracker::active));
@@ -114,24 +116,24 @@ public final class Robot extends LoggedRobot {
         enableRT(true);
     }
 
-    @NotLogged
-    public double driverX() {
-        return driver.getLeftX();
-    }
-
-    @NotLogged
-    public double driverY() {
-        return driver.getLeftY();
-    }
-
-    @NotLogged
-    public double driverAngular() {
-        return driver.getLeftTriggerAxis() - driver.getRightTriggerAxis();
-    }
-
     @Override
     public void robotPeriodic() {
         Profiler.run("scheduler", scheduler::run);
         Profiler.run("lights", lights::update);
+    }
+
+    @NotLogged
+    private double driverX() {
+        return driver.getLeftX();
+    }
+
+    @NotLogged
+    private double driverY() {
+        return driver.getLeftY();
+    }
+
+    @NotLogged
+    private double driverAngular() {
+        return driver.getLeftTriggerAxis() - driver.getRightTriggerAxis();
     }
 }
