@@ -229,6 +229,13 @@ public final class Swerve extends GRRSubsystem {
     }
 
     /**
+     * Returns the current blue origin relative pose of the robot.
+     */
+    public Pose2d getPose() {
+        return state.pose;
+    }
+
+    /**
      * Drives the robot using driver input.
      * @param x The X value from the driver's joystick.
      * @param y The Y value from the driver's joystick.

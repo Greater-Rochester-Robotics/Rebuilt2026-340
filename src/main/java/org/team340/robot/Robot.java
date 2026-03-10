@@ -20,6 +20,7 @@ import org.team340.robot.subsystems.Climber;
 import org.team340.robot.subsystems.Hood;
 import org.team340.robot.subsystems.Indexer;
 import org.team340.robot.subsystems.Intake;
+import org.team340.robot.subsystems.Lights;
 import org.team340.robot.subsystems.Shooters;
 import org.team340.robot.subsystems.Swerve;
 import org.team340.robot.util.ShiftTracker;
@@ -33,6 +34,7 @@ public final class Robot extends LoggedRobot {
     public final Hood hood;
     public final Indexer indexer;
     public final Intake intake;
+    public final Lights lights;
     public final Shooters shooters;
     public final Swerve swerve;
 
@@ -51,6 +53,7 @@ public final class Robot extends LoggedRobot {
         hood = new Hood();
         indexer = new Indexer();
         intake = new Intake();
+        lights = new Lights();
         shooters = new Shooters();
         swerve = new Swerve();
 
@@ -94,6 +97,12 @@ public final class Robot extends LoggedRobot {
 
         driver.rightStick().whileTrue(climber.climbL3(() -> false)).onFalse(climber.climbL3(() -> true));
 
+        // Setup lights
+        routines.lightsPreMatch().schedule();
+
+        RobotModeTriggers.disabled().whileTrue(routines.lightsPreMatch());
+        lights.setDefaultCommand(lights.hubDisplay(shiftTracker::active));
+
         // Disable loop overrun warnings from the command
         // scheduler, since we already log loop timings
         DisableWatchdog.in(scheduler, "m_watchdog");
@@ -123,5 +132,6 @@ public final class Robot extends LoggedRobot {
     @Override
     public void robotPeriodic() {
         Profiler.run("scheduler", scheduler::run);
+        Profiler.run("lights", lights::update);
     }
 }

@@ -15,6 +15,7 @@ import org.team340.robot.subsystems.Climber;
 import org.team340.robot.subsystems.Hood;
 import org.team340.robot.subsystems.Indexer;
 import org.team340.robot.subsystems.Intake;
+import org.team340.robot.subsystems.Lights;
 import org.team340.robot.subsystems.Shooters;
 import org.team340.robot.subsystems.Swerve;
 import org.team340.robot.util.Field;
@@ -45,6 +46,7 @@ public final class Routines {
     private final Hood hood;
     private final Indexer indexer;
     private final Intake intake;
+    private final Lights lights;
     private final Shooters shooters;
     private final Swerve swerve;
 
@@ -53,6 +55,7 @@ public final class Routines {
         hood = robot.hood;
         indexer = robot.indexer;
         intake = robot.intake;
+        lights = robot.lights;
         shooters = robot.shooters;
         swerve = robot.swerve;
     }
@@ -187,5 +190,12 @@ public final class Routines {
         )
             .beforeStarting(() -> ready.value = false)
             .withName("Routines.climbL3(" + l3 + ")");
+    }
+
+    /**
+     * Displays the pre-match lights animation.
+     */
+    public Command lightsPreMatch() {
+        return lights.preMatch(swerve::getPose, swerve::seesAprilTag).withName("Routines.lightsPreMatch()");
     }
 }

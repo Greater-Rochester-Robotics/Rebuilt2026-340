@@ -62,6 +62,10 @@ public final class Constants {
         public static final int INTAKE_ROLLER_MOTOR = 51;
         public static final int INTAKE_WCP_THROUGHBORE_POWERED_BY_CANCODER_FOR_HALF_INCH_HEX = 52;
 
+        // Lights
+
+        public static final int LIGHTS = 1;
+
         // Climber
 
         public static final int CLIMBER_LEAD_MOTOR = 60;

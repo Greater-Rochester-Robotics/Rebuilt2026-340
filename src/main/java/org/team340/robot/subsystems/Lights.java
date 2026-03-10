@@ -1,0 +1,202 @@
+package org.team340.robot.subsystems;
+
+import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.AddressableLED;
+import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
+import org.team340.lib.math.Math2;
+import org.team340.lib.tunable.TunableTable;
+import org.team340.lib.tunable.Tunables;
+import org.team340.lib.tunable.Tunables.TunableDouble;
+import org.team340.lib.tunable.Tunables.TunableInteger;
+import org.team340.lib.util.Alliance;
+import org.team340.lib.util.Mutable;
+import org.team340.lib.util.command.GRRSubsystem;
+import org.team340.robot.Constants.RobotMap;
+
+@Logged
+public final class Lights extends GRRSubsystem {
+
+    private static final int LENGTH = 28;
+    private static final TunableTable tunables = Tunables.getNested("lights");
+
+    private static final TunableDouble locationTol = tunables.value("locationTol", 0.05);
+    private static final TunableDouble angularTol = tunables.value("angularTol", Math.toRadians(0.5));
+
+    private static final Debouncer tagSightFilter = tunables.add(
+        "tagSightFilter",
+        new Debouncer(0.06, DebounceType.kFalling)
+    );
+
+    private static enum Color {
+        HUB_INACTIVE(255, 120, 0),
+        HUB_ACTIVE(0, 255, 0),
+        BLUE(0, 10, 255),
+        RED(255, 0, 0),
+        NO_DS(255, 0, 255),
+        NO_TAGS(255, 0, 0),
+        BAD_LOCATION(255, 144, 0),
+        BAD_ROTATION(255, 32, 0),
+        OFF(0, 0, 0);
+
+        public final TunableInteger r;
+        public final TunableInteger g;
+        public final TunableInteger b;
+
+        private Color(int r, int g, int b) {
+            this.r = tunables.value("colors/" + name() + "/r", r);
+            this.g = tunables.value("colors/" + name() + "/g", g);
+            this.b = tunables.value("colors/" + name() + "/b", b);
+        }
+    }
+
+    private final AddressableLED lights;
+    private final AddressableLEDBuffer buffer;
+
+    public Lights() {
+        lights = new AddressableLED(RobotMap.LIGHTS);
+        buffer = new AddressableLEDBuffer(LENGTH);
+
+        lights.setLength(buffer.getLength());
+        lights.start();
+
+        // Enum warmup
+        Color.OFF.r.get();
+    }
+
+    /**
+     * Sets the LED output data.
+     * Must be ran periodically for this subsystem to work.
+     */
+    public void update() {
+        lights.setData(buffer);
+    }
+
+    /**
+     * Displays the state of our alliance's hub.
+     * @param active If the hub is active.
+     */
+    public Command hubDisplay(BooleanSupplier active) {
+        return commandBuilder()
+            .onExecute(() -> {
+                if (RobotController.getRSLState()) {
+                    set(active.getAsBoolean() ? Color.HUB_ACTIVE : Color.HUB_INACTIVE);
+                } else {
+                    set(Color.OFF);
+                }
+            })
+            .onEnd(() -> set(Color.OFF))
+            .ignoringDisable(true)
+            .withName("Lights.hubDisplay()");
+    }
+
+    /**
+     * Displays the pre-match animation.
+     * @param robotPose The robot's current pose.
+     * @param seesAprilTag If the robot has seen an AprilTag since the last loop.
+     */
+    public Command preMatch(Supplier<Pose2d> robotPose, BooleanSupplier seesAprilTag) {
+        Debouncer tag = new Debouncer(0.5, DebounceType.kFalling);
+        Debouncer location = new Debouncer(0.5, DebounceType.kFalling);
+        Debouncer angle = new Debouncer(0.5, DebounceType.kFalling);
+
+        SlewRateLimiter center = new SlewRateLimiter(0.0175);
+        Mutable<Pose2d> lastPose = new Mutable<>(Pose2d.kZero);
+        Mutable<Double> errorTime = new Mutable<>(-1.0);
+        List<Color> errors = new ArrayList<>();
+
+        return commandBuilder()
+            .onInitialize(() -> {
+                Pose2d pose = robotPose.get();
+                center.reset(pose.getRotation().getRadians());
+                lastPose.value = pose;
+                errorTime.value = -1.0;
+            })
+            .onExecute(() -> {
+                errors.clear();
+                Pose2d pose = robotPose.get();
+
+                if (tag.calculate(!tagSightFilter.calculate(seesAprilTag.getAsBoolean()))) {
+                    errors.add(Color.NO_TAGS);
+                } else if (
+                    location.calculate(
+                        !Math2.isNear(lastPose.value.getTranslation(), pose.getTranslation(), locationTol.get())
+                    )
+                ) {
+                    errors.add(Color.BAD_LOCATION);
+                } else if (
+                    angle.calculate(!Math2.isNear(lastPose.value.getRotation(), pose.getRotation(), angularTol.get()))
+                ) {
+                    errors.add(Color.BAD_ROTATION);
+                }
+
+                lastPose.value = pose;
+                if (!errors.isEmpty()) {
+                    double now = Timer.getFPGATimestamp();
+                    if (errorTime.value < 0.0) errorTime.value = now;
+
+                    double period = (now - errorTime.value) % 0.2;
+                    if (period < 0.15) {
+                        int i = (int) Math.floor((period / 0.15) * errors.size());
+                        set(errors.get(Math.min(i, errors.size())));
+                    } else {
+                        set(Color.OFF);
+                    }
+                } else {
+                    double radians = pose.getRotation().getRadians();
+
+                    if (errorTime.value > 0.0) {
+                        errorTime.value = -1.0;
+                        center.reset(radians);
+                    }
+
+                    double view = Math.toRadians(1.0);
+                    double percent = (center.calculate(radians) + (view / 2.0) - radians) / view;
+                    int closestLED = (int) Math.round(percent * (LENGTH - 1));
+
+                    Color alliance = !DriverStation.isDSAttached()
+                        ? Color.NO_DS
+                        : (Alliance.isBlue() ? Color.BLUE : Color.RED);
+                    for (int i = 0; i < LENGTH; i++) {
+                        if (Math.abs(closestLED - i) <= 1) {
+                            set(i, alliance);
+                        } else {
+                            set(i, Color.OFF);
+                        }
+                    }
+                }
+            })
+            .onEnd(() -> set(Color.OFF))
+            .ignoringDisable(true)
+            .withName("Lights.preMatch()");
+    }
+
+    /**
+     * Sets the entire LED strip to a single color.
+     * @param color The color to apply.
+     */
+    private void set(Color color) {
+        for (int i = 0; i < LENGTH; i++) set(i, color);
+    }
+
+    /**
+     * Sets a single LED to a specified color.
+     * @param i The index of the LED in the strip.
+     * @param color The color to apply.
+     */
+    private void set(int i, Color color) {
+        if (i < 0 || i >= LENGTH) return;
+        buffer.setRGB(i, color.r.get(), color.g.get(), color.b.get());
+    }
+}
