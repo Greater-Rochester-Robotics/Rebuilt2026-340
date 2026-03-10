@@ -107,7 +107,10 @@ public final class Autos {
      */
     private Command secondHelping(boolean left) {
         return sequence(
-            sequence(grab(left, secondHelpingFirstGrabSpeed.get()), parallel(swerve.aimAtTarget(), routines.shoot().asProxy())).withTimeout(10.0),
+            sequence(
+                grab(left, secondHelpingFirstGrabSpeed.get()),
+                parallel(swerve.aimAtTarget(), routines.shoot().asProxy())
+            ).withTimeout(10.0),
             grabMore(left, secondHelpingSecondGrabSpeed.get()),
             parallel(swerve.aimAtTarget(), routines.shoot().asProxy())
         );
