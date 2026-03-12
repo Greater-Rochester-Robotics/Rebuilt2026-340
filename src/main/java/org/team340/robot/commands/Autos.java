@@ -170,7 +170,7 @@ public final class Autos {
             ),
             sequence(
                 intake.stow().asProxy().withTimeout(1.75),
-                intake.intake().asProxy().until(swerve::atAngle),
+                intake.intake().asProxy().until(swerve::inOurZone),
                 getReady()
             )
         );

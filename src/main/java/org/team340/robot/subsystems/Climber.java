@@ -56,7 +56,7 @@ public final class Climber extends GRRSubsystem {
         BOTTOM(-52.5),
         ZERO(0.32),
         RETRACTING(-7.5), // This is the position we go to before we retract.
-        L1(-11.0),
+        L1(-14.0),
         L3(-28.0); // -47.0 ?
 
         public TunableDouble value;
@@ -200,6 +200,7 @@ public final class Climber extends GRRSubsystem {
      */
     public Command climbL3(BooleanSupplier ready) {
         return sequence(
+            goTo(Position.L3, false, true, true),
             goTo(Position.TOP, false, true, false).until(ready),
             goTo(Position.BOTTOM, true, true),
             waitSeconds(0.1),
