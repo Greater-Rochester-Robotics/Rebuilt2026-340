@@ -68,7 +68,7 @@ public final class Robot extends LoggedRobot {
         driver = new CommandXboxController(Constants.DRIVER);
 
         // Set default commands
-        climber.setDefaultCommand(sequence(waitUntil(swerve::isAwayFromTower), climber.retract(), idle()));
+        climber.setDefaultCommand(climber.retract(swerve::isAwayFromTower));
         intake.setDefaultCommand(intake.extend());
         hood.setDefaultCommand(hood.goToZero(false));
         swerve.setDefaultCommand(swerve.drive(this::driverX, this::driverY, this::driverAngular));
@@ -92,7 +92,7 @@ public final class Robot extends LoggedRobot {
 
         driver.povLeft().onTrue(swerve.tareRotation());
         driver.povRight().whileTrue(climber.zero());
-        driver.povUp().whileTrue(routines.climb(swerve::isLeftOfTower, true));
+        driver.povUp().whileTrue(routines.climb(swerve::isLeftOfTower, true)).onFalse(intake.stow());
         driver.povDown().whileTrue(hood.goToZero(true));
 
         driver.rightStick().whileTrue(climber.climbL3(() -> false)).onFalse(climber.climbL3(() -> true));

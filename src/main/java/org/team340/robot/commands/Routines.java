@@ -207,7 +207,8 @@ public final class Routines {
         Timer timer = new Timer();
 
         final double SHOOT_TIME = 4.0;
-        DoubleSupplier targetDistance = () -> timer.get() * (12.0 / SHOOT_TIME);
+        final double MAX_SHOOT_DISTANCE = 12.0;
+        DoubleSupplier targetDistance = () -> timer.get() * (MAX_SHOOT_DISTANCE / SHOOT_TIME);
 
         return sequence(
             intake.intake().asProxy().withTimeout(2.0),
@@ -216,7 +217,7 @@ public final class Routines {
                 .beforeStarting(timer::restart)
                 .asProxy()
                 .withTimeout(SHOOT_TIME),
-            parallel(intake.stow(), climber.climbL3(() -> timer.get() > 1.0)).asProxy()
+            parallel(intake.stow(), climber.climbL3(() -> timer.get() > 1.0)).beforeStarting(timer::restart).asProxy()
         ).withName("Routines.testSequence()");
     }
 }

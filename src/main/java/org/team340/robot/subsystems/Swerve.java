@@ -231,6 +231,7 @@ public final class Swerve extends GRRSubsystem {
     /**
      * Returns the current blue origin relative pose of the robot.
      */
+    @NotLogged
     public Pose2d getPose() {
         return state.pose;
     }

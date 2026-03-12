@@ -52,10 +52,10 @@ public final class Field {
     public static final ExtTranslation HUB_FAR_RIGHT_CORNER = new ExtTranslation(HUB_FAR, Y_CENTER - HUB_HALF_WIDTH);
 
     // TOWER location helpers
-    private static final double TOWER_LEFT_Y = 4.18;
-    private static final double TOWER_RIGHT_Y = 3.33;
+    private static final double TOWER_LEFT_Y = 4.168;
+    private static final double TOWER_RIGHT_Y = 3.32;
     private static final double CLIMB_APPROACH_X = 1.75;
-    private static final double CLIMBING_X = 1.415;
+    private static final double CLIMBING_X = 1.455;
 
     /** The Y coordinate of the center of the blue TOWER. */
     public static final double BLUE_TOWER_Y = getTag(31).getY();

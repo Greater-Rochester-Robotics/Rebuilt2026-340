@@ -48,16 +48,16 @@ public final class Climber extends GRRSubsystem {
 
     private static final TunableDouble zeroingVelocity = tunables.value("zeroingVelocity", 6.0);
     private static final TunableDouble stallVelocity = tunables.value("stallVelocity", 0.05);
-    private static final TunableDouble stallPosition = tunables.value("stallPosition", 13.31);
+    private static final TunableDouble stallPosition = tunables.value("stallPosition", 13.318);
     private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 0.15);
 
     private static enum Position {
-        TOP(13.25),
+        TOP(13.15),
         BOTTOM(-52.5),
         ZERO(0.32),
         RETRACTING(-7.5), // This is the position we go to before we retract.
         L1(-11.0),
-        L3(-28.0);
+        L3(-28.0); // -47.0 ?
 
         public TunableDouble value;
 
@@ -82,6 +82,7 @@ public final class Climber extends GRRSubsystem {
     private final Follower followControl;
 
     private boolean isZeroed = false;
+    private boolean retracted = false;
     private boolean climbingL1 = false;
 
     public Climber() {
@@ -208,6 +209,8 @@ public final class Climber extends GRRSubsystem {
             waitSeconds(0.1),
             goTo(Position.TOP, false, true),
             waitSeconds(0.1),
+            // goTo(Position.BOTTOM, true, true),
+            // waitSeconds(0.1),
             goTo(Position.L3, true, true, false)
         ).withName("Climber.climbL3()");
     }
@@ -251,16 +254,21 @@ public final class Climber extends GRRSubsystem {
     }
 
     /**
-     * Moves the hooks to be retracted into the robot.
+     * Moves the hooks to be retracted into the robot. This command does not end.
+     * @param safe If the climber is safe to go to the retracted position.
      */
-    public Command retract() {
+    public Command retract(BooleanSupplier safe) {
         return sequence(
+            waitUntil(safe),
             zero().onlyIf(() -> !isZeroed),
             goTo(Position.RETRACTING, false, false).onlyIf(
                 () -> position.getValueAsDouble() > Position.RETRACTING.value.get()
             ),
             goTo(Position.ZERO, false, false)
-        ).withName("Climber.retract()");
+        )
+            .onlyIf(() -> !isZeroed || !retracted)
+            .andThen(idle())
+            .withName("Climber.retract()");
     }
 
     /**
@@ -286,6 +294,9 @@ public final class Climber extends GRRSubsystem {
         final boolean deployServo,
         final boolean shouldFinish
     ) {
+        BooleanSupplier atPosition = () ->
+            Math.abs(this.position.getValueAsDouble() - position.value.get()) < atPositionEpsilon.get();
+
         CommandBuilder goTo = commandBuilder()
             .onExecute(() -> {
                 servo.setPosition(deployServo ? SERVO_DEPLOYED : SERVO_RETRACT);
@@ -297,12 +308,13 @@ public final class Climber extends GRRSubsystem {
                     lead.setControl(unloadedPositionControl);
                 }
             })
-            .onEnd(lead::stopMotor);
+            .onEnd(() -> {
+                lead.stopMotor();
+                retracted = position.equals(Position.ZERO) && atPosition.getAsBoolean();
+            });
 
         if (shouldFinish) {
-            goTo.isFinished(
-                () -> Math.abs(this.position.getValueAsDouble() - position.value.get()) < atPositionEpsilon.get()
-            );
+            goTo.isFinished(atPosition);
         }
 
         return sequence(zero().onlyIf(() -> !isZeroed), goTo).withName(
