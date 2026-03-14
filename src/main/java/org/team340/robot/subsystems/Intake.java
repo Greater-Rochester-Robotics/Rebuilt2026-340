@@ -209,7 +209,7 @@ public final class Intake extends GRRSubsystem {
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 95.0;
+        config.Slot0.kP = 75.0;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;

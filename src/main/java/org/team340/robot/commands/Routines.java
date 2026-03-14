@@ -217,7 +217,7 @@ public final class Routines {
                 .beforeStarting(timer::restart)
                 .asProxy()
                 .withTimeout(SHOOT_TIME),
-            parallel(intake.stow(), climber.climbL3(() -> timer.get() > 1.0)).beforeStarting(timer::restart).asProxy()
+            parallel(intake.stow(), climber.climbL1(() -> timer.get() > 1.0)).beforeStarting(timer::restart).asProxy()
         ).withName("Routines.testSequence()");
     }
 }

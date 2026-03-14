@@ -44,7 +44,7 @@ public final class Vision {
     private static final TunableDouble velAngThreshold = tunables.value("velAngThreshold", 0.8);
 
     private static enum StrategyWeights {
-        MULTITAG(0.16, 0.35),
+        MULTITAG(0.14, 0.35),
         TRIG(0.12, 1e5),
         AMBIGUITY(0.2, 0.5);
 
