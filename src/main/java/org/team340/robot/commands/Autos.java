@@ -63,6 +63,7 @@ public final class Autos {
         // Add autonomous modes to the dashboard
         chooser.add("Mashup Monday", mashupMonday());
         chooser.add("Turkiye Special", turkiyeSpecial());
+        chooser.add("StuySplash", stuySplash());
         chooser.add("Second Helping Right", secondHelping(false));
         chooser.add("Second Helping Left", secondHelping(true));
         chooser.add("Tower Time Right", towerTime(false));
@@ -88,6 +89,22 @@ public final class Autos {
 
         return sequence(
             grab(false),
+            deadline(apfShooting(prePickup).withTimeout(2.15), routines.shoot().asProxy()),
+            deadline(apfDefaultsForever(pickup).withTimeout(2.5), getReady()),
+            deadline(apfShooting(shoot), routines.shoot().asProxy())
+        );
+    }
+
+    /**
+     * The "StuySplash" auto routine.
+     */
+    private Command stuySplash() {
+        var shoot = new ExtTranslation(2.875, 2.85);
+        var prePickup = new ExtTranslation(1.25, 1.25);
+        var pickup = new ExtPose(0.55, 0.61, Rotation2d.k180deg);
+
+        return sequence(
+            grabAlt(false),
             deadline(apfShooting(prePickup).withTimeout(2.15), routines.shoot().asProxy()),
             deadline(apfDefaultsForever(pickup).withTimeout(2.5), getReady()),
             deadline(apfShooting(shoot), routines.shoot().asProxy())
@@ -139,9 +156,9 @@ public final class Autos {
      *             {@code false} to run on the right side.
      */
     private Command grab(boolean left) {
-        var preIntake = new ExtPose(7.7, 0.9, Rotation2d.fromDegrees(-135.0));
+        var preIntake = new ExtPose(7.6, 0.9, Rotation2d.fromDegrees(-135.0));
         var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(105.0));
-        var sweep = new ExtPose(7.7, 4.9, Rotation2d.fromDegrees(105.0));
+        var sweep = new ExtPose(7.5, 4.9, Rotation2d.fromDegrees(105.0));
         var preSweep2 = new ExtPose(6.7, 4.9, Rotation2d.fromDegrees(-145.0));
         var sweep2 = new ExtPose(6.25, 2.8, Rotation2d.fromDegrees(-145.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
@@ -155,11 +172,47 @@ public final class Autos {
                 ),
                 apfIntaking(() -> sweep.get(left), 1.75).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
-                apfIntaking(() -> sweep2.get(left), 2.5).withTimeout(4.0),
+                apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
             ),
             sequence(
                 intake.stow().asProxy().withTimeout(1.75),
+                intake.intake().asProxy().until(swerve::inOurZone),
+                getReady()
+            )
+        );
+    }
+
+    /**
+     * Sweeps the neutral zone to intake fuel, then returns to a shooting position in the
+     * alliance zone while preparing the hood and flywheels. Ends when it reaches that
+     * location. Does not run the indexer to actually shoot.
+     * @param left {@code true} if the robot should be on the left side of the field
+     *             (from the perspective of the current alliance's driver station),
+     *             {@code false} to run on the right side.
+     */
+    private Command grabAlt(boolean left) {
+        var preIntake = new ExtPose(7.6, 4.9, Rotation2d.fromDegrees(-135.0));
+        var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(-105.0));
+        var sweep = new ExtPose(7.5, 1.0, Rotation2d.fromDegrees(-105.0));
+        var preSweep2 = new ExtPose(6.7, 1.0, Rotation2d.fromDegrees(145.0));
+        var sweep2 = new ExtPose(6.25, 2.0, Rotation2d.fromDegrees(145.0));
+        var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
+
+        return deadline(
+            sequence(
+                apfDefaults(() ->
+                    swerve.inNeutralZone() && swerve.tagsSeen() >= intakeMinRqTagsSeen.get()
+                        ? preIntakeCrossed.get(left)
+                        : preIntake.get(left)
+                ),
+                apfIntaking(() -> sweep.get(left), 1.75).withTimeout(4.0),
+                swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
+                apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
+                apfDefaults(() -> shoot.get(left))
+            ),
+            sequence(
+                intake.stow().asProxy().withTimeout(1.0),
                 intake.intake().asProxy().until(swerve::inOurZone),
                 getReady()
             )
