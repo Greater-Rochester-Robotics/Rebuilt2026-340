@@ -1,7 +1,6 @@
 package org.team340.robot.util;
 
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import org.team340.lib.math.FieldInfo;
@@ -9,14 +8,9 @@ import org.team340.lib.math.PAPFController.LateralObstacle;
 import org.team340.lib.math.PAPFController.LineObstacle;
 import org.team340.lib.math.PAPFController.LongitudinalObstacle;
 import org.team340.lib.math.PAPFController.Obstacle;
-import org.team340.lib.math.geometry.ExtPose;
 import org.team340.lib.math.geometry.ExtTranslation;
-import org.team340.lib.tunable.TunableTable;
-import org.team340.lib.tunable.Tunables;
 
 public final class Field {
-
-    private static final TunableTable tunables = Tunables.getNested("field");
 
     /** The center of the field over its length (X direction). Also the CENTER LINE. */
     public static final double X_CENTER = FieldInfo.length() / 2.0;
@@ -50,25 +44,6 @@ public final class Field {
     public static final ExtTranslation HUB_FAR_LEFT_CORNER = new ExtTranslation(HUB_FAR, Y_CENTER + HUB_HALF_WIDTH);
     /** The far right corner of the HUB, from the perspective of the DRIVER STATION. */
     public static final ExtTranslation HUB_FAR_RIGHT_CORNER = new ExtTranslation(HUB_FAR, Y_CENTER - HUB_HALF_WIDTH);
-
-    // TOWER location helpers
-    private static final double TOWER_LEFT_Y = 4.168;
-    private static final double TOWER_RIGHT_Y = 3.32;
-    private static final double CLIMB_APPROACH_X = 1.75;
-    private static final double CLIMBING_X = 1.455;
-
-    /** The Y coordinate of the center of the blue TOWER. */
-    public static final double BLUE_TOWER_Y = getTag(31).getY();
-    /** The Y coordinate of the center of the red TOWER. */
-    public static final double RED_TOWER_Y = getTag(15).getY();
-    /** The approach location for the left TOWER UPRIGHT. */
-    public static final ExtPose TOWER_LEFT_APPROACH = new ExtPose(CLIMB_APPROACH_X, TOWER_LEFT_Y, Rotation2d.kZero);
-    /** The climbing location for the left TOWER UPRIGHT. */
-    public static final ExtPose TOWER_LEFT_CLIMB = new ExtPose(CLIMBING_X, TOWER_LEFT_Y, Rotation2d.kZero);
-    /** The approach location for the right TOWER UPRIGHT. */
-    public static final ExtPose TOWER_RIGHT_APPROACH = new ExtPose(CLIMB_APPROACH_X, TOWER_RIGHT_Y, Rotation2d.kZero);
-    /** The climbing location for the right TOWER UPRIGHT. */
-    public static final ExtPose TOWER_RIGHT_CLIMB = new ExtPose(CLIMBING_X, TOWER_RIGHT_Y, Rotation2d.kZero);
 
     // TRENCH location helpers
     private static final double TRENCH_DEPTH = Units.inchesToMeters(47.0);
@@ -186,12 +161,6 @@ public final class Field {
         new LineObstacle(FUEL_LEFT_NEAR, FUEL_RIGHT_NEAR, 2.0, 1.5),
         new LineObstacle(FUEL_LEFT_FAR, FUEL_RIGHT_FAR, 2.0, 1.5)
     };
-
-    static {
-        tunables.add("hub", HUB);
-        tunables.add("towerLeftClimb", TOWER_LEFT_CLIMB);
-        tunables.add("towerRightClimb", TOWER_RIGHT_CLIMB);
-    }
 
     /**
      * Returns the pose of the specified AprilTag on the field.

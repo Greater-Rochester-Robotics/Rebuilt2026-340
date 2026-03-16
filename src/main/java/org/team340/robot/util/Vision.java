@@ -68,7 +68,7 @@ public final class Vision {
     private final List<Pose3d> estimates = new ArrayList<>();
     private final List<Pose3d> targets = new ArrayList<>();
 
-    private TagMode tagMode = TagMode.HUB;
+    private TagMode tagMode = TagMode.ALLIANCE_HUB;
 
     /**
      * Create the vision manager.
@@ -318,9 +318,7 @@ public final class Vision {
         /** Use the tags on either hub. */
         BOTH_HUBS,
         /** Use only our alliance's hub tags. */
-        HUB,
-        /** Use only our alliance's tower tags. */
-        TOWER
+        ALLIANCE_HUB
     }
 
     /**
@@ -340,18 +338,12 @@ public final class Vision {
 
         switch (tagMode) {
             case BOTH_HUBS:
-            case HUB:
+            case ALLIANCE_HUB:
                 boolean blueHub = (id >= 18 && id <= 21) || (id >= 24 && id <= 27);
                 boolean redHub = (id >= 2 && id <= 5) || (id >= 8 && id <= 11);
 
                 if (invalidAlliance || tagMode.equals(TagMode.BOTH_HUBS)) return blueHub || redHub;
                 else return Alliance.isBlue() ? blueHub : redHub;
-            case TOWER:
-                boolean blueTower = id == 31 || id == 32;
-                boolean redTower = id == 15 || id == 16;
-
-                if (invalidAlliance) return blueTower || redTower;
-                else return Alliance.isBlue() ? blueTower : redTower;
             default:
                 return false;
         }

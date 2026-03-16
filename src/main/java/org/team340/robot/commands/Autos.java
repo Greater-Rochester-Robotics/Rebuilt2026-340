@@ -6,7 +6,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import java.util.function.Supplier;
 import org.team340.lib.math.geometry.ExtPose;
 import org.team340.lib.math.geometry.ExtTranslation;
@@ -61,22 +60,12 @@ public final class Autos {
         chooser = new AutoChooser();
 
         // Add autonomous modes to the dashboard
-        chooser.add("Mashup Monday", mashupMonday());
         chooser.add("Turkiye Special", turkiyeSpecial());
         chooser.add("StuySplash", stuySplash());
         chooser.add("Second Helping Right", secondHelping(false));
         chooser.add("Second Helping Left", secondHelping(true));
-        chooser.add("Tower Time Right", towerTime(false));
-        chooser.add("Tower Time Left", towerTime(true));
         chooser.add("Simple Sally Right", simpleSally(false));
         chooser.add("Simple Sally Left", simpleSally(true));
-    }
-
-    /**
-     * The "Mashup Monday" auto routine.
-     */
-    private Command mashupMonday() {
-        return turkiyeSpecial().withTimeout(15.0).andThen(new ScheduleCommand(routines.climb(() -> false, false)));
     }
 
     /**
@@ -123,16 +112,6 @@ public final class Autos {
             grabMore(left),
             parallel(swerve.aimAtTarget(), routines.shoot().asProxy())
         );
-    }
-
-    /**
-     * The "Tower Time" auto routine.
-     * @param left {@code true} if the auto should run on the left side of the field
-     *             (from the perspective of the current alliance's driver station),
-     *             {@code false} to run on the right side.
-     */
-    private Command towerTime(boolean left) {
-        return simpleSally(left).withTimeout(15.0).andThen(new ScheduleCommand(routines.climb(() -> left, false)));
     }
 
     /**

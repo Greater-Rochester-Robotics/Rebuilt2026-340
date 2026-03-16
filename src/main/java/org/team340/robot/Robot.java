@@ -16,7 +16,6 @@ import org.team340.lib.util.command.RumbleCommand;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.commands.Autos;
 import org.team340.robot.commands.Routines;
-import org.team340.robot.subsystems.Climber;
 import org.team340.robot.subsystems.Hood;
 import org.team340.robot.subsystems.Indexer;
 import org.team340.robot.subsystems.Intake;
@@ -30,7 +29,6 @@ public final class Robot extends LoggedRobot {
 
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
 
-    public final Climber climber;
     public final Hood hood;
     public final Indexer indexer;
     public final Intake intake;
@@ -49,7 +47,6 @@ public final class Robot extends LoggedRobot {
         PhoenixUtil.disableDaemons();
 
         // Initialize subsystems
-        climber = new Climber();
         hood = new Hood();
         indexer = new Indexer();
         intake = new Intake();
@@ -68,14 +65,12 @@ public final class Robot extends LoggedRobot {
         driver = new CommandXboxController(Constants.DRIVER);
 
         // Set default commands
-        climber.setDefaultCommand(climber.retract(swerve::isAwayFromTower));
         intake.setDefaultCommand(intake.extend());
         hood.setDefaultCommand(hood.goToZero(false));
         swerve.setDefaultCommand(swerve.drive(this::driverX, this::driverY, this::driverAngular));
 
         // Create triggers
         var shoot = driver.leftBumper().or(driver.rightBumper());
-        RobotModeTriggers.teleop().onTrue(climber.unclimbL1());
         new Trigger(() -> shiftTracker.shiftTimeLeft() < 5.0)
             .onTrue(new RumbleCommand(driver, 1.0).withTimeout(0.3).onlyIf(this::isTeleop))
             .onFalse(new RumbleCommand(driver, 1.0).withTimeout(0.6).onlyIf(this::isTeleop));
@@ -91,11 +86,7 @@ public final class Robot extends LoggedRobot {
             .onFalse(routines.driverShootShutdown(this::driverX, this::driverY));
 
         driver.povLeft().onTrue(swerve.tareRotation());
-        driver.povRight().whileTrue(climber.zero());
-        driver.povUp().whileTrue(routines.climb(swerve::isLeftOfTower, false)).onFalse(intake.stow());
         driver.povDown().whileTrue(hood.goToZero(true));
-
-        driver.rightStick().whileTrue(climber.climbL1(() -> false)).onFalse(climber.climbL1(() -> true));
 
         driver.start().and(driver.back()).whileTrue(routines.testSequence());
 
