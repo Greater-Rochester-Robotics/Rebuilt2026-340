@@ -31,15 +31,20 @@ public final class Autos {
     private static final TunableDouble shootingVelocity = tunables.value("shootingVelocity", 1.25);
     private static final TunableInteger intakeMinRqTagsSeen = tunables.value("intakeMinRqTagsSeen", 15);
 
-    private static final TunableTable intakeTunables = tunables.getNested("intake");
-    private static final TunableDouble intakeDeceleration = intakeTunables.value("deceleration", 12.0);
-    private static final TunableDouble intakeEndTolerance = intakeTunables.value("endTolerance", 0.4);
-
     private static final TunableTable defaultTunables = tunables.getNested("default");
     private static final TunableDouble velocity = defaultTunables.value("velocity", 4.5);
     private static final TunableDouble deceleration = defaultTunables.value("deceleration", 6.0);
     private static final TunableDouble endTolerance = defaultTunables.value("endTolerance", 0.1);
     private static final TunableDouble endAngTolerance = defaultTunables.value("endAngTolerance", Math.toRadians(6.0));
+
+    private static final TunableTable intakeTunables = tunables.getNested("intake");
+    private static final TunableDouble intakeDeceleration = intakeTunables.value("deceleration", 12.0);
+    private static final TunableDouble intakeEndTolerance = intakeTunables.value("endTolerance", 0.4);
+
+    private static final TunableTable depotTunables = tunables.getNested("depot");
+    private static final TunableDouble depotVelocity = depotTunables.value("velocity", 0.75);
+    private static final TunableDouble depotDeceleration = depotTunables.value("deceleration", 4.0);
+    private static final TunableDouble depotEndTolerance = depotTunables.value("endTolerance", 0.04);
 
     private final Hood hood;
     private final Intake intake;
@@ -62,6 +67,7 @@ public final class Autos {
         // Add autonomous modes to the dashboard
         chooser.add("Turkiye Special", turkiyeSpecial());
         chooser.add("StuySplash", stuySplash());
+        chooser.add("Depoo", depoo());
         chooser.add("Second Helping Right", secondHelping(false));
         chooser.add("Second Helping Left", secondHelping(true));
         chooser.add("Simple Sally Right", simpleSally(false));
@@ -96,6 +102,23 @@ public final class Autos {
             grabAlt(false),
             deadline(apfShooting(prePickup).withTimeout(2.15), routines.shoot().asProxy()),
             deadline(apfDefaultsForever(pickup).withTimeout(2.5), getReady()),
+            deadline(apfShooting(shoot), routines.shoot().asProxy())
+        );
+    }
+
+    /**
+     * The "Depoo" auto routine.
+     */
+    private Command depoo() {
+        var shoot = new ExtTranslation(2.875, 5.219);
+        var prePickup = new ExtPose(1.25, 5.94, Rotation2d.k180deg);
+        var pickup = new ExtPose(0.5, 5.94, Rotation2d.k180deg);
+
+        return sequence(
+            grab(true),
+            deadline(apfShooting(() -> prePickup.get().getTranslation()).withTimeout(3.5), routines.shoot().asProxy()),
+            deadline(apfDepot(pickup).withTimeout(2.0), getReady()),
+            deadline(apfDepot(prePickup).withTimeout(2.0), getReady()),
             deadline(apfShooting(shoot), routines.shoot().asProxy())
         );
     }
@@ -171,9 +194,9 @@ public final class Autos {
      *             {@code false} to run on the right side.
      */
     private Command grabAlt(boolean left) {
-        var preIntake = new ExtPose(7.6, 4.9, Rotation2d.fromDegrees(-135.0));
-        var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(-105.0));
-        var sweep = new ExtPose(7.5, 1.0, Rotation2d.fromDegrees(-105.0));
+        var preIntake = new ExtPose(8.9, 4.9, Rotation2d.fromDegrees(-135.0));
+        var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(-115.0));
+        var sweep = new ExtPose(8.8, 1.0, Rotation2d.fromDegrees(-115.0));
         var preSweep2 = new ExtPose(6.7, 1.0, Rotation2d.fromDegrees(145.0));
         var sweep2 = new ExtPose(6.25, 2.0, Rotation2d.fromDegrees(145.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
@@ -216,9 +239,9 @@ public final class Autos {
         return deadline(
             sequence(
                 apfFuelApproach(() -> preIntake.get(left)),
-                apfIntaking(() -> sweep.get(left), 2.75).withTimeout(4.0),
+                apfIntaking(() -> sweep.get(left), 2.5).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
-                apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
+                apfIntaking(() -> sweep2.get(left), 2.5).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
             ),
             sequence(waitSeconds(2.0), intake.intake().asProxy().until(swerve::atAngle), getReady())
@@ -256,6 +279,17 @@ public final class Autos {
     }
 
     /**
+     * Drives the robot to a target position using the P-APF, until the robot is
+     * positioned within the default depot tolerances of the specified goal location.
+     * Uses the default depot velocity and deceleration alues.
+     * @param goal A supplier that returns the target blue-origin relative field location.
+     * @param velocity The desired cruise velocity of the robot, in m/s.
+     */
+    private Command apfDepot(Supplier<Pose2d> goal) {
+        return swerve.apfDrive(goal, depotVelocity, depotDeceleration, depotEndTolerance, () -> 1e5, false);
+    }
+
+    /**
      * Drives the robot to a target position using the P-APF, with
      * parameters configured to favorably approach the neutral zone fuel.
      * @param goal A supplier that returns the target blue-origin relative field location.
@@ -280,7 +314,7 @@ public final class Autos {
      */
     private Command getReady() {
         return parallel(
-            intake.extend(),
+            intake.intake(),
             hood.targetDistance(swerve::targetDistance),
             shooters.targetDistance(swerve::targetDistance)
         ).asProxy();

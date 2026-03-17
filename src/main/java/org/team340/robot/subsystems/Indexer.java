@@ -2,10 +2,12 @@ package org.team340.robot.subsystems;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -38,30 +40,42 @@ public final class Indexer extends GRRSubsystem {
     }
 
     private final TalonFX twindexer;
-    private final TalonFX uptake;
+    private final TalonFX uptakeLead;
+    private final TalonFX uptakeFollow;
 
     private final VelocityTorqueCurrentFOC velocityControl;
+    private final Follower uptakeFollowControl;
 
     public Indexer() {
         this.twindexer = new TalonFX(RobotMap.INDEXER_TWINDEXER_MOTOR, RobotMap.CANBus);
-        this.uptake = new TalonFX(RobotMap.INDEXER_UPTAKE_MOTOR, RobotMap.CANBus);
+        this.uptakeLead = new TalonFX(RobotMap.INDEXER_UPTAKE_LEAD_MOTOR, RobotMap.CANBus);
+        this.uptakeFollow = new TalonFX(RobotMap.INDEXER_UPTAKE_FOLLOW_MOTOR, RobotMap.CANBus);
 
         configureTwindexer();
         configureUptake();
 
+        PhoenixUtil.run(() -> uptakeLead.getTorqueCurrent().setUpdateFrequency(500));
         PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(50, twindexer.getVelocity(), uptake.getVelocity())
+            BaseStatusSignal.setUpdateFrequencyForAll(50, twindexer.getVelocity(), uptakeLead.getVelocity())
         );
-        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, twindexer, uptake));
+        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, twindexer, uptakeLead, uptakeFollow));
 
         velocityControl = new VelocityTorqueCurrentFOC(0.0);
         velocityControl.UpdateFreqHz = 0.0;
 
+        uptakeFollowControl = new Follower(RobotMap.INDEXER_UPTAKE_LEAD_MOTOR, MotorAlignmentValue.Opposed);
+
         tunables.add("twindexerMotor", twindexer);
-        tunables.add("uptakeMotor", uptake);
+        tunables.add("uptakeLeadMotor", uptakeLead);
+        tunables.add("uptakeFollowMotor", uptakeFollow);
 
         // Enum warmup
         State.FEED.twindexerSpeed.get();
+    }
+
+    @Override
+    public void periodic() {
+        uptakeFollow.setControl(uptakeFollowControl);
     }
 
     /**
@@ -89,11 +103,11 @@ public final class Indexer extends GRRSubsystem {
                 twindexer.setControl(velocityControl);
 
                 velocityControl.withVelocity(state.uptakeSpeed.get());
-                uptake.setControl(velocityControl);
+                uptakeLead.setControl(velocityControl);
             })
             .onEnd(() -> {
                 twindexer.stopMotor();
-                uptake.stopMotor();
+                uptakeLead.stopMotor();
             });
     }
 
@@ -123,8 +137,8 @@ public final class Indexer extends GRRSubsystem {
     private void configureUptake() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.StatorCurrentLimit = 150.0;
+        config.CurrentLimits.SupplyCurrentLimit = 60.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
@@ -139,7 +153,10 @@ public final class Indexer extends GRRSubsystem {
 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
-        PhoenixUtil.run(() -> uptake.clearStickyFaults());
-        PhoenixUtil.run(() -> uptake.getConfigurator().apply(config));
+        PhoenixUtil.run(() -> uptakeLead.clearStickyFaults());
+        PhoenixUtil.run(() -> uptakeLead.getConfigurator().apply(config));
+
+        PhoenixUtil.run(() -> uptakeFollow.clearStickyFaults());
+        PhoenixUtil.run(() -> uptakeFollow.getConfigurator().apply(config));
     }
 }

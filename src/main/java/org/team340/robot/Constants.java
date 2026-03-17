@@ -54,24 +54,18 @@ public final class Constants {
         // Indexer
 
         public static final int INDEXER_TWINDEXER_MOTOR = 40;
-        public static final int INDEXER_UPTAKE_MOTOR = 41;
+        public static final int INDEXER_UPTAKE_LEAD_MOTOR = 41;
+        public static final int INDEXER_UPTAKE_FOLLOW_MOTOR = 42;
 
         // Intake
 
         public static final int INTAKE_PIVOT_MOTOR = 50;
-        public static final int INTAKE_ROLLER_MOTOR = 51;
-        public static final int INTAKE_WCP_THROUGHBORE_POWERED_BY_CANCODER_FOR_HALF_INCH_HEX = 52;
+        public static final int INTAKE_ROLLER_LEAD_MOTOR = 51;
+        public static final int INTAKE_ROLLER_FOLLOW_MOTOR = 52;
+        public static final int INTAKE_WCP_THROUGHBORE_POWERED_BY_CANCODER_FOR_HALF_INCH_HEX = 53;
 
         // Lights
 
         public static final int LIGHTS = 1;
-
-        // Climber
-
-        public static final int CLIMBER_LEAD_MOTOR = 60;
-        public static final int CLIMBER_FOLLOW_MOTOR = 61;
-        public static final int CLIMBER_CANCODER = 62;
-
-        public static final int CLIMBER_SERVO_CHANNEL = 0;
     }
 }

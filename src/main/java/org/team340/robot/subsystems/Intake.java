@@ -7,12 +7,14 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.epilogue.Logged;
@@ -57,17 +59,20 @@ public final class Intake extends GRRSubsystem {
     }
 
     private final TalonFX pivot;
-    private final TalonFX rollers;
+    private final TalonFX rollersLead;
+    private final TalonFX rollersFollow;
     private final CANcoder wcpThroughborePoweredByCANcoderForHalfInchHex; // do not change this name
 
     private final StatusSignal<Angle> pivotPosition;
 
     private final DynamicMotionMagicVoltage pivotPositionControl;
     private final VelocityTorqueCurrentFOC rollersVelocityControl;
+    private final Follower pivotFollowControl;
 
     public Intake() {
         this.pivot = new TalonFX(RobotMap.INTAKE_PIVOT_MOTOR, RobotMap.CANBus);
-        this.rollers = new TalonFX(RobotMap.INTAKE_ROLLER_MOTOR, RobotMap.CANBus);
+        this.rollersLead = new TalonFX(RobotMap.INTAKE_ROLLER_LEAD_MOTOR, RobotMap.CANBus);
+        this.rollersFollow = new TalonFX(RobotMap.INTAKE_ROLLER_FOLLOW_MOTOR, RobotMap.CANBus);
         this.wcpThroughborePoweredByCANcoderForHalfInchHex = new CANcoder(
             RobotMap.INTAKE_WCP_THROUGHBORE_POWERED_BY_CANCODER_FOR_HALF_INCH_HEX,
             RobotMap.CANBus
@@ -79,11 +84,18 @@ public final class Intake extends GRRSubsystem {
 
         pivotPosition = pivot.getPosition();
 
+        PhoenixUtil.run(() -> rollersLead.getTorqueCurrent().setUpdateFrequency(500));
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(100, pivotPosition, pivot.getClosedLoopReference())
         );
         PhoenixUtil.run(() ->
-            ParentDevice.optimizeBusUtilizationForAll(4, pivot, rollers, wcpThroughborePoweredByCANcoderForHalfInchHex)
+            ParentDevice.optimizeBusUtilizationForAll(
+                4,
+                pivot,
+                rollersLead,
+                rollersFollow,
+                wcpThroughborePoweredByCANcoderForHalfInchHex
+            )
         );
 
         pivotPositionControl = new DynamicMotionMagicVoltage(0.0, 0.0, 0.0);
@@ -93,8 +105,11 @@ public final class Intake extends GRRSubsystem {
         rollersVelocityControl = new VelocityTorqueCurrentFOC(0.0);
         rollersVelocityControl.UpdateFreqHz = 0.0;
 
+        pivotFollowControl = new Follower(RobotMap.INTAKE_ROLLER_LEAD_MOTOR, MotorAlignmentValue.Aligned);
+
         tunables.add("pivotMotor", pivot);
-        tunables.add("rollersMotor", rollers);
+        tunables.add("rollersLeadMotor", rollersLead);
+        tunables.add("rollersFollowMotor", rollersFollow);
 
         // Enum warmup
         State.STOW.position.get();
@@ -103,6 +118,7 @@ public final class Intake extends GRRSubsystem {
     @Override
     public void periodic() {
         pivotPosition.refresh();
+        rollersFollow.setControl(pivotFollowControl);
     }
 
     /**
@@ -163,14 +179,14 @@ public final class Intake extends GRRSubsystem {
 
                 rollersVelocityControl.withVelocity(state.rollerVelocity.getAsDouble());
                 if (Math.abs(rollersVelocityControl.Velocity) > 1e-6) {
-                    rollers.setControl(rollersVelocityControl);
+                    rollersLead.setControl(rollersVelocityControl);
                 } else {
-                    rollers.stopMotor();
+                    rollersLead.stopMotor();
                 }
             })
             .onEnd(() -> {
                 pivot.stopMotor();
-                rollers.stopMotor();
+                rollersLead.stopMotor();
             });
     }
 
@@ -209,7 +225,7 @@ public final class Intake extends GRRSubsystem {
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 75.0;
+        config.Slot0.kP = 90.0;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
@@ -232,8 +248,8 @@ public final class Intake extends GRRSubsystem {
     private void configureRollers() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.StatorCurrentLimit = 150.0;
+        config.CurrentLimits.SupplyCurrentLimit = 60.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
@@ -248,7 +264,10 @@ public final class Intake extends GRRSubsystem {
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
-        PhoenixUtil.run(() -> rollers.clearStickyFaults());
-        PhoenixUtil.run(() -> rollers.getConfigurator().apply(config));
+        PhoenixUtil.run(() -> rollersLead.clearStickyFaults());
+        PhoenixUtil.run(() -> rollersLead.getConfigurator().apply(config));
+
+        PhoenixUtil.run(() -> rollersFollow.clearStickyFaults());
+        PhoenixUtil.run(() -> rollersFollow.getConfigurator().apply(config));
     }
 }
