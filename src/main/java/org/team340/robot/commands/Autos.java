@@ -116,7 +116,7 @@ public final class Autos {
 
         return sequence(
             grab(true),
-            deadline(apfShooting(() -> prePickup.get().getTranslation()).withTimeout(3.5), routines.shoot().asProxy()),
+            deadline(apfShooting(() -> prePickup.get().getTranslation()).withTimeout(5.0), routines.shoot().asProxy()),
             deadline(apfDepot(pickup).withTimeout(2.0), getReady()),
             deadline(apfDepot(prePickup).withTimeout(2.0), getReady()),
             deadline(apfShooting(shoot), routines.shoot().asProxy())
@@ -172,7 +172,7 @@ public final class Autos {
                         ? preIntakeCrossed.get(left)
                         : preIntake.get(left)
                 ),
-                apfIntaking(() -> sweep.get(left), 1.75).withTimeout(4.0),
+                apfIntaking(() -> sweep.get(left), 2.0).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
                 apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
@@ -194,9 +194,9 @@ public final class Autos {
      *             {@code false} to run on the right side.
      */
     private Command grabAlt(boolean left) {
-        var preIntake = new ExtPose(8.9, 4.9, Rotation2d.fromDegrees(-135.0));
-        var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(-115.0));
-        var sweep = new ExtPose(8.8, 1.0, Rotation2d.fromDegrees(-115.0));
+        var preIntake = new ExtPose(8.8, 4.9, Rotation2d.fromDegrees(-135.0));
+        var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(-125.0));
+        var sweep = new ExtPose(8.65, 1.0, Rotation2d.fromDegrees(-125.0));
         var preSweep2 = new ExtPose(6.7, 1.0, Rotation2d.fromDegrees(145.0));
         var sweep2 = new ExtPose(6.25, 2.0, Rotation2d.fromDegrees(145.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
@@ -208,7 +208,7 @@ public final class Autos {
                         ? preIntakeCrossed.get(left)
                         : preIntake.get(left)
                 ),
-                apfIntaking(() -> sweep.get(left), 1.75).withTimeout(4.0),
+                apfIntaking(() -> sweep.get(left), 2.0).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
                 apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
@@ -241,7 +241,7 @@ public final class Autos {
                 apfFuelApproach(() -> preIntake.get(left)),
                 apfIntaking(() -> sweep.get(left), 2.5).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
-                apfIntaking(() -> sweep2.get(left), 2.5).withTimeout(4.0),
+                apfIntaking(() -> sweep2.get(left), 3.0).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
             ),
             sequence(waitSeconds(2.0), intake.intake().asProxy().until(swerve::atAngle), getReady())
