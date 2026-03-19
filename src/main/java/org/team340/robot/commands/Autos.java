@@ -160,8 +160,8 @@ public final class Autos {
     private Command grab(boolean left) {
         var preIntake = new ExtPose(7.6, 0.9, Rotation2d.fromDegrees(-135.0));
         var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(105.0));
-        var sweep = new ExtPose(7.5, 4.6, Rotation2d.fromDegrees(105.0));
-        var preSweep2 = new ExtPose(6.7, 4.6, Rotation2d.fromDegrees(-145.0));
+        var sweep = new ExtPose(7.5, 4.5, Rotation2d.fromDegrees(105.0));
+        var preSweep2 = new ExtPose(6.7, 4.5, Rotation2d.fromDegrees(-145.0));
         var sweep2 = new ExtPose(6.25, 2.8, Rotation2d.fromDegrees(-145.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
 
@@ -194,7 +194,7 @@ public final class Autos {
      *             {@code false} to run on the right side.
      */
     private Command grabAlt(boolean left) {
-        var preIntake = new ExtPose(8.8, 4.9, Rotation2d.fromDegrees(-135.0));
+        var preIntake = new ExtPose(8.8, 4.8, Rotation2d.fromDegrees(-135.0));
         var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(-125.0));
         var sweep = new ExtPose(8.65, 1.0, Rotation2d.fromDegrees(-125.0));
         var preSweep2 = new ExtPose(6.7, 1.0, Rotation2d.fromDegrees(145.0));
