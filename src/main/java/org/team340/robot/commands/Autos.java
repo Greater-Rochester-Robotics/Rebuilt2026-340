@@ -131,7 +131,7 @@ public final class Autos {
      */
     private Command secondHelping(boolean left) {
         return sequence(
-            sequence(grab(left), parallel(swerve.aimAtTarget(), routines.shoot().asProxy())).withTimeout(10.0),
+            sequence(grab(left), parallel(swerve.aimAtTarget(), routines.shoot().asProxy())).withTimeout(15.0),
             grabMore(left),
             parallel(swerve.aimAtTarget(), routines.shoot().asProxy())
         );
@@ -160,8 +160,8 @@ public final class Autos {
     private Command grab(boolean left) {
         var preIntake = new ExtPose(7.6, 0.9, Rotation2d.fromDegrees(-135.0));
         var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(105.0));
-        var sweep = new ExtPose(7.5, 4.9, Rotation2d.fromDegrees(105.0));
-        var preSweep2 = new ExtPose(6.7, 4.9, Rotation2d.fromDegrees(-145.0));
+        var sweep = new ExtPose(7.5, 4.6, Rotation2d.fromDegrees(105.0));
+        var preSweep2 = new ExtPose(6.7, 4.6, Rotation2d.fromDegrees(-145.0));
         var sweep2 = new ExtPose(6.25, 2.8, Rotation2d.fromDegrees(-145.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
 
@@ -172,7 +172,7 @@ public final class Autos {
                         ? preIntakeCrossed.get(left)
                         : preIntake.get(left)
                 ),
-                apfIntaking(() -> sweep.get(left), 2.0).withTimeout(4.0),
+                apfIntaking(() -> sweep.get(left), 1.75).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
                 apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
@@ -208,7 +208,7 @@ public final class Autos {
                         ? preIntakeCrossed.get(left)
                         : preIntake.get(left)
                 ),
-                apfIntaking(() -> sweep.get(left), 2.0).withTimeout(4.0),
+                apfIntaking(() -> sweep.get(left), 1.75).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
                 apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
@@ -231,17 +231,17 @@ public final class Autos {
      */
     private Command grabMore(boolean left) {
         var preIntake = new ExtPose(6.7, 2.0, Rotation2d.fromDegrees(-135.0));
-        var sweep = new ExtPose(6.7, 5.0, Rotation2d.fromDegrees(105.0));
-        var preSweep2 = new ExtPose(6.35, 5.0, Rotation2d.fromDegrees(-120.0));
+        var sweep = new ExtPose(6.7, 4.6, Rotation2d.fromDegrees(105.0));
+        var preSweep2 = new ExtPose(6.35, 4.6, Rotation2d.fromDegrees(-120.0));
         var sweep2 = new ExtPose(6.2, 2.8, Rotation2d.fromDegrees(-120.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
 
         return deadline(
             sequence(
                 apfFuelApproach(() -> preIntake.get(left)),
-                apfIntaking(() -> sweep.get(left), 2.5).withTimeout(4.0),
+                apfIntaking(() -> sweep.get(left), 2.0).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
-                apfIntaking(() -> sweep2.get(left), 3.0).withTimeout(4.0),
+                apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
             ),
             sequence(waitSeconds(2.0), intake.intake().asProxy().until(swerve::atAngle), getReady())
