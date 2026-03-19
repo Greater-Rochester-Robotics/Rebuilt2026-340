@@ -36,9 +36,9 @@ public final class ShootParams {
             new DataPoint(2.50, 4.0, 41.0),
             new DataPoint(2.99, 7.5, 39.0),
             new DataPoint(3.51, 10.0, 44.0),
-            new DataPoint(3.96, 12.0, 46.0),
-            new DataPoint(4.59, 12.5, 48.5),
-            new DataPoint(5.15, 15.0, 53.0),
+            new DataPoint(3.96, 11.95, 46.0),
+            new DataPoint(4.59, 12.4, 48.5),
+            new DataPoint(5.15, 14.9, 53.0),
             // Outside of alliance zone
             new DataPoint(6.15, 15.0, 58.0),
             new DataPoint(8.39, 12.0, 68.0),

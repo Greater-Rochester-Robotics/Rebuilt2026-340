@@ -248,8 +248,8 @@ public final class Intake extends GRRSubsystem {
     private void configureRollers() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 150.0;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.StatorCurrentLimit = 170.0;
+        config.CurrentLimits.SupplyCurrentLimit = 65.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;

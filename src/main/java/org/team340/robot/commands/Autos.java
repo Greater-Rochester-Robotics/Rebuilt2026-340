@@ -172,7 +172,7 @@ public final class Autos {
                         ? preIntakeCrossed.get(left)
                         : preIntake.get(left)
                 ),
-                apfIntaking(() -> sweep.get(left), 1.75).withTimeout(4.0),
+                apfIntaking(() -> sweep.get(left), 1.6).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
                 apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
@@ -208,7 +208,7 @@ public final class Autos {
                         ? preIntakeCrossed.get(left)
                         : preIntake.get(left)
                 ),
-                apfIntaking(() -> sweep.get(left), 1.75).withTimeout(4.0),
+                apfIntaking(() -> sweep.get(left), 1.6).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
                 apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
@@ -239,7 +239,7 @@ public final class Autos {
         return deadline(
             sequence(
                 apfFuelApproach(() -> preIntake.get(left)),
-                apfIntaking(() -> sweep.get(left), 2.0).withTimeout(4.0),
+                apfIntaking(() -> sweep.get(left), 1.8).withTimeout(4.0),
                 swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
                 apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
