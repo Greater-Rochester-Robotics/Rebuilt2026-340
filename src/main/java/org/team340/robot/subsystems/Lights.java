@@ -33,11 +33,7 @@ public final class Lights extends GRRSubsystem {
 
     private static final TunableDouble locationTol = tunables.value("locationTol", 0.05);
     private static final TunableDouble angularTol = tunables.value("angularTol", Math.toRadians(0.5));
-
-    private static final Debouncer tagSightFilter = tunables.add(
-        "tagSightFilter",
-        new Debouncer(0.06, DebounceType.kFalling)
-    );
+    private static final Debouncer tagFilter = tunables.add("tagFilter", new Debouncer(0.2, DebounceType.kFalling));
 
     private static enum Color {
         HUB_INACTIVE(255, 120, 0),
@@ -127,7 +123,7 @@ public final class Lights extends GRRSubsystem {
                 errors.clear();
                 Pose2d pose = robotPose.get();
 
-                if (tag.calculate(!tagSightFilter.calculate(seesAprilTag.getAsBoolean()))) {
+                if (tag.calculate(!tagFilter.calculate(seesAprilTag.getAsBoolean()))) {
                     errors.add(Color.NO_TAGS);
                 } else if (
                     location.calculate(
