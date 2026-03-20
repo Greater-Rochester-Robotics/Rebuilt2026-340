@@ -158,9 +158,9 @@ public final class Autos {
      *             {@code false} to run on the right side.
      */
     private Command grab(boolean left) {
-        var preIntake = new ExtPose(7.6, 0.9, Rotation2d.fromDegrees(-135.0));
+        var preIntake = new ExtPose(7.8, 0.9, Rotation2d.fromDegrees(-135.0));
         var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(105.0));
-        var sweep = new ExtPose(7.5, 4.5, Rotation2d.fromDegrees(105.0));
+        var sweep = new ExtPose(7.7, 4.5, Rotation2d.fromDegrees(105.0));
         var preSweep2 = new ExtPose(6.7, 4.5, Rotation2d.fromDegrees(-145.0));
         var sweep2 = new ExtPose(6.25, 2.8, Rotation2d.fromDegrees(-145.0));
         var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
@@ -178,7 +178,7 @@ public final class Autos {
                 apfDefaults(() -> shoot.get(left))
             ),
             sequence(
-                intake.stow().asProxy().withTimeout(1.75),
+                intake.stow().asProxy().withTimeout(1.5),
                 intake.intake().asProxy().until(swerve::inOurZone),
                 getReady()
             )
