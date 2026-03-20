@@ -200,7 +200,7 @@ public final class Intake extends GRRSubsystem {
     private void configureCANcoder() {
         final CANcoderConfiguration wcpThroughborePoweredByCANcoderForHalfInchHexConfig = new CANcoderConfiguration();
 
-        wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.MagnetOffset = 0.843;
+        wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.MagnetOffset = 0.509;
         wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.SensorDirection =
             SensorDirectionValue.CounterClockwise_Positive;
 
