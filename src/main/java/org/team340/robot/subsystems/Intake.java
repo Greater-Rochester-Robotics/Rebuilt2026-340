@@ -42,8 +42,8 @@ public final class Intake extends GRRSubsystem {
         STOW(-0.115, 1.0, 0.0),
         EXTEND(0.254, 1.0, 0.0),
         INTAKE(0.254, 1.0, 90.0),
-        AGITATE_UP(0.17, 2.0, 40.0),
-        AGITATE_DOWN(0.254, 2.0, 40.0),
+        AGITATE_UP(0.17, 2.0, 30.0),
+        AGITATE_DOWN(0.254, 2.0, 30.0),
         BARF(0.254, 1.0, -90.0),
         PURGE(-0.115, 1.0, -90.0);
 
@@ -249,7 +249,7 @@ public final class Intake extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 170.0;
-        config.CurrentLimits.SupplyCurrentLimit = 65.0;
+        config.CurrentLimits.SupplyCurrentLimit = 60.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
