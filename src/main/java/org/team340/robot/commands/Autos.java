@@ -84,9 +84,10 @@ public final class Autos {
 
         return sequence(
             grab(false),
+            parallel(apfShooting(shoot), routines.shoot().asProxy()).withTimeout(2.0),
             deadline(apfShooting(prePickup).withTimeout(2.15), routines.shoot().asProxy()),
             deadline(apfDefaultsForever(pickup).withTimeout(2.5), getReady()),
-            deadline(apfShooting(shoot), routines.shoot().asProxy())
+            parallel(apfShooting(shoot), routines.shoot().asProxy())
         );
     }
 
@@ -100,9 +101,10 @@ public final class Autos {
 
         return sequence(
             grabAlt(false),
+            parallel(apfShooting(shoot), routines.shoot().asProxy()).withTimeout(2.0),
             deadline(apfShooting(prePickup).withTimeout(2.15), routines.shoot().asProxy()),
             deadline(apfDefaultsForever(pickup).withTimeout(2.5), getReady()),
-            deadline(apfShooting(shoot), routines.shoot().asProxy())
+            parallel(apfShooting(shoot), routines.shoot().asProxy())
         );
     }
 
@@ -119,7 +121,7 @@ public final class Autos {
             deadline(apfShooting(() -> prePickup.get().getTranslation()).withTimeout(5.0), routines.shoot().asProxy()),
             deadline(apfDepot(pickup).withTimeout(2.0), getReady()),
             deadline(apfDepot(prePickup).withTimeout(2.0), getReady()),
-            deadline(apfShooting(shoot), routines.shoot().asProxy())
+            parallel(apfShooting(shoot), routines.shoot().asProxy())
         );
     }
 
