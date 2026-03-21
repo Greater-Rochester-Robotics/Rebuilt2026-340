@@ -41,7 +41,7 @@ public final class Intake extends GRRSubsystem {
     private static enum State {
         STOW(-0.115, 1.0, 0.0),
         EXTEND(0.254, 1.0, 0.0),
-        INTAKE(0.254, 1.0, 90.0),
+        INTAKE(0.25, 1.0, 90.0),
         AGITATE_UP(0.17, 2.0, 30.0),
         AGITATE_DOWN(0.254, 2.0, 30.0),
         BARF(0.254, 1.0, -90.0),
