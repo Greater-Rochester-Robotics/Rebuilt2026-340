@@ -79,7 +79,7 @@ public final class Indexer extends GRRSubsystem {
     }
 
     /**
-     * Feeds the shooters.
+     * Feeds the shooter.
      */
     public Command feed() {
         return runState(State.FEED).withName("Indexer.feed()");

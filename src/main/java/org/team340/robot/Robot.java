@@ -20,7 +20,7 @@ import org.team340.robot.subsystems.Hood;
 import org.team340.robot.subsystems.Indexer;
 import org.team340.robot.subsystems.Intake;
 import org.team340.robot.subsystems.Lights;
-import org.team340.robot.subsystems.Shooters;
+import org.team340.robot.subsystems.Shooter;
 import org.team340.robot.subsystems.Swerve;
 import org.team340.robot.util.ShiftTracker;
 
@@ -33,7 +33,7 @@ public final class Robot extends LoggedRobot {
     public final Indexer indexer;
     public final Intake intake;
     public final Lights lights;
-    public final Shooters shooters;
+    public final Shooter shooter;
     public final Swerve swerve;
 
     public final Routines routines;
@@ -51,7 +51,7 @@ public final class Robot extends LoggedRobot {
         indexer = new Indexer();
         intake = new Intake();
         lights = new Lights();
-        shooters = new Shooters();
+        shooter = new Shooter();
         swerve = new Swerve();
 
         // Initialize compositions

@@ -15,7 +15,7 @@ import org.team340.robot.subsystems.Hood;
 import org.team340.robot.subsystems.Indexer;
 import org.team340.robot.subsystems.Intake;
 import org.team340.robot.subsystems.Lights;
-import org.team340.robot.subsystems.Shooters;
+import org.team340.robot.subsystems.Shooter;
 import org.team340.robot.subsystems.Swerve;
 
 /**
@@ -35,7 +35,7 @@ public final class Routines {
     private final Indexer indexer;
     private final Intake intake;
     private final Lights lights;
-    private final Shooters shooters;
+    private final Shooter shooter;
     private final Swerve swerve;
 
     public Routines(Robot robot) {
@@ -43,7 +43,7 @@ public final class Routines {
         indexer = robot.indexer;
         intake = robot.intake;
         lights = robot.lights;
-        shooters = robot.shooters;
+        shooter = robot.shooter;
         swerve = robot.swerve;
     }
 
@@ -73,19 +73,19 @@ public final class Routines {
     /**
      * Shoots at the hub, without commanding the drivetrain.
      * @param runIntake Whether the intake should also be intaking.
-     * @param force A supplier that if {@code true} will force the indexer to feed the shooters.
+     * @param force A supplier that if {@code true} will force the indexer to feed the shooter.
      */
     public Command shoot(BooleanSupplier runIntake, BooleanSupplier force) {
         return parallel(
             hood.targetDistance(swerve::targetDistance),
-            shooters.targetDistance(swerve::targetDistance),
+            shooter.targetDistance(swerve::targetDistance),
             sequence(
                 sequence(
                     waitSeconds(0.05),
                     waitUntil(
                         () ->
                             (hood.atPosition()
-                                && shooters.atVelocity()
+                                && shooter.atVelocity()
                                 && swerve.aimingAtTarget()
                                 && swerve.tagsSeen() >= shootingMinRqTagsSeen.get())
                             || force.getAsBoolean()
@@ -106,7 +106,7 @@ public final class Routines {
     public Command staticShoot() {
         return parallel(
             hood.targetDistance(staticShootHoodPosition),
-            shooters.targetDistance(staticShootDistance),
+            shooter.targetDistance(staticShootDistance),
             indexer.feed()
         ).withName("Routines.shoot()");
     }
@@ -116,7 +116,7 @@ public final class Routines {
      * @param x The X value from the driver's joystick.
      * @param y The Y value from the driver's joystick.
      * @param runIntake Whether the intake should also be intaking.
-     * @param force A supplier that if {@code true} will force the indexer to feed the shooters.
+     * @param force A supplier that if {@code true} will force the indexer to feed the .
      */
     public Command driverShoot(DoubleSupplier x, DoubleSupplier y, BooleanSupplier runIntake, BooleanSupplier force) {
         return parallel(shoot(runIntake, force), swerve.aimAtTarget(x, y)).withName("Routines.driverShoot()");
@@ -131,7 +131,7 @@ public final class Routines {
         return deadline(
             waitSeconds(0.4),
             hood.targetDistance(swerve::targetDistance),
-            shooters.targetDistance(swerve::targetDistance),
+            shooter.targetDistance(swerve::targetDistance),
             swerve.aimAtTarget(x, y)
         ).withName("Routines.driverShootShutdown()");
     }
@@ -156,7 +156,7 @@ public final class Routines {
         return sequence(
             intake.intake().asProxy().withTimeout(2.0),
             parallel(indexer.feed(), intake.agitate()).asProxy().withTimeout(2.0),
-            parallel(intake.stow(), hood.targetDistance(targetDistance), shooters.targetDistance(targetDistance))
+            parallel(intake.stow(), hood.targetDistance(targetDistance), shooter.targetDistance(targetDistance))
                 .beforeStarting(timer::restart)
                 .asProxy()
                 .withTimeout(SHOOT_TIME)

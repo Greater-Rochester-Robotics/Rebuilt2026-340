@@ -26,9 +26,9 @@ import org.team340.robot.Constants.RobotMap;
  * The robot's twin shooter.
  */
 @Logged
-public final class Shooters extends GRRSubsystem {
+public final class Shooter extends GRRSubsystem {
 
-    private static final TunableTable tunables = Tunables.getNested("shooters");
+    private static final TunableTable tunables = Tunables.getNested("shooter");
 
     private static final TunableDouble atVelocityEpsilon = tunables.value("atVelocityEpsilon", 4.0);
 
@@ -44,7 +44,7 @@ public final class Shooters extends GRRSubsystem {
     private final Follower portFollowControl;
     private final Follower starboardFollowControl;
 
-    public Shooters() {
+    public Shooter() {
         this.portLead = new TalonFX(RobotMap.SHOOTER_PORT_LEAD_MOTOR, RobotMap.CANBus);
         this.portFollow = new TalonFX(RobotMap.SHOOTER_PORT_FOLLOW_MOTOR, RobotMap.CANBus);
         this.starboardLead = new TalonFX(RobotMap.SHOOTER_STARBOARD_LEAD_MOTOR, RobotMap.CANBus);
@@ -107,7 +107,7 @@ public final class Shooters extends GRRSubsystem {
      * @param distance The distance to target in meters.
      */
     public Command targetDistance(final DoubleSupplier distance) {
-        return runVelocity(() -> shooterVelocityMap.get(distance.getAsDouble())).withName("Shooters.targetDistance()");
+        return runVelocity(() -> shooterVelocityMap.get(distance.getAsDouble())).withName("Shooter.targetDistance()");
     }
 
     /**
