@@ -40,7 +40,7 @@ public final class Constants {
 
         public static final int CANANDGYRO = 14;
 
-        // Shooters
+        // Shooter
 
         public static final int SHOOTER_PORT_LEAD_MOTOR = 20;
         public static final int SHOOTER_PORT_FOLLOW_MOTOR = 21;

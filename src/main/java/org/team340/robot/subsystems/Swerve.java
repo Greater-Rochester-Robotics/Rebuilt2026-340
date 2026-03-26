@@ -190,7 +190,7 @@ public final class Swerve extends GRRSubsystem {
             deltaY += fieldSpeeds.vyMetersPerSecond * TOF;
 
             // Compensate for angular robot velocity in a similar fashion. To calculate the field-relative velocity of
-            // the shooters considering their offset from the robot's center of rotation, we can take the cross product
+            // the shooter considering their offset from the robot's center of rotation, we can take the cross product
             // of the following vectors:
             //
             // [   0   ]   [ offset * rotation.cos ]

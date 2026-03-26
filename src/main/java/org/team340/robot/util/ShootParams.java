@@ -2,10 +2,10 @@ package org.team340.robot.util;
 
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import org.team340.robot.subsystems.Hood;
-import org.team340.robot.subsystems.Shooters;
+import org.team340.robot.subsystems.Shooter;
 
 /**
- * This class stores our lookup tables for the {@link Hood} and {@link Shooters}
+ * This class stores our lookup tables for the {@link Hood} and {@link Shooter}
  * subsystems to utilize when converting hub distance to motor setpoints.
  */
 public final class ShootParams {

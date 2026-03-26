@@ -17,7 +17,7 @@ import org.team340.lib.util.command.AutoChooser;
 import org.team340.robot.Robot;
 import org.team340.robot.subsystems.Hood;
 import org.team340.robot.subsystems.Intake;
-import org.team340.robot.subsystems.Shooters;
+import org.team340.robot.subsystems.Shooter;
 import org.team340.robot.subsystems.Swerve;
 
 /**
@@ -48,7 +48,7 @@ public final class Autos {
 
     private final Hood hood;
     private final Intake intake;
-    private final Shooters shooters;
+    private final Shooter shooter;
     private final Swerve swerve;
     private final Routines routines;
 
@@ -57,7 +57,7 @@ public final class Autos {
     public Autos(Robot robot) {
         hood = robot.hood;
         intake = robot.intake;
-        shooters = robot.shooters;
+        shooter = robot.shooter;
         swerve = robot.swerve;
         routines = robot.routines;
 
@@ -311,14 +311,14 @@ public final class Autos {
     }
 
     /**
-     * Prepares the hood and shooters to score fuel, and keeps the
+     * Prepares the hood and shooter to score fuel, and keeps the
      * intake extended. The returned command is already proxied.
      */
     private Command getReady() {
         return parallel(
             intake.intake(),
             hood.targetDistance(swerve::targetDistance),
-            shooters.targetDistance(swerve::targetDistance)
+            shooter.targetDistance(swerve::targetDistance)
         ).asProxy();
     }
 }
