@@ -53,9 +53,10 @@ public final class Constants {
 
         // Indexer
 
-        public static final int INDEXER_TWINDEXER_MOTOR = 40;
-        public static final int INDEXER_UPTAKE_LEAD_MOTOR = 41;
-        public static final int INDEXER_UPTAKE_FOLLOW_MOTOR = 42;
+        public static final int INDEXER_PORT_UPPER_LEAD_MOTOR = 40;
+        public static final int INDEXER_PORT_LOWER_FOLLOW_MOTOR = 41;
+        public static final int INDEXER_STARBOARD_UPPER_FOLLOW_MOTOR = 42;
+        public static final int INDEXER_STARBOARD_LOWER_FOLLOW_MOTOR = 43;
 
         // Intake
 
