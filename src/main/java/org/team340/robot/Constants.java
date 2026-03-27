@@ -42,10 +42,10 @@ public final class Constants {
 
         // Shooter
 
-        public static final int SHOOTER_PORT_LEAD_MOTOR = 20;
-        public static final int SHOOTER_PORT_FOLLOW_MOTOR = 21;
-        public static final int SHOOTER_STARBOARD_LEAD_MOTOR = 22;
-        public static final int SHOOTER_STARBOARD_FOLLOW_MOTOR = 23;
+        public static final int SHOOTER_PORT_UPPER_LEAD_MOTOR = 20;
+        public static final int SHOOTER_PORT_LOWER_FOLLOW_MOTOR = 21;
+        public static final int SHOOTER_STARBOARD_UPPER_FOLLOW_MOTOR = 22;
+        public static final int SHOOTER_STARBOARD_LOWER_FOLLOW_MOTOR = 23;
 
         // Hood
 

@@ -32,74 +32,72 @@ public final class Shooter extends GRRSubsystem {
 
     private static final TunableDouble atVelocityEpsilon = tunables.value("atVelocityEpsilon", 4.0);
 
-    private final TalonFX portLead;
-    private final TalonFX portFollow;
-    private final TalonFX starboardLead;
-    private final TalonFX starboardFollow;
+    private final TalonFX portUpperLead;
+    private final TalonFX portLowerFollow;
+    private final TalonFX starboardUpperFollow;
+    private final TalonFX starboardLowerFollow;
 
-    private final StatusSignal<Double> portClosedLoopError;
-    private final StatusSignal<Double> starboardClosedLoopError;
+    private final StatusSignal<Double> closedLoopError;
 
     private final VelocityVoltage velocityControl;
-    private final Follower portFollowControl;
-    private final Follower starboardFollowControl;
+    private final Follower followControl;
 
     public Shooter() {
-        this.portLead = new TalonFX(RobotMap.SHOOTER_PORT_LEAD_MOTOR, RobotMap.CANBus);
-        this.portFollow = new TalonFX(RobotMap.SHOOTER_PORT_FOLLOW_MOTOR, RobotMap.CANBus);
-        this.starboardLead = new TalonFX(RobotMap.SHOOTER_STARBOARD_LEAD_MOTOR, RobotMap.CANBus);
-        this.starboardFollow = new TalonFX(RobotMap.SHOOTER_STARBOARD_FOLLOW_MOTOR, RobotMap.CANBus);
+        this.portUpperLead = new TalonFX(RobotMap.SHOOTER_PORT_UPPER_LEAD_MOTOR, RobotMap.CANBus);
+        this.portLowerFollow = new TalonFX(RobotMap.SHOOTER_PORT_LOWER_FOLLOW_MOTOR, RobotMap.CANBus);
+        this.starboardUpperFollow = new TalonFX(RobotMap.SHOOTER_STARBOARD_UPPER_FOLLOW_MOTOR, RobotMap.CANBus);
+        this.starboardLowerFollow = new TalonFX(RobotMap.SHOOTER_STARBOARD_LOWER_FOLLOW_MOTOR, RobotMap.CANBus);
 
         configureMotors();
 
-        portClosedLoopError = portLead.getClosedLoopError();
-        starboardClosedLoopError = starboardLead.getClosedLoopError();
+        closedLoopError = portUpperLead.getClosedLoopError();
 
-        PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(100, portClosedLoopError, starboardClosedLoopError)
-        );
-        PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(500, portLead.getMotorVoltage(), starboardLead.getMotorVoltage())
-        );
+        PhoenixUtil.run(() -> BaseStatusSignal.setUpdateFrequencyForAll(100, closedLoopError));
+        PhoenixUtil.run(() -> BaseStatusSignal.setUpdateFrequencyForAll(500, portUpperLead.getMotorVoltage()));
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
-                portLead.getVelocity(),
-                portLead.getClosedLoopReference(),
-                starboardLead.getVelocity(),
-                starboardLead.getClosedLoopReference()
+                portUpperLead.getVelocity(),
+                portUpperLead.getClosedLoopReference()
             )
         );
         PhoenixUtil.run(() ->
-            ParentDevice.optimizeBusUtilizationForAll(4, portLead, portFollow, starboardLead, starboardFollow)
+            ParentDevice.optimizeBusUtilizationForAll(
+                4,
+                portUpperLead,
+                portLowerFollow,
+                starboardUpperFollow,
+                starboardLowerFollow
+            )
         );
 
         velocityControl = new VelocityVoltage(0.0);
         velocityControl.EnableFOC = true;
         velocityControl.UpdateFreqHz = 0.0;
 
-        portFollowControl = new Follower(portLead.getDeviceID(), MotorAlignmentValue.Aligned);
-        starboardFollowControl = new Follower(starboardLead.getDeviceID(), MotorAlignmentValue.Aligned);
+        followControl = new Follower(portUpperLead.getDeviceID(), MotorAlignmentValue.Aligned);
 
-        tunables.add("motors", portLead);
-        tunables.add("motors", portFollow);
-        tunables.add("motors", starboardLead);
-        tunables.add("motors", starboardFollow);
+        tunables.add("motors", portUpperLead);
+        tunables.add("motors", portLowerFollow);
+        tunables.add("motors", starboardUpperFollow);
+        tunables.add("motors", starboardLowerFollow);
     }
 
     @Override
     public void periodic() {
-        BaseStatusSignal.refreshAll(portClosedLoopError, starboardClosedLoopError);
+        BaseStatusSignal.refreshAll(closedLoopError);
 
-        portFollow.setControl(portFollowControl);
-        starboardFollow.setControl(starboardFollowControl);
+        portLowerFollow.setControl(followControl);
+        starboardUpperFollow.setControl(followControl);
+        starboardLowerFollow.setControl(followControl);
     }
 
+    /**
+     * shooter's closeloop error is less than allowed error.
+     * @return true if less
+     */
     public boolean atVelocity() {
-        return (
-            Math.abs(portClosedLoopError.getValueAsDouble()) <= atVelocityEpsilon.get()
-            && Math.abs(starboardClosedLoopError.getValueAsDouble()) < atVelocityEpsilon.get()
-        );
+        return (Math.abs(closedLoopError.getValueAsDouble()) <= atVelocityEpsilon.get());
     }
 
     /**
@@ -111,19 +109,17 @@ public final class Shooter extends GRRSubsystem {
     }
 
     /**
-     * Internal method to run both shooters at a specified velocity.
+     * Internal method to run the shooter at a specified velocity.
      * @param velocity The velocity in rotations/second at the rotor (gearing not included).
      */
     private Command runVelocity(final DoubleSupplier velocity) {
         return commandBuilder("Shooter.runVelocity()")
             .onExecute(() -> {
                 velocityControl.withVelocity(velocity.getAsDouble());
-                portLead.setControl(velocityControl);
-                starboardLead.setControl(velocityControl);
+                portUpperLead.setControl(velocityControl);
             })
             .onEnd(() -> {
-                portLead.stopMotor();
-                starboardLead.stopMotor();
+                portUpperLead.stopMotor();
             });
     }
 
@@ -145,19 +141,19 @@ public final class Shooter extends GRRSubsystem {
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
-        PhoenixUtil.run(() -> portLead.clearStickyFaults());
-        PhoenixUtil.run(() -> portLead.getConfigurator().apply(config));
+        PhoenixUtil.run(() -> portUpperLead.clearStickyFaults());
+        PhoenixUtil.run(() -> portUpperLead.getConfigurator().apply(config));
 
-        PhoenixUtil.run(() -> portFollow.clearStickyFaults());
-        PhoenixUtil.run(() -> portFollow.getConfigurator().apply(config));
+        PhoenixUtil.run(() -> portLowerFollow.clearStickyFaults());
+        PhoenixUtil.run(() -> portLowerFollow.getConfigurator().apply(config));
 
         // Inverts the direction for the other side.
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
-        PhoenixUtil.run(() -> starboardLead.clearStickyFaults());
-        PhoenixUtil.run(() -> starboardLead.getConfigurator().apply(config));
+        PhoenixUtil.run(() -> starboardUpperFollow.clearStickyFaults());
+        PhoenixUtil.run(() -> starboardUpperFollow.getConfigurator().apply(config));
 
-        PhoenixUtil.run(() -> starboardFollow.clearStickyFaults());
-        PhoenixUtil.run(() -> starboardFollow.getConfigurator().apply(config));
+        PhoenixUtil.run(() -> starboardLowerFollow.clearStickyFaults());
+        PhoenixUtil.run(() -> starboardLowerFollow.getConfigurator().apply(config));
     }
 }
