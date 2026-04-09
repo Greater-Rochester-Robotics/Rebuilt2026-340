@@ -85,7 +85,7 @@ public final class Shooter extends GRRSubsystem {
 
     @Override
     public void periodic() {
-        BaseStatusSignal.refreshAll(closedLoopError);
+        closedLoopError.refresh();
 
         portLowerFollow.setControl(followControl);
         starboardUpperFollow.setControl(followControl);
@@ -93,11 +93,11 @@ public final class Shooter extends GRRSubsystem {
     }
 
     /**
-     * shooter's closeloop error is less than allowed error.
+     * shooter's closed loop error is less than allowed error.
      * @return true if less
      */
     public boolean atVelocity() {
-        return (Math.abs(closedLoopError.getValueAsDouble()) <= atVelocityEpsilon.get());
+        return Math.abs(closedLoopError.getValueAsDouble()) <= atVelocityEpsilon.get();
     }
 
     /**
