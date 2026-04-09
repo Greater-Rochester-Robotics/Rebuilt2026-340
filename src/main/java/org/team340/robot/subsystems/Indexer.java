@@ -27,55 +27,60 @@ public final class Indexer extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("indexer");
 
     private static enum State {
-        FEED(85.0, 78.0),
-        BARF(-80.0, -75.0);
+        FEED(78.0),
+        BARF(-75.0);
 
-        public final TunableDouble twindexerSpeed;
-        public final TunableDouble uptakeSpeed;
+        public final TunableDouble speed;
 
-        private State(final double twindexerSpeed, final double uptakeSpeed) {
-            this.twindexerSpeed = tunables.value("twindexerSpeeds/" + name(), twindexerSpeed);
-            this.uptakeSpeed = tunables.value("uptakeSpeeds/" + name(), uptakeSpeed);
+        private State(final double speed) {
+            this.speed = tunables.value("speed/" + name(), speed);
         }
     }
 
-    private final TalonFX twindexer;
-    private final TalonFX uptakeLead;
-    private final TalonFX uptakeFollow;
+    private final TalonFX portUpperLead;
+    private final TalonFX portLowerFollow;
+    private final TalonFX starboardUpperFollow;
+    private final TalonFX starboardLowerFollow;
 
     private final VelocityTorqueCurrentFOC velocityControl;
-    private final Follower uptakeFollowControl;
+    private final Follower followControl;
 
     public Indexer() {
-        this.twindexer = new TalonFX(RobotMap.INDEXER_TWINDEXER_MOTOR, RobotMap.CANBus);
-        this.uptakeLead = new TalonFX(RobotMap.INDEXER_UPTAKE_LEAD_MOTOR, RobotMap.CANBus);
-        this.uptakeFollow = new TalonFX(RobotMap.INDEXER_UPTAKE_FOLLOW_MOTOR, RobotMap.CANBus);
+        this.portUpperLead = new TalonFX(RobotMap.INDEXER_PORT_UPPER_LEAD_MOTOR, RobotMap.CANBus);
+        this.portLowerFollow = new TalonFX(RobotMap.INDEXER_PORT_LOWER_FOLLOW_MOTOR, RobotMap.CANBus);
+        this.starboardUpperFollow = new TalonFX(RobotMap.INDEXER_STARBOARD_UPPER_FOLLOW_MOTOR, RobotMap.CANBus);
+        this.starboardLowerFollow = new TalonFX(RobotMap.INDEXER_STARBOARD_LOWER_FOLLOW_MOTOR, RobotMap.CANBus);
 
-        configureTwindexer();
-        configureUptake();
+        configureMotors();
 
-        PhoenixUtil.run(() -> uptakeLead.getTorqueCurrent().setUpdateFrequency(500));
+        PhoenixUtil.run(() -> portUpperLead.getTorqueCurrent().setUpdateFrequency(500));
+        PhoenixUtil.run(() -> BaseStatusSignal.setUpdateFrequencyForAll(50, portUpperLead.getVelocity()));
         PhoenixUtil.run(() ->
-            BaseStatusSignal.setUpdateFrequencyForAll(50, twindexer.getVelocity(), uptakeLead.getVelocity())
+            ParentDevice.optimizeBusUtilizationForAll(
+                4,
+                portUpperLead,
+                portLowerFollow,
+                starboardUpperFollow,
+                starboardLowerFollow
+            )
         );
-        PhoenixUtil.run(() -> ParentDevice.optimizeBusUtilizationForAll(4, twindexer, uptakeLead, uptakeFollow));
 
         velocityControl = new VelocityTorqueCurrentFOC(0.0);
         velocityControl.UpdateFreqHz = 0.0;
 
-        uptakeFollowControl = new Follower(RobotMap.INDEXER_UPTAKE_LEAD_MOTOR, MotorAlignmentValue.Opposed);
+        followControl = new Follower(portUpperLead.getDeviceID(), MotorAlignmentValue.Aligned);
 
-        tunables.add("twindexerMotor", twindexer);
-        tunables.add("uptakeLeadMotor", uptakeLead);
-        tunables.add("uptakeFollowMotor", uptakeFollow);
+        tunables.add("portLeadMotor", portUpperLead);
 
         // Enum warmup
-        State.FEED.twindexerSpeed.get();
+        State.FEED.speed.get();
     }
 
     @Override
     public void periodic() {
-        uptakeFollow.setControl(uptakeFollowControl);
+        portLowerFollow.setControl(followControl);
+        starboardUpperFollow.setControl(followControl);
+        starboardLowerFollow.setControl(followControl);
     }
 
     /**
@@ -99,42 +104,15 @@ public final class Indexer extends GRRSubsystem {
     private Command runState(final State state) {
         return commandBuilder("Indexer.run()")
             .onExecute(() -> {
-                velocityControl.withVelocity(state.twindexerSpeed.get());
-                twindexer.setControl(velocityControl);
-
-                velocityControl.withVelocity(state.uptakeSpeed.get());
-                uptakeLead.setControl(velocityControl);
+                velocityControl.withVelocity(state.speed.get());
+                portUpperLead.setControl(velocityControl);
             })
             .onEnd(() -> {
-                twindexer.stopMotor();
-                uptakeLead.stopMotor();
+                portUpperLead.stopMotor();
             });
     }
 
-    private void configureTwindexer() {
-        final TalonFXConfiguration config = new TalonFXConfiguration();
-
-        config.CurrentLimits.StatorCurrentLimit = 170.0;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
-        config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
-
-        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-
-        config.Slot0.kP = 16.0;
-        config.Slot0.kI = 0.0;
-        config.Slot0.kD = 0.0;
-        config.Slot0.kG = 0.0;
-        config.Slot0.kS = 6.0;
-        config.Slot0.kV = 0.0;
-        config.Slot0.kA = 0.0;
-
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-
-        PhoenixUtil.run(() -> twindexer.clearStickyFaults());
-        PhoenixUtil.run(() -> twindexer.getConfigurator().apply(config));
-    }
-
-    private void configureUptake() {
+    private void configureMotors() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 170.0;
@@ -153,10 +131,18 @@ public final class Indexer extends GRRSubsystem {
 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
-        PhoenixUtil.run(() -> uptakeLead.clearStickyFaults());
-        PhoenixUtil.run(() -> uptakeLead.getConfigurator().apply(config));
+        PhoenixUtil.run(() -> portUpperLead.clearStickyFaults());
+        PhoenixUtil.run(() -> portUpperLead.getConfigurator().apply(config));
 
-        PhoenixUtil.run(() -> uptakeFollow.clearStickyFaults());
-        PhoenixUtil.run(() -> uptakeFollow.getConfigurator().apply(config));
+        PhoenixUtil.run(() -> portLowerFollow.clearStickyFaults());
+        PhoenixUtil.run(() -> portLowerFollow.getConfigurator().apply(config));
+
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+
+        PhoenixUtil.run(() -> starboardUpperFollow.clearStickyFaults());
+        PhoenixUtil.run(() -> starboardUpperFollow.getConfigurator().apply(config));
+
+        PhoenixUtil.run(() -> starboardLowerFollow.clearStickyFaults());
+        PhoenixUtil.run(() -> starboardLowerFollow.getConfigurator().apply(config));
     }
 }
