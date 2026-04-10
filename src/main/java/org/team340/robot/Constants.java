@@ -57,6 +57,7 @@ public final class Constants {
         public static final int INDEXER_PORT_LOWER_FOLLOW_MOTOR = 41;
         public static final int INDEXER_STARBOARD_UPPER_FOLLOW_MOTOR = 42;
         public static final int INDEXER_STARBOARD_LOWER_FOLLOW_MOTOR = 43;
+        public static final int INDEXER_PRELOAD_SWITCH = 44;
 
         // Intake
 

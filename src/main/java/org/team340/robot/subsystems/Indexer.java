@@ -1,9 +1,12 @@
 package org.team340.robot.subsystems;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CANdiConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.hardware.CANdi;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -26,9 +29,13 @@ public final class Indexer extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("indexer");
 
+    private static final TunableDouble backoffInTime = Tunables.value("backoffInTime", 1.0);
+
     private static enum State {
         FEED(78.0),
-        BARF(-75.0);
+        BARF(-75.0),
+        PRELOAD(0.0),
+        BACKOFF(0.0);
 
         public final TunableDouble speed;
 
@@ -41,6 +48,9 @@ public final class Indexer extends GRRSubsystem {
     private final TalonFX portLowerFollow;
     private final TalonFX starboardUpperFollow;
     private final TalonFX starboardLowerFollow;
+    private final CANdi preloadSwitch;
+
+    private final StatusSignal<Boolean> isPreloaded;
 
     private final VelocityTorqueCurrentFOC velocityControl;
     private final Follower followControl;
@@ -50,10 +60,18 @@ public final class Indexer extends GRRSubsystem {
         this.portLowerFollow = new TalonFX(RobotMap.INDEXER_PORT_LOWER_FOLLOW_MOTOR, RobotMap.CANBus);
         this.starboardUpperFollow = new TalonFX(RobotMap.INDEXER_STARBOARD_UPPER_FOLLOW_MOTOR, RobotMap.CANBus);
         this.starboardLowerFollow = new TalonFX(RobotMap.INDEXER_STARBOARD_LOWER_FOLLOW_MOTOR, RobotMap.CANBus);
+        this.preloadSwitch = new CANdi(RobotMap.INDEXER_PRELOAD_SWITCH, RobotMap.CANBus);
 
         configureMotors();
+        configureCANdi();
 
-        PhoenixUtil.run(() -> portUpperLead.getTorqueCurrent().setUpdateFrequency(500));
+        PhoenixUtil.run(() ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                500,
+                portUpperLead.getTorqueCurrent(),
+                preloadSwitch.getS1Closed()
+            )
+        );
         PhoenixUtil.run(() -> BaseStatusSignal.setUpdateFrequencyForAll(50, portUpperLead.getVelocity()));
         PhoenixUtil.run(() ->
             ParentDevice.optimizeBusUtilizationForAll(
@@ -61,9 +79,12 @@ public final class Indexer extends GRRSubsystem {
                 portUpperLead,
                 portLowerFollow,
                 starboardUpperFollow,
-                starboardLowerFollow
+                starboardLowerFollow,
+                preloadSwitch
             )
         );
+
+        isPreloaded = preloadSwitch.getS1Closed();
 
         velocityControl = new VelocityTorqueCurrentFOC(0.0);
         velocityControl.UpdateFreqHz = 0.0;
@@ -78,6 +99,8 @@ public final class Indexer extends GRRSubsystem {
 
     @Override
     public void periodic() {
+        isPreloaded.refresh();
+
         portLowerFollow.setControl(followControl);
         starboardUpperFollow.setControl(followControl);
         starboardLowerFollow.setControl(followControl);
@@ -95,6 +118,12 @@ public final class Indexer extends GRRSubsystem {
      */
     public Command barf() {
         return runState(State.BARF).withName("Indexer.unjam()");
+    }
+
+    public Command preload() {
+        return runState(State.PRELOAD)
+            .until(() -> isPreloaded.getValue())
+            .andThen(runState(State.BACKOFF).withTimeout(backoffInTime.get()));
     }
 
     /**
@@ -129,7 +158,7 @@ public final class Indexer extends GRRSubsystem {
         config.Slot0.kV = 0.0;
         config.Slot0.kA = 0.0;
 
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         PhoenixUtil.run(() -> portUpperLead.clearStickyFaults());
         PhoenixUtil.run(() -> portUpperLead.getConfigurator().apply(config));
@@ -144,5 +173,12 @@ public final class Indexer extends GRRSubsystem {
 
         PhoenixUtil.run(() -> starboardLowerFollow.clearStickyFaults());
         PhoenixUtil.run(() -> starboardLowerFollow.getConfigurator().apply(config));
+    }
+
+    private void configureCANdi() {
+        CANdiConfiguration config = new CANdiConfiguration();
+
+        PhoenixUtil.run(() -> preloadSwitch.clearStickyFaults());
+        PhoenixUtil.run(() -> preloadSwitch.getConfigurator().apply(config));
     }
 }
