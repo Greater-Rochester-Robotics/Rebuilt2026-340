@@ -139,7 +139,7 @@ public final class Shooter extends GRRSubsystem {
         config.Slot0.kV = 0.129;
         config.Slot0.kA = 0.0;
 
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
         PhoenixUtil.run(() -> portUpperLead.clearStickyFaults());
         PhoenixUtil.run(() -> portUpperLead.getConfigurator().apply(config));
@@ -148,7 +148,7 @@ public final class Shooter extends GRRSubsystem {
         PhoenixUtil.run(() -> portLowerFollow.getConfigurator().apply(config));
 
         // Inverts the direction for the other side.
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         PhoenixUtil.run(() -> starboardUpperFollow.clearStickyFaults());
         PhoenixUtil.run(() -> starboardUpperFollow.getConfigurator().apply(config));
