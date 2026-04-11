@@ -160,7 +160,7 @@ public final class Hood extends GRRSubsystem {
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
         config.TorqueCurrent.PeakForwardTorqueCurrent = 10.0;
         config.TorqueCurrent.PeakReverseTorqueCurrent = -10.0;
