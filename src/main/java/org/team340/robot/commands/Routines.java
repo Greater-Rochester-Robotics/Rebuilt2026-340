@@ -48,6 +48,13 @@ public final class Routines {
     }
 
     /**
+     * Intakes and preloads fuel.
+     */
+    public Command intake() {
+        return parallel(intake.intake(), indexer.preload());
+    }
+
+    /**
      * Barfs fuel out of the intake.
      */
     public Command barf() {
