@@ -9,6 +9,8 @@ import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANdi;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.ForwardLimitSourceValue;
+import com.ctre.phoenix6.signals.ForwardLimitTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -53,6 +55,7 @@ public final class Indexer extends GRRSubsystem {
     private final StatusSignal<Boolean> isPreloaded;
 
     private final VelocityTorqueCurrentFOC velocityControl;
+    private final VelocityTorqueCurrentFOC velocityControlLimit;
     private final Follower followControl;
 
     public Indexer() {
@@ -88,6 +91,10 @@ public final class Indexer extends GRRSubsystem {
 
         velocityControl = new VelocityTorqueCurrentFOC(0.0);
         velocityControl.UpdateFreqHz = 0.0;
+        velocityControl.IgnoreHardwareLimits = true;
+
+        velocityControlLimit = velocityControl.clone();
+        velocityControlLimit.IgnoreHardwareLimits = false;
 
         followControl = new Follower(portUpperLead.getDeviceID(), MotorAlignmentValue.Aligned);
 
@@ -133,8 +140,16 @@ public final class Indexer extends GRRSubsystem {
     private Command runState(final State state) {
         return commandBuilder("Indexer.run()")
             .onExecute(() -> {
-                velocityControl.withVelocity(state.speed.get());
-                portUpperLead.setControl(velocityControl);
+                switch (state) {
+                    case PRELOAD:
+                        velocityControlLimit.withVelocity(state.speed.get());
+                        portUpperLead.setControl(velocityControlLimit);
+                        break;
+                    default:
+                        velocityControl.withVelocity(state.speed.get());
+                        portUpperLead.setControl(velocityControl);
+                        break;
+                }
             })
             .onEnd(() -> {
                 portUpperLead.stopMotor();
@@ -157,6 +172,11 @@ public final class Indexer extends GRRSubsystem {
         config.Slot0.kS = 8.0;
         config.Slot0.kV = 0.0;
         config.Slot0.kA = 0.0;
+
+        config.HardwareLimitSwitch.ForwardLimitRemoteSensorID = RobotMap.INDEXER_PRELOAD_SWITCH;
+        config.HardwareLimitSwitch.ForwardLimitSource = ForwardLimitSourceValue.RemoteCANdiS1;
+        config.HardwareLimitSwitch.ForwardLimitType = ForwardLimitTypeValue.NormallyOpen;
+        config.HardwareLimitSwitch.ForwardLimitEnable = true;
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
