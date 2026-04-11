@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
@@ -26,9 +27,15 @@ public final class Indexer extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("indexer");
 
+    private static final TunableDouble preDelay = Tunables.value("preDelay", 3.0);
+    private static final TunableDouble loadTime = Tunables.value("loadTime", 5.0);
+    private static final TunableDouble backoffInTime = Tunables.value("backoffInTime", 1.0);
+
     private static enum State {
         FEED(78.0),
-        BARF(-75.0);
+        BARF(-75.0),
+        PRELOAD(0.0),
+        BACKOFF(0.0);
 
         public final TunableDouble speed;
 
@@ -97,6 +104,12 @@ public final class Indexer extends GRRSubsystem {
         return runState(State.BARF).withName("Indexer.unjam()");
     }
 
+    public Command preload() {
+        return Commands.waitSeconds(preDelay.get())
+            .andThen(runState(State.PRELOAD).withTimeout(loadTime.get()))
+            .andThen(runState(State.BACKOFF).withTimeout(backoffInTime.get()));
+    }
+
     /**
      * Internal method to run the motors as configured for the specified state.
      * @param state The indexer state to target.
@@ -129,7 +142,7 @@ public final class Indexer extends GRRSubsystem {
         config.Slot0.kV = 0.0;
         config.Slot0.kA = 0.0;
 
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         PhoenixUtil.run(() -> portUpperLead.clearStickyFaults());
         PhoenixUtil.run(() -> portUpperLead.getConfigurator().apply(config));

@@ -181,7 +181,7 @@ public final class Autos {
             ),
             sequence(
                 intake.stow().asProxy().withTimeout(1.5),
-                intake.intake().asProxy().until(swerve::inOurZone),
+                routines.intake().asProxy().until(swerve::inOurZone),
                 getReady()
             )
         );
@@ -217,7 +217,7 @@ public final class Autos {
             ),
             sequence(
                 intake.stow().asProxy().withTimeout(1.0),
-                intake.intake().asProxy().until(swerve::inOurZone),
+                routines.intake().asProxy().until(swerve::inOurZone),
                 getReady()
             )
         );
@@ -246,7 +246,7 @@ public final class Autos {
                 apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
                 apfDefaults(() -> shoot.get(left))
             ),
-            sequence(waitSeconds(2.0), intake.intake().asProxy().until(swerve::atAngle), getReady())
+            sequence(waitSeconds(2.0), routines.intake().asProxy().until(swerve::atAngle), getReady())
         );
     }
 
