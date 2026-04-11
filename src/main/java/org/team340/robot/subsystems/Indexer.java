@@ -11,11 +11,11 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.command.GRRSubsystem;
+import org.team340.lib.util.command.TunableWaitCommand;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
@@ -27,9 +27,9 @@ public final class Indexer extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("indexer");
 
-    private static final TunableDouble preDelay = Tunables.value("preDelay", 3.0);
-    private static final TunableDouble loadTime = Tunables.value("loadTime", 5.0);
-    private static final TunableDouble backoffInTime = Tunables.value("backoffInTime", 1.0);
+    private static final TunableWaitCommand preDelay = Tunables.add("preDelay", new TunableWaitCommand(3.0));
+    private static final TunableWaitCommand loadTime = Tunables.add("loadTime", new TunableWaitCommand(5.0));
+    private static final TunableWaitCommand backoffTime = Tunables.add("backoffTime", new TunableWaitCommand(1.0));
 
     private static enum State {
         FEED(78.0),
@@ -105,9 +105,10 @@ public final class Indexer extends GRRSubsystem {
     }
 
     public Command preload() {
-        return Commands.waitSeconds(preDelay.get())
-            .andThen(runState(State.PRELOAD).withTimeout(loadTime.get()))
-            .andThen(runState(State.BACKOFF).withTimeout(backoffInTime.get()));
+        return preDelay
+            .andThen(runState(State.PRELOAD).raceWith(loadTime))
+            .andThen(runState(State.BACKOFF).raceWith(backoffTime))
+            .withName("Indexer.preload()");
     }
 
     /**
