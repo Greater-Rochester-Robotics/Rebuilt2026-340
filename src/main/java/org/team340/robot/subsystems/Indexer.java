@@ -20,7 +20,7 @@ import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
 /**
- * The robot's twindexer and uptake.
+ * The robot's roller floor and uptake.
  */
 @Logged
 public final class Indexer extends GRRSubsystem {
@@ -92,6 +92,7 @@ public final class Indexer extends GRRSubsystem {
 
     /**
      * Feeds the shooter.
+     * @return feed command
      */
     public Command feed() {
         return runState(State.FEED).withName("Indexer.feed()");
@@ -99,11 +100,16 @@ public final class Indexer extends GRRSubsystem {
 
     /**
      * Barfs back into the hopper.
+     * @return barf command
      */
     public Command barf() {
         return runState(State.BARF).withName("Indexer.unjam()");
     }
 
+    /**
+     * preloads the uptake
+     * @return preload command
+     */
     public Command preload() {
         return preDelay
             .andThen(runState(State.PRELOAD).raceWith(loadTime))
@@ -114,6 +120,7 @@ public final class Indexer extends GRRSubsystem {
     /**
      * Internal method to run the motors as configured for the specified state.
      * @param state The indexer state to target.
+     * @return runState command
      */
     private Command runState(final State state) {
         return commandBuilder("Indexer.run()")
