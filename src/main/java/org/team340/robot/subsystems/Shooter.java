@@ -23,7 +23,7 @@ import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
 /**
- * The robot's twin shooter.
+ * The robot's shooter.
  */
 @Logged
 public final class Shooter extends GRRSubsystem {
