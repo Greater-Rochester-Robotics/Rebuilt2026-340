@@ -12,10 +12,9 @@ import org.team340.lib.tunable.Tunables.Tunable;
 public class TunableWaitCommand extends Command implements Tunable {
 
     /** The timer used for waiting. */
-    protected Timer m_timer = new Timer();
+    protected Timer timer = new Timer();
 
-    private static double m_duration;
-    private static String m_defaultName;
+    private double duration;
 
     /**
      * Creates a new TunableWaitCommand. This command will do nothing, and end after the specified duration.
@@ -24,31 +23,26 @@ public class TunableWaitCommand extends Command implements Tunable {
      */
     @SuppressWarnings("this-escape")
     public TunableWaitCommand(double seconds) {
-        m_duration = seconds;
-        m_defaultName = this.getName();
-        this.setName(m_defaultName + ": " + m_duration + " seconds");
+        duration = seconds;
     }
 
     public void initTunable(TunableTable table) {
-        table.value("seconds", m_duration, v -> {
-            m_duration = v;
-            this.setName(m_defaultName + ": " + m_duration + " seconds");
-        });
+        table.value("seconds", duration, v -> duration = v);
     }
 
     @Override
     public void initialize() {
-        m_timer.restart();
+        timer.restart();
     }
 
     @Override
     public void end(boolean interrupted) {
-        m_timer.stop();
+        timer.stop();
     }
 
     @Override
     public boolean isFinished() {
-        return m_timer.hasElapsed(m_duration);
+        return timer.hasElapsed(duration);
     }
 
     @Override
