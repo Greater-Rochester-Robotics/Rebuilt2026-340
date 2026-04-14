@@ -232,6 +232,7 @@ public final class Vision {
 
                     if (
                         enabled
+                        && result.getBestTarget() != null
                         && useTag(result.getBestTarget().fiducialId)
                         && (estimate = estimator.estimatePnpDistanceTrigSolvePose(result)).isPresent()
                     ) {
