@@ -94,7 +94,8 @@ public final class Robot extends LoggedRobot {
         scheduler.schedule(routines.lightsPreMatch());
 
         RobotModeTriggers.disabled().whileTrue(routines.lightsPreMatch());
-        lights.setDefaultCommand(lights.hubDisplay(shiftTracker::active));
+        RobotModeTriggers.autonomous().whileTrue(lights.flames(false));
+        RobotModeTriggers.teleop().whileTrue(lights.driving(shiftTracker::active, indexer::isFeeding));
 
         // Disable loop overrun warnings from the command
         // scheduler, since we already log loop timings

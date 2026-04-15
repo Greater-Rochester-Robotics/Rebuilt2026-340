@@ -26,10 +26,6 @@ public class TunableWaitCommand extends Command implements Tunable {
         duration = seconds;
     }
 
-    public void initTunable(TunableTable table) {
-        table.value("seconds", duration, v -> duration = v);
-    }
-
     @Override
     public void initialize() {
         timer.restart();
@@ -48,5 +44,10 @@ public class TunableWaitCommand extends Command implements Tunable {
     @Override
     public boolean runsWhenDisabled() {
         return true;
+    }
+
+    @Override
+    public void initTunable(TunableTable table) {
+        table.value("seconds", duration, v -> duration = v);
     }
 }

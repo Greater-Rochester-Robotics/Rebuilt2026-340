@@ -33,7 +33,6 @@ import org.team340.lib.swerve.hardware.SwerveIMUs.SwerveIMU;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables.Tunable;
 import org.team340.lib.util.Sleep;
-import org.team340.robot.Robot;
 
 /**
  * An implementation of a swerve drivetrain, with support for various hardware configurations.
@@ -528,7 +527,7 @@ public class SwerveAPI implements Tunable, AutoCloseable {
 
                 if (readError) {
                     failures++;
-                    if (!Robot.isSimulation()) return;
+                    if (!RobotBase.isSimulation()) return;
                 }
 
                 poseEstimator.updateWithTime(lastTimestamp, lastYaw, positionCache);

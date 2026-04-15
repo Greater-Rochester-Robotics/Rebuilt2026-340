@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
@@ -52,6 +53,8 @@ public final class Indexer extends GRRSubsystem {
     private final VelocityTorqueCurrentFOC velocityControl;
     private final Follower followControl;
 
+    private boolean isFeeding = false;
+
     public Indexer() {
         this.portUpperLead = new TalonFX(RobotMap.INDEXER_PORT_UPPER_LEAD_MOTOR, RobotMap.CANBus);
         this.portLowerFollow = new TalonFX(RobotMap.INDEXER_PORT_LOWER_FOLLOW_MOTOR, RobotMap.CANBus);
@@ -91,11 +94,20 @@ public final class Indexer extends GRRSubsystem {
     }
 
     /**
+     * Returns {@code true} if the indexer is feeding the shooter.
+     */
+    public boolean isFeeding() {
+        return isFeeding;
+    }
+
+    /**
      * Feeds the shooter.
      * @return feed command
      */
     public Command feed() {
-        return runState(State.FEED).withName("Indexer.feed()");
+        return runState(State.FEED)
+            .alongWith(Commands.runEnd(() -> isFeeding = true, () -> isFeeding = false))
+            .withName("Indexer.feed()");
     }
 
     /**
@@ -112,8 +124,9 @@ public final class Indexer extends GRRSubsystem {
      */
     public Command preload() {
         return preDelay
-            .andThen(runState(State.PRELOAD).raceWith(loadTime))
-            .andThen(runState(State.BACKOFF).raceWith(backoffTime))
+            .asProxy()
+            .andThen(runState(State.PRELOAD).raceWith(loadTime.asProxy()))
+            .andThen(runState(State.BACKOFF).raceWith(backoffTime.asProxy()))
             .withName("Indexer.preload()");
     }
 

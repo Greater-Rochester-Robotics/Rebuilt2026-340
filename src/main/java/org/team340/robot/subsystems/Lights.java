@@ -80,6 +80,19 @@ public final class Lights extends GRRSubsystem {
     }
 
     /**
+     * Displays information for the driver.
+     * @param hubActive If the hub is active.
+     * @param shooting If the robot is shooting.
+     */
+    public Command driving(BooleanSupplier hubActive, BooleanSupplier shooting) {
+        return hubDisplay(hubActive)
+            .until(shooting)
+            .andThen(flames(true).onlyWhile(shooting))
+            .repeatedly()
+            .withName("Lights.driving()");
+    }
+
+    /**
      * Displays the state of our alliance's hub.
      * @param active If the hub is active.
      */
@@ -95,6 +108,67 @@ public final class Lights extends GRRSubsystem {
             .onEnd(() -> set(Color.OFF))
             .ignoringDisable(true)
             .withName("Lights.hubDisplay()");
+    }
+
+    /**
+     * Displays the flames animation.
+     * @param allianceColors If the color of the flames should match the robot's alliance.
+     */
+    public Command flames(boolean allianceColors) {
+        Mutable<Integer> count = new Mutable<>(0);
+        int[] state = new int[LENGTH / 2];
+
+        return commandBuilder()
+            .onInitialize(() -> {
+                count.value = 0;
+                for (int i = 0; i < state.length; i++) {
+                    state[i] = 0;
+                }
+            })
+            .onExecute(() -> {
+                for (int i = 0; i < LENGTH / 2; i++) {
+                    state[i] = Math.max(0, state[i] - 30);
+                }
+
+                for (int i = LENGTH / 2 - 1; i >= 2; i--) {
+                    state[i] = (state[i - 1] + state[i - 2] * 2) / 3;
+                }
+
+                if (count.value++ % 2 == 0) {
+                    int i = (int) Math2.random(3.0);
+                    state[i] = (int) Math.min(255.0, state[i] + Math2.random(200.0, 255.0));
+                }
+
+                for (int i = 0; i < LENGTH / 2; i++) {
+                    int heat = Math.min(255, state[i] + (Math.random() < 0.1 && state[i] > 16 ? 32 : 0));
+                    int ramp = (((int) Math.round((heat / 255.0) * 191.0)) & 63) << 2;
+
+                    if (heat > 170) {
+                        if (allianceColors) {
+                            if (Alliance.isBlue()) setMirrored(i, ramp, ramp, 255);
+                            else setMirrored(i, 255, ramp, ramp);
+                        } else {
+                            setMirrored(i, 255, 255, ramp / 2);
+                        }
+                    } else if (heat > 84) {
+                        if (allianceColors) {
+                            if (Alliance.isBlue()) setMirrored(i, ramp / 4, 0, 255);
+                            else setMirrored(i, 255, 0, ramp / 4);
+                        } else {
+                            setMirrored(i, 255, ramp / 2, 0);
+                        }
+                    } else {
+                        if (allianceColors && Alliance.isBlue()) {
+                            setMirrored(i, 0, 0, ramp);
+                        } else {
+                            setMirrored(i, ramp, 0, 0);
+                        }
+                    }
+                }
+            })
+            .onEnd(() -> set(Color.OFF))
+            .ignoringDisable(true)
+            .withName("Lights.flames(" + allianceColors + ")");
     }
 
     /**
@@ -188,11 +262,24 @@ public final class Lights extends GRRSubsystem {
 
     /**
      * Sets a single LED to a specified color.
-     * @param i The index of the LED in the strip.
+     * @param i The index of the LED on the strip.
      * @param color The color to apply.
      */
     private void set(int i, Color color) {
         if (i < 0 || i >= LENGTH) return;
         buffer.setRGB(i, color.r.get(), color.g.get(), color.b.get());
+    }
+
+    /**
+     * Sets 2 LEDs mirrored across the center of the LED strip to the specified color.
+     * @param i The index of the LED on the strip, starting from the center.
+     * @param r Red value from {@code 0} to {@code 255}.
+     * @param g Green value from {@code 0} to {@code 255}.
+     * @param b Blue value from {@code 0} to {@code 255}.
+     */
+    private void setMirrored(int i, int r, int g, int b) {
+        if (i < 0 || i >= LENGTH / 2) return;
+        buffer.setRGB(LENGTH / 2 - i - 1, r, g, b);
+        buffer.setRGB(LENGTH / 2 + i, r, g, b);
     }
 }
