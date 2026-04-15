@@ -226,7 +226,7 @@ public final class Swerve extends GRRSubsystem {
             tagsSeen += measurements.length;
         }
 
-        if(DriverStation.isDisabled()) {
+        if (DriverStation.isDisabled()) {
             api.applyStop(false);
         }
 

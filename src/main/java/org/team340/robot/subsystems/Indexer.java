@@ -93,7 +93,7 @@ public final class Indexer extends GRRSubsystem {
         starboardUpperFollow.setControl(followControl);
         starboardLowerFollow.setControl(followControl);
 
-        if(DriverStation.isDisabled()) {
+        if (DriverStation.isDisabled()) {
             portUpperLead.stopMotor();
             portLowerFollow.stopMotor();
             starboardUpperFollow.stopMotor();

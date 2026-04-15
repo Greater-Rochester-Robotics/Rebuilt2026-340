@@ -78,7 +78,7 @@ public final class Hood extends GRRSubsystem {
     public void periodic() {
         BaseStatusSignal.refreshAll(closedLoopError, velocity);
 
-        if(DriverStation.isDisabled()) {
+        if (DriverStation.isDisabled()) {
             motor.stopMotor();
         }
     }

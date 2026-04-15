@@ -121,7 +121,7 @@ public final class Intake extends GRRSubsystem {
         pivotPosition.refresh();
         rollersFollow.setControl(pivotFollowControl);
 
-        if(DriverStation.isDisabled()) {
+        if (DriverStation.isDisabled()) {
             pivot.stopMotor();
             rollersLead.stopMotor();
             rollersFollow.stopMotor();
