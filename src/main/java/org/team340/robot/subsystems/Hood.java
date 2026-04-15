@@ -15,6 +15,7 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.DoubleSupplier;
 import org.team340.lib.tunable.TunableTable;
@@ -76,6 +77,10 @@ public final class Hood extends GRRSubsystem {
     @Override
     public void periodic() {
         BaseStatusSignal.refreshAll(closedLoopError, velocity);
+
+        if(DriverStation.isDisabled()) {
+            motor.stopMotor();
+        }
     }
 
     /**

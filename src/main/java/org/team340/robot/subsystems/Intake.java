@@ -19,6 +19,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
@@ -119,6 +120,12 @@ public final class Intake extends GRRSubsystem {
     public void periodic() {
         pivotPosition.refresh();
         rollersFollow.setControl(pivotFollowControl);
+
+        if(DriverStation.isDisabled()) {
+            pivot.stopMotor();
+            rollersLead.stopMotor();
+            rollersFollow.stopMotor();
+        }
     }
 
     /**

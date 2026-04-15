@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -223,6 +224,10 @@ public final class Swerve extends GRRSubsystem {
         } else {
             atAngle = false;
             tagsSeen += measurements.length;
+        }
+
+        if(DriverStation.isDisabled()) {
+            api.applyStop(false);
         }
 
         Profiler.end();
