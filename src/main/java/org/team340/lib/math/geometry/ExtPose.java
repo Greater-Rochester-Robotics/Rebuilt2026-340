@@ -17,6 +17,16 @@ public final class ExtPose extends ExtGeometry<Pose2d> {
      * Creates an extended {@link Pose2d}. All parameters are expected to be blue origin relative.
      * @param x The x component of the translational component of the pose.
      * @param y The y component of the translational component of the pose.
+     * @param radians The rotational component of the pose in radians.
+     */
+    public ExtPose(double x, double y, double radians) {
+        this(x, y, new Rotation2d(radians));
+    }
+
+    /**
+     * Creates an extended {@link Pose2d}. All parameters are expected to be blue origin relative.
+     * @param x The x component of the translational component of the pose.
+     * @param y The y component of the translational component of the pose.
      * @param rotation The rotational component of the pose.
      */
     public ExtPose(double x, double y, Rotation2d rotation) {

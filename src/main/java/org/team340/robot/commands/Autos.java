@@ -6,9 +6,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.team340.lib.math.geometry.ExtPose;
-import org.team340.lib.math.geometry.ExtTranslation;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
@@ -26,7 +26,14 @@ import org.team340.robot.subsystems.Swerve;
  */
 public final class Autos {
 
+    private static final Rotation2d INTAKE_PRE_TAG_ROTATION = Rotation2d.fromDegrees(-135.0);
+
     private static final TunableTable tunables = Tunables.getNested("autos");
+
+    private static final ExtPose shootPosition = tunables.add(
+        "shootPosition",
+        new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0))
+    );
 
     private static final TunableDouble shootingVelocity = tunables.value("shootingVelocity", 1.25);
     private static final TunableInteger intakeMinRqTagsSeen = tunables.value("intakeMinRqTagsSeen", 15);
@@ -46,6 +53,46 @@ public final class Autos {
     private static final TunableDouble depotDeceleration = depotTunables.value("deceleration", 4.0);
     private static final TunableDouble depotEndTolerance = depotTunables.value("endTolerance", 0.04);
 
+    private static enum GrabDepth {
+        SHALLOW(
+            "Shallow",
+            new ExtPose(6.7, 2.0, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.7, 4.6, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.35, 4.6, Rotation2d.fromDegrees(-120.0)),
+            new ExtPose(6.2, 2.8, Rotation2d.fromDegrees(-120.0))
+        ),
+        MODERATE(
+            "Moderate",
+            new ExtPose(7.8, 0.9, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(7.7, 4.5, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.7, 4.5, Rotation2d.fromDegrees(-145.0)),
+            new ExtPose(6.25, 2.8, Rotation2d.fromDegrees(-145.0))
+        ),
+        DANGER(
+            "Danger",
+            new ExtPose(8.6, 0.9, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(8.5, 4.5, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.7, 4.5, Rotation2d.fromDegrees(-145.0)),
+            new ExtPose(6.25, 2.8, Rotation2d.fromDegrees(-145.0))
+        );
+
+        private String name;
+        private ExtPose sweepStartPreTags;
+        private ExtPose sweepStartPostTags;
+        private ExtPose sweepEnd;
+        private ExtPose returnStart;
+        private ExtPose returnEnd;
+
+        private GrabDepth(String name, ExtPose sweepStart, ExtPose sweepEnd, ExtPose returnStart, ExtPose returnEnd) {
+            this.name = name;
+            sweepStartPreTags = new ExtPose(sweepStart.getBlue().getTranslation(), INTAKE_PRE_TAG_ROTATION);
+            sweepStartPostTags = sweepStart;
+            this.sweepEnd = sweepEnd;
+            this.returnStart = returnStart;
+            this.returnEnd = returnEnd;
+        }
+    }
+
     private final Hood hood;
     private final Intake intake;
     private final Shooter shooter;
@@ -53,6 +100,10 @@ public final class Autos {
     private final Routines routines;
 
     private final AutoChooser chooser;
+    private final AutoChooser firstSwipeChooser;
+    private final AutoChooser secondSwipeChooser;
+
+    private boolean doubleSwipeLeft = false;
 
     public Autos(Robot robot) {
         hood = robot.hood;
@@ -61,50 +112,42 @@ public final class Autos {
         swerve = robot.swerve;
         routines = robot.routines;
 
-        // Create the auto chooser
-        chooser = new AutoChooser();
+        // Create the auto choosers
+        chooser = new AutoChooser("/Autos/chooser");
+        firstSwipeChooser = new AutoChooser("/Autos/firstSwipe");
+        secondSwipeChooser = new AutoChooser("/Autos/secondSwipe");
+
+        // Disable scheduling for double swipe choosers
+        firstSwipeChooser.enableScheduling(false);
+        secondSwipeChooser.enableScheduling(false);
 
         // Add autonomous modes to the dashboard
-        chooser.add("Turkiye Special", turkiyeSpecial());
-        chooser.add("StuySplash", stuySplash());
+        chooser.add("Double Swipe Right", doubleSwipe(false));
+        chooser.add("Double Swipe Left", doubleSwipe(true));
         chooser.add("Depoo", depoo());
-        chooser.add("Second Helping Right", secondHelping(false));
-        chooser.add("Second Helping Left", secondHelping(true));
         chooser.add("Simple Sally Right", simpleSally(false));
         chooser.add("Simple Sally Left", simpleSally(true));
+
+        // Add swipe options to the dashboard
+        for (var depth : GrabDepth.values()) {
+            firstSwipeChooser.add(depth.name, grab(depth, () -> doubleSwipeLeft));
+            secondSwipeChooser.add(depth.name, grab(depth, () -> doubleSwipeLeft));
+        }
     }
 
-    /**
-     * The "Turkiye Special" auto routine.
-     */
-    private Command turkiyeSpecial() {
-        var shoot = new ExtTranslation(2.875, 2.85);
-        var prePickup = new ExtTranslation(1.25, 1.25);
-        var pickup = new ExtPose(0.55, 0.61, Rotation2d.k180deg);
-
+    private Command doubleSwipe(boolean left) {
         return sequence(
-            grab(false),
-            parallel(apfShooting(shoot), routines.shoot().asProxy()).withTimeout(2.0),
-            deadline(apfShooting(prePickup).withTimeout(2.15), routines.shoot().asProxy()),
-            deadline(apfDefaultsForever(pickup).withTimeout(2.5), getReady()),
-            parallel(apfShooting(shoot), routines.shoot().asProxy())
+            singleSwipe(firstSwipeChooser::getSelected, left).withTimeout(10.0),
+            singleSwipe(secondSwipeChooser::getSelected, left)
         );
     }
 
-    /**
-     * The "StuySplash" auto routine.
-     */
-    private Command stuySplash() {
-        var shoot = new ExtTranslation(2.875, 2.85);
-        var prePickup = new ExtTranslation(1.25, 1.25);
-        var pickup = new ExtPose(0.55, 0.61, Rotation2d.k180deg);
-
+    private Command singleSwipe(Supplier<Command> grabCommand, boolean left) {
         return sequence(
-            grabAlt(false),
-            parallel(apfShooting(shoot), routines.shoot().asProxy()).withTimeout(2.0),
-            deadline(apfShooting(prePickup).withTimeout(2.15), routines.shoot().asProxy()),
-            deadline(apfDefaultsForever(pickup).withTimeout(2.5), getReady()),
-            parallel(apfShooting(shoot), routines.shoot().asProxy())
+            deferredProxy(grabCommand).alongWith(runOnce(() -> doubleSwipeLeft = left)),
+            print("dones2"),
+            parallel(apfShooting(() -> shootPosition.get(left).getTranslation()), routines.shoot()).asProxy(),
+            print("dones")
         );
     }
 
@@ -112,30 +155,15 @@ public final class Autos {
      * The "Depoo" auto routine.
      */
     private Command depoo() {
-        var shoot = new ExtTranslation(2.875, 5.219);
         var prePickup = new ExtPose(1.25, 5.94, Rotation2d.k180deg);
         var pickup = new ExtPose(0.5, 5.94, Rotation2d.k180deg);
 
         return sequence(
-            grab(true),
+            grab(GrabDepth.MODERATE, () -> true),
             deadline(apfShooting(() -> prePickup.get().getTranslation()).withTimeout(5.0), routines.shoot().asProxy()),
             deadline(apfDepot(pickup).withTimeout(2.0), getReady()),
             deadline(apfDepot(prePickup).withTimeout(2.0), getReady()),
-            parallel(apfShooting(shoot), routines.shoot().asProxy())
-        );
-    }
-
-    /**
-     * The "Second Helping" auto routine.
-     * @param left {@code true} if the auto should run on the left side of the field
-     *             (from the perspective of the current alliance's driver station),
-     *             {@code false} to run on the right side.
-     */
-    private Command secondHelping(boolean left) {
-        return sequence(
-            sequence(grab(left), parallel(swerve.aimAtTarget(), routines.shoot().asProxy())).withTimeout(15.0),
-            grabMore(left),
-            parallel(swerve.aimAtTarget(), routines.shoot().asProxy())
+            parallel(apfShooting(() -> shootPosition.get(true).getTranslation()), routines.shoot().asProxy())
         );
     }
 
@@ -146,7 +174,10 @@ public final class Autos {
      *             {@code false} to run on the right side.
      */
     private Command simpleSally(boolean left) {
-        return sequence(grab(left), parallel(swerve.aimAtTarget(), routines.shoot().asProxy()));
+        return sequence(
+            grab(GrabDepth.MODERATE, () -> left),
+            parallel(swerve.aimAtTarget(), routines.shoot().asProxy())
+        );
     }
 
     // ********** Helper Methods **********
@@ -159,31 +190,28 @@ public final class Autos {
      *             (from the perspective of the current alliance's driver station),
      *             {@code false} to run on the right side.
      */
-    private Command grab(boolean left) {
-        var preIntake = new ExtPose(7.8, 0.9, Rotation2d.fromDegrees(-135.0));
-        var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(105.0));
-        var sweep = new ExtPose(7.7, 4.5, Rotation2d.fromDegrees(105.0));
-        var preSweep2 = new ExtPose(6.7, 4.5, Rotation2d.fromDegrees(-145.0));
-        var sweep2 = new ExtPose(6.25, 2.8, Rotation2d.fromDegrees(-145.0));
-        var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
-
+    private Command grab(GrabDepth depth, BooleanSupplier left) {
         return deadline(
             sequence(
                 apfFuelApproach(() ->
-                    swerve.inNeutralZone() && swerve.tagsSeen() >= intakeMinRqTagsSeen.get()
-                        ? preIntakeCrossed.get(left)
-                        : preIntake.get(left)
+                    !swerve.inNeutralZone() || swerve.tagsSeen() < intakeMinRqTagsSeen.get()
+                        ? depth.sweepStartPreTags.get(left.getAsBoolean())
+                        : depth.sweepStartPostTags.get(left.getAsBoolean())
                 ),
-                apfIntaking(() -> sweep.get(left), 1.5).withTimeout(4.0),
-                swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
-                apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
-                apfDefaults(() -> shoot.get(left))
+                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), 1.5).withTimeout(4.0),
+                swerve.apfDrive(
+                    () -> depth.returnStart.get(left.getAsBoolean()),
+                    velocity,
+                    () -> 15.0,
+                    () -> 0.25,
+                    () -> 1e5,
+                    false
+                ),
+                apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), 2.75).withTimeout(4.0),
+                apfDefaults(() -> shootPosition.get(left.getAsBoolean())),
+                print("hello")
             ),
-            sequence(
-                intake.stow().asProxy().withTimeout(1.5),
-                routines.intake().asProxy().until(swerve::inOurZone),
-                getReady()
-            )
+            sequence(waitSeconds(1.5), routines.intake().asProxy().until(swerve::inOurZone), getReady())
         );
     }
 
@@ -195,7 +223,8 @@ public final class Autos {
      *             (from the perspective of the current alliance's driver station),
      *             {@code false} to run on the right side.
      */
-    private Command grabAlt(boolean left) {
+    @SuppressWarnings("unused") // TODO
+    private Command grabCenterOut(boolean left) {
         var preIntake = new ExtPose(8.8, 4.8, Rotation2d.fromDegrees(-135.0));
         var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(-125.0));
         var sweep = new ExtPose(8.65, 1.0, Rotation2d.fromDegrees(-125.0));
@@ -224,33 +253,6 @@ public final class Autos {
     }
 
     /**
-     * Sweeps the neutral zone farther in to intake fuel, then returns to a shooting position in the
-     * alliance zone while preparing the hood and flywheels. Ends when it reaches that
-     * location. Does not run the indexer to actually shoot.
-     * @param left {@code true} if the robot should be on the left side of the field
-     *             (from the perspective of the current alliance's driver station),
-     *             {@code false} to run on the right side.
-     */
-    private Command grabMore(boolean left) {
-        var preIntake = new ExtPose(6.7, 2.0, Rotation2d.fromDegrees(-135.0));
-        var sweep = new ExtPose(6.7, 4.6, Rotation2d.fromDegrees(105.0));
-        var preSweep2 = new ExtPose(6.35, 4.6, Rotation2d.fromDegrees(-120.0));
-        var sweep2 = new ExtPose(6.2, 2.8, Rotation2d.fromDegrees(-120.0));
-        var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
-
-        return deadline(
-            sequence(
-                apfFuelApproach(() -> preIntake.get(left)),
-                apfIntaking(() -> sweep.get(left), 1.8).withTimeout(4.0),
-                swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
-                apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
-                apfDefaults(() -> shoot.get(left))
-            ),
-            sequence(waitSeconds(2.0), routines.intake().asProxy().until(swerve::atAngle), getReady())
-        );
-    }
-
-    /**
      * Drives the robot to a target position using the P-APF, until the robot is
      * positioned within the default tolerances of the specified goal location.
      * Uses the default velocity and deceleration values.
@@ -258,15 +260,6 @@ public final class Autos {
      */
     private Command apfDefaults(Supplier<Pose2d> goal) {
         return swerve.apfDrive(goal, velocity, deceleration, endTolerance, endAngTolerance, false);
-    }
-
-    /**
-     * Drives the robot to a target position using the P-APF. Uses the
-     * default velocity and deceleration values. This command does not end.
-     * @param goal A supplier that returns the target blue-origin relative field location.
-     */
-    private Command apfDefaultsForever(Supplier<Pose2d> goal) {
-        return swerve.apfDrive(goal, velocity, deceleration, false);
     }
 
     /**
