@@ -10,6 +10,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import org.team340.lib.tunable.TunableTable;
@@ -91,6 +92,13 @@ public final class Indexer extends GRRSubsystem {
         portLowerFollow.setControl(followControl);
         starboardUpperFollow.setControl(followControl);
         starboardLowerFollow.setControl(followControl);
+
+        if (DriverStation.isDisabled()) {
+            portUpperLead.stopMotor();
+            portLowerFollow.stopMotor();
+            starboardUpperFollow.stopMotor();
+            starboardLowerFollow.stopMotor();
+        }
     }
 
     /**
