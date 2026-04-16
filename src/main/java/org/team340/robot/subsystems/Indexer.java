@@ -57,10 +57,10 @@ public final class Indexer extends GRRSubsystem {
     private boolean isFeeding = false;
 
     public Indexer() {
-        this.portUpperLead = new TalonFX(RobotMap.INDEXER_PORT_UPPER_LEAD_MOTOR, RobotMap.CANBus);
-        this.portLowerFollow = new TalonFX(RobotMap.INDEXER_PORT_LOWER_FOLLOW_MOTOR, RobotMap.CANBus);
-        this.starboardUpperFollow = new TalonFX(RobotMap.INDEXER_STARBOARD_UPPER_FOLLOW_MOTOR, RobotMap.CANBus);
-        this.starboardLowerFollow = new TalonFX(RobotMap.INDEXER_STARBOARD_LOWER_FOLLOW_MOTOR, RobotMap.CANBus);
+        this.portUpperLead = new TalonFX(RobotMap.INDEXER_PORT_UPPER_MOTOR, RobotMap.CANBus);
+        this.portLowerFollow = new TalonFX(RobotMap.INDEXER_PORT_LOWER_MOTOR, RobotMap.CANBus);
+        this.starboardUpperFollow = new TalonFX(RobotMap.INDEXER_STARBOARD_UPPER_MOTOR, RobotMap.CANBus);
+        this.starboardLowerFollow = new TalonFX(RobotMap.INDEXER_STARBOARD_LOWER_MOTOR, RobotMap.CANBus);
 
         configureMotors();
 
