@@ -53,7 +53,6 @@ import org.team340.robot.util.Vision.TagMode;
 public final class Swerve extends GRRSubsystem {
 
     private static final double OFFSET = Units.inchesToMeters(10.375);
-    private static final double SHOOTER_OFFSET = Units.inchesToMeters(-5.75);
 
     private static final TunableTable tunables = Tunables.getNested("swerve");
 
@@ -115,8 +114,8 @@ public final class Swerve extends GRRSubsystem {
     private final CameraConfig[] cameras = {
         new CameraConfig(
             "lumap1",
-            new Translation3d(-0.3107, 0.0, 0.2214),
-            new Rotation3d(0.0, Math.toRadians(-33.0), Math.PI)
+            new Translation3d(-0.3182, 0.0, 0.3804),
+            new Rotation3d(0.0, Math.toRadians(-24.0), Math.PI)
         )
     };
 
@@ -186,24 +185,8 @@ public final class Swerve extends GRRSubsystem {
             // Compensate for translational robot velocity by shifting our target by the product of the robot's
             // velocity and the ball's time of flight. Because we tuned our shot parameters to always produce
             // ball trajectories with a constant time of flight, this is trivial.
-
             deltaX += fieldSpeeds.vxMetersPerSecond * TOF;
             deltaY += fieldSpeeds.vyMetersPerSecond * TOF;
-
-            // Compensate for angular robot velocity in a similar fashion. To calculate the field-relative velocity of
-            // the shooter considering their offset from the robot's center of rotation, we can take the cross product
-            // of the following vectors:
-            //
-            // [   0   ]   [ offset * rotation.cos ]
-            // |   0   | x | offset * rotation.sin |
-            // [ omega ]   [           0           ]
-            //
-            // The first and second element of the resulting vector is the shooter's field-relative X and Y velocity,
-            // respectively, caused by the robot's angular velocity. Multiplying each component by the ball's time of
-            // flight will produce the desired deltaX and deltaY adjustments.
-
-            deltaX -= state.rotation.getSin() * fieldSpeeds.omegaRadiansPerSecond * SHOOTER_OFFSET * TOF;
-            deltaY += state.rotation.getCos() * fieldSpeeds.omegaRadiansPerSecond * SHOOTER_OFFSET * TOF;
         }
 
         // Save our target distance and angle.

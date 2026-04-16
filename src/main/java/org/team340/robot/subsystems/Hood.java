@@ -9,6 +9,7 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
@@ -143,13 +144,15 @@ public final class Hood extends GRRSubsystem {
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
         // Normal operations
-        config.Slot0.kP = 16.0;
+        config.Slot0.kP = 20.0;
         config.Slot0.kI = 0.0;
-        config.Slot0.kD = 0.08;
-        config.Slot0.kG = 0.0;
+        config.Slot0.kD = 0.2;
+        config.Slot0.kG = 1.75;
         config.Slot0.kS = 0.0;
         config.Slot0.kV = 0.0;
         config.Slot0.kA = 0.0;
+
+        config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
         // Zeroing the hood.
         config.Slot1.kP = 12.0;
@@ -160,7 +163,7 @@ public final class Hood extends GRRSubsystem {
         config.Slot1.kV = 0.0;
         config.Slot1.kA = 0.0;
 
-        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 22.938;
+        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 17.97;
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;

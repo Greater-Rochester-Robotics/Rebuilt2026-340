@@ -2,12 +2,11 @@ package org.team340.robot.subsystems;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.StrictFollower;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -34,8 +33,8 @@ public final class Indexer extends GRRSubsystem {
     private static final TunableWaitCommand backoffTime = Tunables.add("backoffTime", new TunableWaitCommand(1.0));
 
     private static enum State {
-        FEED(78.0),
-        BARF(-75.0),
+        FEED(35.0),
+        BARF(-30.0),
         PRELOAD(0.0),
         BACKOFF(0.0);
 
@@ -52,7 +51,7 @@ public final class Indexer extends GRRSubsystem {
     private final TalonFX starboardLowerFollow;
 
     private final VelocityTorqueCurrentFOC velocityControl;
-    private final Follower followControl;
+    private final StrictFollower followControl;
 
     private boolean isFeeding = false;
 
@@ -65,7 +64,13 @@ public final class Indexer extends GRRSubsystem {
         configureMotors();
 
         PhoenixUtil.run(() -> portUpperLead.getTorqueCurrent().setUpdateFrequency(500));
-        PhoenixUtil.run(() -> BaseStatusSignal.setUpdateFrequencyForAll(50, portUpperLead.getVelocity()));
+        PhoenixUtil.run(() ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                50,
+                portUpperLead.getVelocity(),
+                portUpperLead.getClosedLoopReference()
+            )
+        );
         PhoenixUtil.run(() ->
             ParentDevice.optimizeBusUtilizationForAll(
                 4,
@@ -79,7 +84,7 @@ public final class Indexer extends GRRSubsystem {
         velocityControl = new VelocityTorqueCurrentFOC(0.0);
         velocityControl.UpdateFreqHz = 0.0;
 
-        followControl = new Follower(portUpperLead.getDeviceID(), MotorAlignmentValue.Aligned);
+        followControl = new StrictFollower(portUpperLead.getDeviceID());
 
         tunables.add("portLeadMotor", portUpperLead);
 
@@ -158,17 +163,17 @@ public final class Indexer extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 170.0;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.SupplyCurrentLimit = 40.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 11.0;
+        config.Slot0.kP = 20.0;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
-        config.Slot0.kS = 8.0;
-        config.Slot0.kV = 0.0;
+        config.Slot0.kS = 12.0;
+        config.Slot0.kV = 0.5;
         config.Slot0.kA = 0.0;
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;

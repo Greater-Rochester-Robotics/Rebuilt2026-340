@@ -5,12 +5,11 @@ import static org.team340.robot.util.ShootParams.shooterVelocityMap;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.StrictFollower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -41,7 +40,7 @@ public final class Shooter extends GRRSubsystem {
     private final StatusSignal<Double> closedLoopError;
 
     private final VelocityVoltage velocityControl;
-    private final Follower followControl;
+    private final StrictFollower followControl;
 
     public Shooter() {
         this.portUpperFollow = new TalonFX(RobotMap.SHOOTER_PORT_UPPER_MOTOR, RobotMap.CANBus);
@@ -51,15 +50,15 @@ public final class Shooter extends GRRSubsystem {
 
         configureMotors();
 
-        closedLoopError = portUpperFollow.getClosedLoopError();
+        closedLoopError = portLowerLead.getClosedLoopError();
 
         PhoenixUtil.run(() -> BaseStatusSignal.setUpdateFrequencyForAll(100, closedLoopError));
-        PhoenixUtil.run(() -> BaseStatusSignal.setUpdateFrequencyForAll(500, portUpperFollow.getMotorVoltage()));
+        PhoenixUtil.run(() -> BaseStatusSignal.setUpdateFrequencyForAll(500, portLowerLead.getMotorVoltage()));
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
-                portUpperFollow.getVelocity(),
-                portUpperFollow.getClosedLoopReference()
+                portLowerLead.getVelocity(),
+                portLowerLead.getClosedLoopReference()
             )
         );
         PhoenixUtil.run(() ->
@@ -76,7 +75,7 @@ public final class Shooter extends GRRSubsystem {
         velocityControl.EnableFOC = true;
         velocityControl.UpdateFreqHz = 0.0;
 
-        followControl = new Follower(portLowerLead.getDeviceID(), MotorAlignmentValue.Aligned);
+        followControl = new StrictFollower(portLowerLead.getDeviceID());
 
         tunables.add("motors", portUpperFollow);
         tunables.add("motors", portLowerLead);
@@ -124,11 +123,9 @@ public final class Shooter extends GRRSubsystem {
         return commandBuilder("Shooter.runVelocity()")
             .onExecute(() -> {
                 velocityControl.withVelocity(velocity.getAsDouble());
-                portUpperFollow.setControl(velocityControl);
+                portLowerLead.setControl(velocityControl);
             })
-            .onEnd(() -> {
-                portUpperFollow.stopMotor();
-            });
+            .onEnd(portLowerLead::stopMotor);
     }
 
     private void configureMotors() {
@@ -144,7 +141,7 @@ public final class Shooter extends GRRSubsystem {
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
         config.Slot0.kS = 0.0;
-        config.Slot0.kV = 0.129;
+        config.Slot0.kV = 0.128;
         config.Slot0.kA = 0.0;
 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;

@@ -36,7 +36,7 @@ public final class Lights extends GRRSubsystem {
     private static final Debouncer tagFilter = tunables.add("tagFilter", new Debouncer(0.2, DebounceType.kFalling));
 
     private static enum Color {
-        HUB_INACTIVE(255, 120, 0),
+        HUB_INACTIVE(255, 90, 0),
         HUB_ACTIVE(0, 255, 0),
         BLUE(0, 10, 255),
         RED(255, 0, 0),

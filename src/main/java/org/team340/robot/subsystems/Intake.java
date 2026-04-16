@@ -232,13 +232,13 @@ public final class Intake extends GRRSubsystem {
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 90.0;
-        config.Slot0.kI = 0.0;
-        config.Slot0.kD = 0.0;
-        config.Slot0.kG = 0.0;
-        config.Slot0.kS = 0.0;
-        config.Slot0.kV = 2.0;
-        config.Slot0.kA = 0.0;
+        // config.Slot0.kP = 90.0;
+        // config.Slot0.kI = 0.0;
+        // config.Slot0.kD = 0.0;
+        // config.Slot0.kG = 0.0;
+        // config.Slot0.kS = 0.0;
+        // config.Slot0.kV = 2.0;
+        // config.Slot0.kA = 0.0;
 
         config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 0.281;
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
