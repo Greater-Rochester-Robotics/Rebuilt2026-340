@@ -42,10 +42,10 @@ public final class Constants {
 
         // Shooter
 
-        public static final int SHOOTER_PORT_UPPER_LEAD_MOTOR = 20;
-        public static final int SHOOTER_PORT_LOWER_FOLLOW_MOTOR = 21;
-        public static final int SHOOTER_STARBOARD_UPPER_FOLLOW_MOTOR = 22;
-        public static final int SHOOTER_STARBOARD_LOWER_FOLLOW_MOTOR = 23;
+        public static final int SHOOTER_PORT_UPPER_MOTOR = 20;
+        public static final int SHOOTER_PORT_LOWER_MOTOR = 21;
+        public static final int SHOOTER_STARBOARD_UPPER_MOTOR = 22;
+        public static final int SHOOTER_STARBOARD_LOWER_MOTOR = 23;
 
         // Hood
 
@@ -53,10 +53,10 @@ public final class Constants {
 
         // Indexer
 
-        public static final int INDEXER_PORT_UPPER_LEAD_MOTOR = 40;
-        public static final int INDEXER_PORT_LOWER_FOLLOW_MOTOR = 41;
-        public static final int INDEXER_STARBOARD_UPPER_FOLLOW_MOTOR = 42;
-        public static final int INDEXER_STARBOARD_LOWER_FOLLOW_MOTOR = 43;
+        public static final int INDEXER_PORT_UPPER_MOTOR = 40;
+        public static final int INDEXER_PORT_LOWER_MOTOR = 41;
+        public static final int INDEXER_STARBOARD_UPPER_MOTOR = 42;
+        public static final int INDEXER_STARBOARD_LOWER_MOTOR = 43;
 
         // Intake
 
