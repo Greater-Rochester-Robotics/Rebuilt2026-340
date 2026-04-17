@@ -39,6 +39,8 @@ public final class Hood extends GRRSubsystem {
     private static final TunableDouble homingVelocity = tunables.value("homingVelocity", -30.0); // In rotations per second.
     private static final TunableDouble zeroZero = tunables.value("zeroZero", 1.0); // In rotations per second.
 
+    private static final TunableDouble tunePosition = tunables.value("tunePosition", 0.0);
+
     private final TalonFX motor;
 
     private final StatusSignal<Double> closedLoopError;
@@ -108,6 +110,13 @@ public final class Hood extends GRRSubsystem {
         Command goTo = goTo(zeroZero).withName("Hood.goToZero(" + reZero + ")");
         if (reZero) goTo = goTo.beforeStarting(() -> isZeroed = false);
         return goTo;
+    }
+
+    /**
+     * Moves to {@link #tunePosition}, for tuning purposes.
+     */
+    public Command tune() {
+        return goTo(tunePosition).withName("Hood.tune()");
     }
 
     /**

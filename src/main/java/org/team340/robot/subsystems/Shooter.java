@@ -31,6 +31,7 @@ public final class Shooter extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("shooter");
 
     private static final TunableDouble atVelocityEpsilon = tunables.value("atVelocityEpsilon", 4.0);
+    private static final TunableDouble tuneVelocity = tunables.value("tuneVelocity", 0.0);
 
     private final TalonFX portUpperFollow;
     private final TalonFX portLowerLead;
@@ -113,6 +114,13 @@ public final class Shooter extends GRRSubsystem {
      */
     public Command targetDistance(final DoubleSupplier distance) {
         return runVelocity(() -> shooterVelocityMap.get(distance.getAsDouble())).withName("Shooter.targetDistance()");
+    }
+
+    /**
+     * Runs the shooter at {@link #tuneVelocity}, for tuning purposes.
+     */
+    public Command tune() {
+        return runVelocity(tuneVelocity).withName("Shooter.tune()");
     }
 
     /**

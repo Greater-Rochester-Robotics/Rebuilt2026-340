@@ -89,6 +89,7 @@ public final class Robot extends LoggedRobot {
         driver.povDown().whileTrue(hood.goToZero(true));
 
         driver.start().and(driver.back()).whileTrue(routines.testSequence());
+        driver.start().and(driver.rightStick()).whileTrue(routines.tune());
 
         // Setup lights
         scheduler.schedule(routines.lightsPreMatch());

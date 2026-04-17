@@ -169,4 +169,11 @@ public final class Routines {
                 .withTimeout(SHOOT_TIME)
         ).withName("Routines.testSequence()");
     }
+
+    /**
+     * Runs tuning commands for the shooter and hood.
+     */
+    public Command tune() {
+        return parallel(hood.tune(), indexer.feed(), shooter.tune(), swerve.aimAtTarget()).withName("Routines.tune()");
+    }
 }
