@@ -71,30 +71,30 @@ public final class Swerve extends GRRSubsystem {
     private final SwerveModuleConfig frontLeft = new SwerveModuleConfig()
         .setName("frontLeft")
         .setLocation(OFFSET, OFFSET)
-        .setMoveMotor(SwerveMotors.talonFX(RobotMap.FL_MOVE, false))
+        .setMoveMotor(SwerveMotors.talonFX(RobotMap.FL_MOVE, true))
         .setTurnMotor(SwerveMotors.talonFX(RobotMap.FL_TURN, false))
-        .setEncoder(SwerveEncoders.cancoder(RobotMap.FL_ENCODER, 0.076, false));
+        .setEncoder(SwerveEncoders.cancoder(RobotMap.FL_ENCODER, -0.421, false));
 
     private final SwerveModuleConfig frontRight = new SwerveModuleConfig()
         .setName("frontRight")
         .setLocation(OFFSET, -OFFSET)
-        .setMoveMotor(SwerveMotors.talonFX(RobotMap.FR_MOVE, false))
+        .setMoveMotor(SwerveMotors.talonFX(RobotMap.FR_MOVE, true))
         .setTurnMotor(SwerveMotors.talonFX(RobotMap.FR_TURN, false))
-        .setEncoder(SwerveEncoders.cancoder(RobotMap.FR_ENCODER, 0.057, false));
+        .setEncoder(SwerveEncoders.cancoder(RobotMap.FR_ENCODER, -0.445, false));
 
     private final SwerveModuleConfig backLeft = new SwerveModuleConfig()
         .setName("backLeft")
         .setLocation(-OFFSET, OFFSET)
-        .setMoveMotor(SwerveMotors.talonFX(RobotMap.BL_MOVE, false))
+        .setMoveMotor(SwerveMotors.talonFX(RobotMap.BL_MOVE, true))
         .setTurnMotor(SwerveMotors.talonFX(RobotMap.BL_TURN, false))
-        .setEncoder(SwerveEncoders.cancoder(RobotMap.BL_ENCODER, -0.105, false));
+        .setEncoder(SwerveEncoders.cancoder(RobotMap.BL_ENCODER, 0.408, false));
 
     private final SwerveModuleConfig backRight = new SwerveModuleConfig()
         .setName("backRight")
         .setLocation(-OFFSET, -OFFSET)
-        .setMoveMotor(SwerveMotors.talonFX(RobotMap.BR_MOVE, false))
+        .setMoveMotor(SwerveMotors.talonFX(RobotMap.BR_MOVE, true))
         .setTurnMotor(SwerveMotors.talonFX(RobotMap.BR_TURN, false))
-        .setEncoder(SwerveEncoders.cancoder(RobotMap.BR_ENCODER, -0.290, false));
+        .setEncoder(SwerveEncoders.cancoder(RobotMap.BR_ENCODER, 0.213, false));
 
     private final SwerveConfig config = new SwerveConfig()
         .setTimings(LoggedRobot.DEFAULT_PERIOD)
