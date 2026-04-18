@@ -37,16 +37,16 @@ public final class Intake extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("intake");
 
     private static final TunableDouble pivotAcceleration = tunables.value("pivotAcceleration", 18.0);
-    private static final TunableDouble pivotStowed = tunables.value("pivotStowed", -0.1);
+    private static final TunableDouble pivotStowed = tunables.value("pivotStowed", -0.07);
 
     private static enum State {
-        STOW(-0.115, 1.0, 0.0),
-        EXTEND(0.254, 1.0, 0.0),
-        INTAKE(0.25, 1.0, 90.0),
+        STOW(-0.08, 1.0, 0.0),
+        EXTEND(0.256, 1.0, 0.0),
+        INTAKE(0.256, 1.0, 90.0),
         AGITATE_UP(0.17, 2.0, 30.0),
-        AGITATE_DOWN(0.254, 2.0, 30.0),
-        BARF(0.254, 1.0, -90.0),
-        PURGE(-0.115, 1.0, -90.0);
+        AGITATE_DOWN(0.256, 2.0, 30.0),
+        BARF(0.256, 1.0, -90.0),
+        PURGE(-0.08, 1.0, -90.0);
 
         public final TunableDouble position;
         public final TunableDouble pivotVelocity;
@@ -207,7 +207,7 @@ public final class Intake extends GRRSubsystem {
     private void configureCANcoder() {
         final CANcoderConfiguration wcpThroughborePoweredByCANcoderForHalfInchHexConfig = new CANcoderConfiguration();
 
-        wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.MagnetOffset = 0.509;
+        wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.MagnetOffset = -0.309;
         wcpThroughborePoweredByCANcoderForHalfInchHexConfig.MagnetSensor.SensorDirection =
             SensorDirectionValue.CounterClockwise_Positive;
 
@@ -232,18 +232,18 @@ public final class Intake extends GRRSubsystem {
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        // config.Slot0.kP = 90.0;
-        // config.Slot0.kI = 0.0;
-        // config.Slot0.kD = 0.0;
-        // config.Slot0.kG = 0.0;
-        // config.Slot0.kS = 0.0;
-        // config.Slot0.kV = 2.0;
-        // config.Slot0.kA = 0.0;
+        config.Slot0.kP = 90.0;
+        config.Slot0.kI = 0.0;
+        config.Slot0.kD = 0.0;
+        config.Slot0.kG = 0.0;
+        config.Slot0.kS = 0.0;
+        config.Slot0.kV = 2.0;
+        config.Slot0.kA = 0.0;
 
         config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 0.281;
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
 
-        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -0.150;
+        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -0.082;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
