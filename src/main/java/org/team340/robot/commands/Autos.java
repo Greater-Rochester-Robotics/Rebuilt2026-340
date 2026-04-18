@@ -310,8 +310,8 @@ public final class Autos {
     private Command getReady() {
         return parallel(
             intake.intake(),
-            hood.targetDistance(swerve::targetDistance),
-            shooter.targetDistance(swerve::targetDistance)
+            hood.targetDistance(swerve::targetDistance, () -> true),
+            shooter.targetDistance(swerve::targetDistance, () -> true)
         ).asProxy();
     }
 }

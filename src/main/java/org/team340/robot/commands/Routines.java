@@ -79,14 +79,14 @@ public final class Routines {
     }
 
     /**
-     * Shoots at the hub, without commanding the drivetrain.
+     * Shoots at the current swerve target, without commanding the drivetrain.
      * @param runIntake Whether the intake should also be intaking.
      * @param force A supplier that if {@code true} will force the indexer to feed the shooter.
      */
     public Command shoot(BooleanSupplier runIntake, BooleanSupplier force) {
         return parallel(
-            hood.targetDistance(swerve::targetDistance),
-            shooter.targetDistance(swerve::targetDistance),
+            hood.targetDistance(swerve::targetDistance, swerve::inOurZone),
+            shooter.targetDistance(swerve::targetDistance, swerve::inOurZone),
             sequence(
                 sequence(
                     waitSeconds(0.05),
@@ -113,8 +113,8 @@ public final class Routines {
      */
     public Command staticShoot() {
         return parallel(
-            hood.targetDistance(staticShootHoodPosition),
-            shooter.targetDistance(staticShootDistance),
+            hood.targetDistance(staticShootHoodPosition, () -> true),
+            shooter.targetDistance(staticShootDistance, () -> true),
             indexer.feed()
         ).withName("Routines.shoot()");
     }
@@ -138,8 +138,8 @@ public final class Routines {
     public Command driverShootShutdown(DoubleSupplier x, DoubleSupplier y) {
         return deadline(
             waitSeconds(0.4),
-            hood.targetDistance(swerve::targetDistance),
-            shooter.targetDistance(swerve::targetDistance),
+            hood.targetDistance(swerve::targetDistance, swerve::inOurZone),
+            shooter.targetDistance(swerve::targetDistance, swerve::inOurZone),
             swerve.aimAtTarget(x, y)
         ).withName("Routines.driverShootShutdown()");
     }
@@ -164,7 +164,11 @@ public final class Routines {
         return sequence(
             intake.intake().asProxy().withTimeout(2.0),
             parallel(indexer.feed(), intake.agitate()).asProxy().withTimeout(2.0),
-            parallel(intake.stow(), hood.targetDistance(targetDistance), shooter.targetDistance(targetDistance))
+            parallel(
+                intake.stow(),
+                hood.targetDistance(targetDistance, () -> true),
+                shooter.targetDistance(targetDistance, () -> true)
+            )
                 .beforeStarting(timer::restart)
                 .asProxy()
                 .withTimeout(SHOOT_TIME)

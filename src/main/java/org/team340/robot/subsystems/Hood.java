@@ -1,6 +1,6 @@
 package org.team340.robot.subsystems;
 
-import static org.team340.robot.util.ShootParams.hoodPositionMap;
+import static org.team340.robot.util.ShootParams.getHoodPosition;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -18,6 +18,7 @@ import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
@@ -98,8 +99,10 @@ public final class Hood extends GRRSubsystem {
      * Run the hood pivot to target a specific distance based on a preset interpolating map.
      * @param distance The distance to target in meters.
      */
-    public Command targetDistance(final DoubleSupplier distance) {
-        return goTo(() -> hoodPositionMap.get(distance.getAsDouble())).withName("Hood.targetDistance()");
+    public Command targetDistance(final DoubleSupplier distance, BooleanSupplier inOurZone) {
+        return goTo(() -> getHoodPosition(distance.getAsDouble(), inOurZone.getAsBoolean())).withName(
+            "Hood.targetDistance()"
+        );
     }
 
     /**

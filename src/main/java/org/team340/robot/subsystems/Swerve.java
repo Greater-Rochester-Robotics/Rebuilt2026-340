@@ -1,6 +1,6 @@
 package org.team340.robot.subsystems;
 
-import static org.team340.robot.util.ShootParams.TOF;
+import static org.team340.robot.util.ShootParams.HUB_TOF;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.NotLogged;
@@ -178,15 +178,15 @@ public final class Swerve extends GRRSubsystem {
         double deltaY = state.pose.getY() - target.getY();
 
         // If shoot on the move is enabled, perform the necessary adjustments.
-        if (enableSOTM.get()) {
+        if (enableSOTM.get() && inOurZone()) {
             // Get our field-relative chassis speeds.
             var fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(state.speeds, state.rotation);
 
             // Compensate for translational robot velocity by shifting our target by the product of the robot's
             // velocity and the ball's time of flight. Because we tuned our shot parameters to always produce
             // ball trajectories with a constant time of flight, this is trivial.
-            deltaX += fieldSpeeds.vxMetersPerSecond * TOF;
-            deltaY += fieldSpeeds.vyMetersPerSecond * TOF;
+            deltaX += fieldSpeeds.vxMetersPerSecond * HUB_TOF;
+            deltaY += fieldSpeeds.vyMetersPerSecond * HUB_TOF;
         }
 
         // Save our target distance and angle.

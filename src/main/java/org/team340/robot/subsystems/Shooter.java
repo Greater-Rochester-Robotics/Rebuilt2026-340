@@ -1,6 +1,6 @@
 package org.team340.robot.subsystems;
 
-import static org.team340.robot.util.ShootParams.shooterVelocityMap;
+import static org.team340.robot.util.ShootParams.getShooterVelocity;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -14,6 +14,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
@@ -112,8 +113,10 @@ public final class Shooter extends GRRSubsystem {
      * Run the shooter to target a specific distance based on a preset interpolating map.
      * @param distance The distance to target in meters.
      */
-    public Command targetDistance(final DoubleSupplier distance) {
-        return runVelocity(() -> shooterVelocityMap.get(distance.getAsDouble())).withName("Shooter.targetDistance()");
+    public Command targetDistance(final DoubleSupplier distance, final BooleanSupplier inOurZone) {
+        return runVelocity(() -> getShooterVelocity(distance.getAsDouble(), inOurZone.getAsBoolean())).withName(
+            "Shooter.targetDistance()"
+        );
     }
 
     /**
