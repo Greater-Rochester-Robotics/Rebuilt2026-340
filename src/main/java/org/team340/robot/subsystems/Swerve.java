@@ -64,7 +64,7 @@ public final class Swerve extends GRRSubsystem {
 
     // spotless:off
     private static final TunableTable ferryTargets = tunables.getNested("ferryTargets");
-    private static final ExtTranslation leftFerryTarget = ferryTargets.add("left", new ExtTranslation(2.5, 6.5));
+    private static final ExtTranslation leftFerryTarget = ferryTargets.add("left", new ExtTranslation(Field.BLUE_ZONE - 1.0, Field.Y_CENTER + Units.inchesToMeters(60.0)));
     private static final ExtTranslation rightFerryTarget = ferryTargets.add("right", new ExtTranslation(leftFerryTarget.getBlue(true)));
     // spotless:on
 

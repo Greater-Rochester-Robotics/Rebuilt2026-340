@@ -30,7 +30,7 @@ public final class Indexer extends GRRSubsystem {
 
     private static final TunableWaitCommand preDelay = tunables.add("preDelay", new TunableWaitCommand(3.0));
     private static final TunableWaitCommand loadTime = tunables.add("loadTime", new TunableWaitCommand(1.25));
-    private static final TunableWaitCommand backoffTime = tunables.add("backoffTime", new TunableWaitCommand(0.21));
+    private static final TunableWaitCommand backoffTime = tunables.add("backoffTime", new TunableWaitCommand(0.25));
 
     private static enum State {
         FEED(35.0),
@@ -168,12 +168,12 @@ public final class Indexer extends GRRSubsystem {
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 20.0;
+        config.Slot0.kP = 18.0;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
         config.Slot0.kS = 12.0;
-        config.Slot0.kV = 0.5;
+        config.Slot0.kV = 0.0;
         config.Slot0.kA = 0.0;
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;

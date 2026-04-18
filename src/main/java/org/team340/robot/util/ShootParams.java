@@ -67,14 +67,12 @@ public final class ShootParams {
     static {
         // Data obtained from empirical testing.
         final DataPoint[] ferryingDataPoints = {
-            new DataPoint(4.95, 8.0, 44.5), // Bad TOF
-            new DataPoint(4.45, 7.75, 41.0),
-            new DataPoint(3.91, 7.5, 39.5),
-            new DataPoint(3.41, 7.6, 38.0), // Bad TOF
-            new DataPoint(2.90, 7.5, 36.25),
-            new DataPoint(2.50, 7.3, 34.5),
-            new DataPoint(2.08, 6.9, 34.0),
-            new DataPoint(1.52, 3.8, 34.0)
+            new DataPoint(1.78, 8.5, 19.5),
+            new DataPoint(2.69, 8.0, 24.0),
+            new DataPoint(3.82, 7.5, 40.0),
+            new DataPoint(4.85, 7.5, 43.0),
+            new DataPoint(5.81, 7.5, 43.6),
+            new DataPoint(6.69, 7.5, 47.5)
         };
 
         // Create our lookup tables.
