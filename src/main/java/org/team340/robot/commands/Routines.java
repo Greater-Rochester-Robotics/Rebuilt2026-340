@@ -4,6 +4,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import org.team340.lib.tunable.TunableTable;
@@ -51,7 +52,7 @@ public final class Routines {
      * Intakes and preloads fuel.
      */
     public Command intake() {
-        return parallel(intake.intake(), indexer.preload());
+        return parallel(intake.intake(), new ScheduleCommand(indexer.preload()));
     }
 
     /**
@@ -97,7 +98,7 @@ public final class Routines {
                                 && swerve.tagsSeen() >= shootingMinRqTagsSeen.get())
                             || force.getAsBoolean()
                     )
-                ).deadlineFor(indexer.barf().withTimeout(0.25)),
+                ),
                 indexer.feed()
             ),
             sequence(

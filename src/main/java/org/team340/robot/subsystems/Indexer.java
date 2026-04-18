@@ -28,15 +28,15 @@ public final class Indexer extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("indexer");
 
-    private static final TunableWaitCommand preDelay = Tunables.add("preDelay", new TunableWaitCommand(3.0));
-    private static final TunableWaitCommand loadTime = Tunables.add("loadTime", new TunableWaitCommand(5.0));
-    private static final TunableWaitCommand backoffTime = Tunables.add("backoffTime", new TunableWaitCommand(1.0));
+    private static final TunableWaitCommand preDelay = tunables.add("preDelay", new TunableWaitCommand(3.0));
+    private static final TunableWaitCommand loadTime = tunables.add("loadTime", new TunableWaitCommand(1.25));
+    private static final TunableWaitCommand backoffTime = tunables.add("backoffTime", new TunableWaitCommand(0.21));
 
     private static enum State {
         FEED(35.0),
         BARF(-30.0),
-        PRELOAD(0.0),
-        BACKOFF(0.0);
+        PRELOAD(3.5),
+        BACKOFF(-8.0);
 
         public final TunableDouble speed;
 
@@ -163,7 +163,7 @@ public final class Indexer extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 170.0;
-        config.CurrentLimits.SupplyCurrentLimit = 40.0;
+        config.CurrentLimits.SupplyCurrentLimit = 65.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;

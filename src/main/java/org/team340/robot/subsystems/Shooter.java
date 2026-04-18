@@ -30,7 +30,7 @@ public final class Shooter extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("shooter");
 
-    private static final TunableDouble atVelocityEpsilon = tunables.value("atVelocityEpsilon", 4.0);
+    private static final TunableDouble atVelocityEpsilon = tunables.value("atVelocityEpsilon", 1.5);
     private static final TunableDouble tuneVelocity = tunables.value("tuneVelocity", 0.0);
 
     private final TalonFX portUpperFollow;
