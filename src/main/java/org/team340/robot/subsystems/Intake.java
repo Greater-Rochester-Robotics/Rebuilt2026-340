@@ -41,11 +41,11 @@ public final class Intake extends GRRSubsystem {
 
     private static enum State {
         STOW(-0.08, 1.0, 0.0),
-        EXTEND(0.256, 1.0, 0.0),
-        INTAKE(0.256, 1.0, 90.0),
+        EXTEND(0.253, 1.0, 0.0),
+        INTAKE(0.253, 1.0, 90.0),
         AGITATE_UP(0.17, 2.0, 30.0),
-        AGITATE_DOWN(0.256, 2.0, 30.0),
-        BARF(0.256, 1.0, -90.0),
+        AGITATE_DOWN(0.253, 2.0, 30.0),
+        BARF(0.253, 1.0, -90.0),
         PURGE(-0.08, 1.0, -90.0);
 
         public final TunableDouble position;
@@ -255,8 +255,8 @@ public final class Intake extends GRRSubsystem {
     private void configureRollers() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 170.0;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.StatorCurrentLimit = 180.0;
+        config.CurrentLimits.SupplyCurrentLimit = 70.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;

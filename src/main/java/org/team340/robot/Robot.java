@@ -76,7 +76,7 @@ public final class Robot extends LoggedRobot {
             .onFalse(new RumbleCommand(driver, 1.0).withTimeout(0.6).onlyIf(this::isTeleop));
 
         // Driver bindings
-        driver.a().and(shoot.negate()).whileTrue(routines.intake());
+        driver.a().and(shoot.negate()).whileTrue(intake.intake());
         driver.b().onTrue(routines.barf()).onFalse(routines.finishBarf());
         driver.x().whileTrue(routines.staticShoot());
         driver.y().onTrue(none()); // Reserved for shoot override

@@ -211,7 +211,7 @@ public final class Autos {
                 apfDefaults(() -> shootPosition.get(left.getAsBoolean())),
                 print("hello")
             ),
-            sequence(waitSeconds(1.5), routines.intake().asProxy().until(swerve::inOurZone), getReady())
+            sequence(waitSeconds(1.5), intake.intake().asProxy().until(swerve::inOurZone), getReady())
         );
     }
 
@@ -246,7 +246,7 @@ public final class Autos {
             ),
             sequence(
                 intake.stow().asProxy().withTimeout(1.0),
-                routines.intake().asProxy().until(swerve::inOurZone),
+                intake.intake().asProxy().until(swerve::inOurZone),
                 getReady()
             )
         );

@@ -16,7 +16,6 @@ import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.command.GRRSubsystem;
-import org.team340.lib.util.command.TunableWaitCommand;
 import org.team340.lib.util.vendors.PhoenixUtil;
 import org.team340.robot.Constants.RobotMap;
 
@@ -28,15 +27,9 @@ public final class Indexer extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("indexer");
 
-    private static final TunableWaitCommand preDelay = tunables.add("preDelay", new TunableWaitCommand(3.0));
-    private static final TunableWaitCommand loadTime = tunables.add("loadTime", new TunableWaitCommand(1.25));
-    private static final TunableWaitCommand backoffTime = tunables.add("backoffTime", new TunableWaitCommand(0.15));
-
     private static enum State {
-        FEED(50.0),
-        BARF(-30.0),
-        PRELOAD(1.5),
-        BACKOFF(-6.0);
+        FEED(55.0),
+        BARF(-40.0);
 
         public final TunableDouble speed;
 
@@ -82,6 +75,7 @@ public final class Indexer extends GRRSubsystem {
         );
 
         velocityControl = new VelocityVoltage(0.0);
+        velocityControl.EnableFOC = true;
         velocityControl.UpdateFreqHz = 0.0;
 
         followControl = new StrictFollower(portUpperLead.getDeviceID());
@@ -132,18 +126,6 @@ public final class Indexer extends GRRSubsystem {
     }
 
     /**
-     * preloads the uptake
-     * @return preload command
-     */
-    public Command preload() {
-        return preDelay
-            .asProxy()
-            .andThen(runState(State.PRELOAD).raceWith(loadTime.asProxy()))
-            .andThen(runState(State.BACKOFF).raceWith(backoffTime.asProxy()))
-            .withName("Indexer.preload()");
-    }
-
-    /**
      * Internal method to run the motors as configured for the specified state.
      * @param state The indexer state to target.
      * @return runState command
@@ -162,18 +144,18 @@ public final class Indexer extends GRRSubsystem {
     private void configureMotors() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 170.0;
-        config.CurrentLimits.SupplyCurrentLimit = 50.0;
+        config.CurrentLimits.StatorCurrentLimit = 180.0;
+        config.CurrentLimits.SupplyCurrentLimit = 100.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 0.6;
+        config.Slot0.kP = 0.65;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
         config.Slot0.kS = 0.3;
-        config.Slot0.kV = 0.15;
+        config.Slot0.kV = 0.14;
         config.Slot0.kA = 0.0;
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
