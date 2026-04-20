@@ -90,12 +90,12 @@ public final class Routines {
                                 && swerve.tagsSeen() >= shootingMinRqTagsSeen.get())
                             || force.getAsBoolean()
                     )
-                ),
+                ).deadlineFor(indexer.accelerate()),
                 indexer.feed()
             ),
             sequence(
                 race(waitUntil(runIntake), waitSeconds(0.75)),
-                either(intake.intake().onlyWhile(runIntake), intake.agitate().until(runIntake), runIntake)
+                either(intake.intake().onlyWhile(runIntake), intake.compress().until(runIntake), runIntake)
             ).repeatedly()
         ).withName("Routines.shoot()");
     }
@@ -155,7 +155,7 @@ public final class Routines {
 
         return sequence(
             intake.intake().asProxy().withTimeout(2.0),
-            parallel(indexer.feed(), intake.agitate()).asProxy().withTimeout(2.0),
+            parallel(indexer.feed(), intake.compress()).asProxy().withTimeout(2.0),
             parallel(
                 intake.stow(),
                 hood.targetDistance(targetDistance, () -> true),
@@ -171,6 +171,11 @@ public final class Routines {
      * Runs tuning commands for the shooter and hood.
      */
     public Command tune() {
-        return parallel(hood.tune(), indexer.feed(), shooter.tune(), swerve.aimAtTarget()).withName("Routines.tune()");
+        return parallel(
+            hood.tune(),
+            indexer.accelerate().withTimeout(1.0).andThen(indexer.feed()),
+            shooter.tune(),
+            swerve.aimAtTarget()
+        ).withName("Routines.tune()");
     }
 }

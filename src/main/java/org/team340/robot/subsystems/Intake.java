@@ -1,7 +1,5 @@
 package org.team340.robot.subsystems;
 
-import static edu.wpi.first.wpilibj2.command.Commands.*;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -43,8 +41,7 @@ public final class Intake extends GRRSubsystem {
         STOW(-0.08, 1.0, 0.0),
         EXTEND(0.253, 1.0, 0.0),
         INTAKE(0.253, 1.0, 90.0),
-        AGITATE_UP(0.17, 2.0, 30.0),
-        AGITATE_DOWN(0.253, 2.0, 30.0),
+        COMPRESS(0.17, 0.1, 30.0),
         BARF(0.253, 1.0, -90.0),
         PURGE(-0.08, 1.0, -90.0);
 
@@ -150,12 +147,10 @@ public final class Intake extends GRRSubsystem {
     }
 
     /**
-     * Agitates the hopper by jostling the intake up and down while pulling balls inwards.
+     * Compresses the hopper while pulling balls inwards.
      */
-    public Command agitate() {
-        return sequence(runState(State.AGITATE_UP).withTimeout(0.4), runState(State.AGITATE_DOWN).withTimeout(0.4))
-            .repeatedly()
-            .withName("Intake.agitate()");
+    public Command compress() {
+        return runState(State.COMPRESS).withName("Intake.compress()");
     }
 
     /**
@@ -256,7 +251,7 @@ public final class Intake extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.SupplyCurrentLimit = 60.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
