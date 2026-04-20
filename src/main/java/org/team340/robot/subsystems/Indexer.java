@@ -31,7 +31,8 @@ public final class Indexer extends GRRSubsystem {
     private static enum State {
         ACCELERATE(55.0, 0.0),
         FEED(55.0, 50.0),
-        BARF(-40.0, -40.0);
+        CLEAR(-15.0, -15.0),
+        BARF(-50.0, -50.0);
 
         public final TunableDouble uptakeSpeed;
         public final TunableDouble floorSpeed;
@@ -138,6 +139,13 @@ public final class Indexer extends GRRSubsystem {
         return runState(State.FEED)
             .alongWith(Commands.runEnd(() -> isFeeding = true, () -> isFeeding = false))
             .withName("Indexer.feed()");
+    }
+
+    /**
+     * Runs the indexer to clear the ball tunnel.
+     */
+    public Command clear() {
+        return runState(State.CLEAR).withName("Indexer.clear()");
     }
 
     /**

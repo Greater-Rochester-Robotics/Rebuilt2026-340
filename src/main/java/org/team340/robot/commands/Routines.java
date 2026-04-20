@@ -131,6 +131,7 @@ public final class Routines {
         return deadline(
             waitSeconds(0.4),
             hood.targetDistance(swerve::targetDistance, swerve::inOurZone),
+            indexer.clear(),
             shooter.targetDistance(swerve::targetDistance, swerve::inOurZone),
             swerve.aimAtTarget(x, y)
         ).withName("Routines.driverShootShutdown()");

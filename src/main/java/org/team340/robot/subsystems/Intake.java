@@ -41,7 +41,7 @@ public final class Intake extends GRRSubsystem {
         STOW(-0.08, 1.0, 0.0),
         EXTEND(0.253, 1.0, 0.0),
         INTAKE(0.253, 1.0, 90.0),
-        COMPRESS(0.19, 0.1, 30.0),
+        COMPRESS(0.19, 0.1, 45.0),
         BARF(0.253, 1.0, -90.0),
         PURGE(-0.08, 1.0, -90.0);
 

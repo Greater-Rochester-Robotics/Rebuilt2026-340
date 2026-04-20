@@ -16,6 +16,7 @@ import org.team340.lib.tunable.Tunables.TunableInteger;
 import org.team340.lib.util.command.AutoChooser;
 import org.team340.robot.Robot;
 import org.team340.robot.subsystems.Hood;
+import org.team340.robot.subsystems.Indexer;
 import org.team340.robot.subsystems.Intake;
 import org.team340.robot.subsystems.Shooter;
 import org.team340.robot.subsystems.Swerve;
@@ -70,7 +71,7 @@ public final class Autos {
         ),
         DANGER(
             "Danger",
-            new ExtPose(8.6, 0.9, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(8.5, 0.9, Rotation2d.fromDegrees(105.0)),
             new ExtPose(8.5, 4.5, Rotation2d.fromDegrees(105.0)),
             new ExtPose(6.7, 4.5, Rotation2d.fromDegrees(-145.0)),
             new ExtPose(6.25, 2.8, Rotation2d.fromDegrees(-145.0))
@@ -94,6 +95,7 @@ public final class Autos {
     }
 
     private final Hood hood;
+    private final Indexer indexer;
     private final Intake intake;
     private final Shooter shooter;
     private final Swerve swerve;
@@ -107,6 +109,7 @@ public final class Autos {
 
     public Autos(Robot robot) {
         hood = robot.hood;
+        indexer = robot.indexer;
         intake = robot.intake;
         shooter = robot.shooter;
         swerve = robot.swerve;
@@ -211,41 +214,9 @@ public final class Autos {
                 apfDefaults(() -> shootPosition.get(left.getAsBoolean())),
                 print("hello")
             ),
-            sequence(waitSeconds(1.5), intake.intake().asProxy().until(swerve::inOurZone), getReady())
-        );
-    }
-
-    /**
-     * Sweeps the neutral zone to intake fuel, then returns to a shooting position in the
-     * alliance zone while preparing the hood and flywheels. Ends when it reaches that
-     * location. Does not run the indexer to actually shoot.
-     * @param left {@code true} if the robot should be on the left side of the field
-     *             (from the perspective of the current alliance's driver station),
-     *             {@code false} to run on the right side.
-     */
-    @SuppressWarnings("unused") // TODO
-    private Command grabCenterOut(boolean left) {
-        var preIntake = new ExtPose(8.8, 4.8, Rotation2d.fromDegrees(-135.0));
-        var preIntakeCrossed = new ExtPose(preIntake.getBlue().getTranslation(), Rotation2d.fromDegrees(-125.0));
-        var sweep = new ExtPose(8.65, 1.0, Rotation2d.fromDegrees(-125.0));
-        var preSweep2 = new ExtPose(6.7, 1.0, Rotation2d.fromDegrees(145.0));
-        var sweep2 = new ExtPose(6.25, 2.0, Rotation2d.fromDegrees(145.0));
-        var shoot = new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0));
-
-        return deadline(
             sequence(
-                apfDefaults(() ->
-                    swerve.inNeutralZone() && swerve.tagsSeen() >= intakeMinRqTagsSeen.get()
-                        ? preIntakeCrossed.get(left)
-                        : preIntake.get(left)
-                ),
-                apfIntaking(() -> sweep.get(left), 1.5).withTimeout(4.0),
-                swerve.apfDrive(() -> preSweep2.get(left), velocity, () -> 15.0, () -> 0.25, () -> 1e5, false),
-                apfIntaking(() -> sweep2.get(left), 2.75).withTimeout(4.0),
-                apfDefaults(() -> shoot.get(left))
-            ),
-            sequence(
-                intake.stow().asProxy().withTimeout(1.0),
+                indexer.clear().asProxy().withTimeout(0.5),
+                waitSeconds(1.0),
                 intake.intake().asProxy().until(swerve::inOurZone),
                 getReady()
             )
