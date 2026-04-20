@@ -43,14 +43,10 @@ public final class ShootParams {
     static {
         // Data obtained from empirical testing.
         final DataPoint[] hubDataPoints = {
-            new DataPoint(4.95, 8.0, 44.5), // Bad TOF
-            new DataPoint(4.45, 7.75, 41.0),
-            new DataPoint(3.91, 7.5, 39.5),
-            new DataPoint(3.41, 7.6, 38.0), // Bad TOF
-            new DataPoint(2.90, 7.5, 36.25),
-            new DataPoint(2.50, 7.3, 34.5),
-            new DataPoint(2.08, 6.9, 34.0),
-            new DataPoint(1.52, 3.8, 34.0)
+            new DataPoint(1.554, 4.0, 31.0),
+            new DataPoint(2.158, 7.0, 33.0),
+            new DataPoint(2.620, 7.8, 34.0),
+            new DataPoint(3.098, 9.9, 36.0)
         };
 
         // Create our lookup tables.

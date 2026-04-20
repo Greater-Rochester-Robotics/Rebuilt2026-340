@@ -29,8 +29,8 @@ public final class Indexer extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("indexer");
 
     private static enum State {
-        ACCELERATE(60.0, 0.0),
-        FEED(60.0, 60.0),
+        ACCELERATE(55.0, 0.0),
+        FEED(55.0, 50.0),
         BARF(-40.0, -40.0);
 
         public final TunableDouble uptakeSpeed;
