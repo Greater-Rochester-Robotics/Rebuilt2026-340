@@ -14,7 +14,7 @@ FRC Team 340's code for the 2026 season, REBUILT.
 
 - **On-the-fly Motion Planning with Obstacle Avoidance**
 
-    The robot utilizes an [artificial potential field](src/main/java/org/team340/lib/math/PAPFController.java) to automatically servo to a specified pose, with the ability to avoid obstacles (i.e. field elements) in its path. This algorithm is used for all movement during the autonomous period, and for automated climbing in teleop.
+    The robot utilizes an [artificial potential field](src/main/java/org/team340/lib/math/PAPFController.java) to automatically servo to a specified pose, with the ability to avoid obstacles (i.e. field elements) in its path. This algorithm is used for all movement during the autonomous period.
 
 <br>
 
