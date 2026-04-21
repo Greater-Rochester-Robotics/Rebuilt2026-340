@@ -40,7 +40,7 @@ public final class Vision {
         String name,
         Translation3d translation,
         Rotation3d rotation,
-        boolean autoOnly
+        boolean teleopDisabled
     ) {}
 
     private static final TunableTable tunables = Tunables.getNested("vision");
@@ -147,7 +147,7 @@ public final class Vision {
 
         private final PhotonCamera camera;
         private final PhotonPoseEstimator estimator;
-        private final boolean autoOnly;
+        private final boolean teleopDisabled;
 
         private final Debouncer enabledDebounce = new Debouncer(5.0, DebounceType.kFalling);
 
@@ -161,7 +161,7 @@ public final class Vision {
 
             camera = new PhotonCamera(config.name());
             estimator = new PhotonPoseEstimator(FieldInfo.aprilTags(), robotToCamera);
-            autoOnly = config.autoOnly();
+            teleopDisabled = config.teleopDisabled();
 
             if (sim != null) {
                 // (Roughly) the properties of an OV9281
@@ -212,8 +212,8 @@ public final class Vision {
         ) {
             boolean enabled = enabledDebounce.calculate(DriverStation.isEnabled());
 
-            if (autoOnly) {
-                camera.setPipelineIndex(DriverStation.isAutonomousEnabled() ? 0 : 1);
+            if (teleopDisabled) {
+                camera.setPipelineIndex(DriverStation.isTeleopEnabled() ? 1 : 0);
             }
 
             for (PhotonPipelineResult result : camera.getAllUnreadResults()) {

@@ -27,13 +27,13 @@ import org.team340.robot.subsystems.Swerve;
  */
 public final class Autos {
 
-    private static final Rotation2d INTAKE_PRE_TAG_ROTATION = Rotation2d.fromDegrees(-135.0);
+    private static final Rotation2d INTAKE_PRE_TAG_ROTATION = Rotation2d.fromDegrees(-145.0);
 
     private static final TunableTable tunables = Tunables.getNested("autos");
 
     private static final ExtPose shootPosition = tunables.add(
         "shootPosition",
-        new ExtPose(2.875, 2.85, Rotation2d.fromDegrees(-145.0))
+        new ExtPose(3.2, 2.6, Rotation2d.fromDegrees(-145.0))
     );
 
     private static final TunableDouble shootingVelocity = tunables.value("shootingVelocity", 1.25);
@@ -41,8 +41,8 @@ public final class Autos {
 
     private static final TunableTable defaultTunables = tunables.getNested("default");
     private static final TunableDouble velocity = defaultTunables.value("velocity", 4.5);
-    private static final TunableDouble deceleration = defaultTunables.value("deceleration", 6.0);
-    private static final TunableDouble endTolerance = defaultTunables.value("endTolerance", 0.1);
+    private static final TunableDouble deceleration = defaultTunables.value("deceleration", 4.5);
+    private static final TunableDouble endTolerance = defaultTunables.value("endTolerance", 0.05);
     private static final TunableDouble endAngTolerance = defaultTunables.value("endAngTolerance", Math.toRadians(6.0));
 
     private static final TunableTable intakeTunables = tunables.getNested("intake");
@@ -57,24 +57,31 @@ public final class Autos {
     private static enum GrabDepth {
         SHALLOW(
             "Shallow",
-            new ExtPose(6.7, 2.0, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.7, 4.6, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.35, 4.6, Rotation2d.fromDegrees(-120.0)),
-            new ExtPose(6.2, 2.8, Rotation2d.fromDegrees(-120.0))
+            new ExtPose(6.7, 2.0, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(6.7, 4.0, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(6.35, 4.0, Rotation2d.fromDegrees(-160.0)),
+            new ExtPose(6.2, 2.6, Rotation2d.fromDegrees(-95.0))
         ),
         MODERATE(
             "Moderate",
-            new ExtPose(7.8, 0.9, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(7.7, 4.5, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.7, 4.5, Rotation2d.fromDegrees(-145.0)),
-            new ExtPose(6.25, 2.8, Rotation2d.fromDegrees(-145.0))
+            new ExtPose(8.0, 1.2, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(8.0, 4.0, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(6.7, 4.0, Rotation2d.fromDegrees(-170.0)),
+            new ExtPose(6.25, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
         DANGER(
             "Danger",
-            new ExtPose(8.5, 0.9, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(8.5, 4.5, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.7, 4.5, Rotation2d.fromDegrees(-145.0)),
-            new ExtPose(6.25, 2.8, Rotation2d.fromDegrees(-145.0))
+            new ExtPose(8.45, 1.2, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(8.45, 4.0, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(6.7, 4.0, Rotation2d.fromDegrees(-170.0)),
+            new ExtPose(6.25, 2.6, Rotation2d.fromDegrees(-90.0))
+        ),
+        INNIE_OUTIE(
+            "Innie Outie",
+            new ExtPose(6.7, 2.0, Rotation2d.fromDegrees(85.0)),
+            new ExtPose(6.7, 4.0, Rotation2d.fromDegrees(85.0)),
+            new ExtPose(7.6, 4.0, Rotation2d.fromDegrees(10.0)),
+            new ExtPose(7.6, 2.0, Rotation2d.fromDegrees(-95.0))
         );
 
         private String name;
@@ -133,8 +140,8 @@ public final class Autos {
 
         // Add swipe options to the dashboard
         for (var depth : GrabDepth.values()) {
-            firstSwipeChooser.add(depth.name, grab(depth, () -> doubleSwipeLeft));
-            secondSwipeChooser.add(depth.name, grab(depth, () -> doubleSwipeLeft));
+            firstSwipeChooser.add(depth.name, grab(depth, () -> doubleSwipeLeft, false));
+            secondSwipeChooser.add(depth.name, grab(depth, () -> doubleSwipeLeft, true));
         }
     }
 
@@ -148,9 +155,7 @@ public final class Autos {
     private Command singleSwipe(Supplier<Command> grabCommand, boolean left) {
         return sequence(
             deferredProxy(grabCommand).alongWith(runOnce(() -> doubleSwipeLeft = left)),
-            print("dones2"),
-            parallel(apfShooting(() -> shootPosition.get(left).getTranslation()), routines.shoot()).asProxy(),
-            print("dones")
+            parallel(apfShooting(() -> shootPosition.get(left).getTranslation()), routines.shoot()).asProxy()
         );
     }
 
@@ -162,7 +167,7 @@ public final class Autos {
         var pickup = new ExtPose(0.5, 5.94, Rotation2d.k180deg);
 
         return sequence(
-            grab(GrabDepth.MODERATE, () -> true),
+            grab(GrabDepth.MODERATE, () -> true, false),
             deadline(apfShooting(() -> prePickup.get().getTranslation()).withTimeout(5.0), routines.shoot().asProxy()),
             deadline(apfDepot(pickup).withTimeout(2.0), getReady()),
             deadline(apfDepot(prePickup).withTimeout(2.0), getReady()),
@@ -178,7 +183,7 @@ public final class Autos {
      */
     private Command simpleSally(boolean left) {
         return sequence(
-            grab(GrabDepth.MODERATE, () -> left),
+            grab(GrabDepth.MODERATE, () -> left, false),
             parallel(swerve.aimAtTarget(), routines.shoot().asProxy())
         );
     }
@@ -193,7 +198,7 @@ public final class Autos {
      *             (from the perspective of the current alliance's driver station),
      *             {@code false} to run on the right side.
      */
-    private Command grab(GrabDepth depth, BooleanSupplier left) {
+    private Command grab(GrabDepth depth, BooleanSupplier left, boolean secondPass) {
         return deadline(
             sequence(
                 apfFuelApproach(() ->
@@ -201,7 +206,7 @@ public final class Autos {
                         ? depth.sweepStartPreTags.get(left.getAsBoolean())
                         : depth.sweepStartPostTags.get(left.getAsBoolean())
                 ),
-                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), 3.0).withTimeout(4.0),
+                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), secondPass ? 2.3 : 1.8).withTimeout(4.0),
                 swerve.apfDrive(
                     () -> depth.returnStart.get(left.getAsBoolean()),
                     velocity,
@@ -210,9 +215,8 @@ public final class Autos {
                     () -> 1e5,
                     false
                 ),
-                apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), 3.75).withTimeout(4.0),
-                apfDefaults(() -> shootPosition.get(left.getAsBoolean())),
-                print("hello")
+                apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), 3.0).withTimeout(3.0),
+                apfDefaults(() -> shootPosition.get(left.getAsBoolean()))
             ),
             sequence(
                 indexer.clear().asProxy().withTimeout(0.5),

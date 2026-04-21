@@ -58,7 +58,7 @@ public final class Swerve extends GRRSubsystem {
 
     private static final TunableBoolean enableSOTM = tunables.value("enableSOTM", true);
     private static final TunableDouble distanceFudge = tunables.value("distanceFudge", 0.0);
-    private static final TunableDouble apfBumpVelocity = tunables.value("apfBumpVelocity", 1.85);
+    private static final TunableDouble apfBumpVelocity = tunables.value("apfBumpVelocity", 2.25);
     private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(10.0));
     private static final TunableDouble flatTolerance = tunables.value("flatTolerance", Math.toRadians(5.0));
 
@@ -185,7 +185,7 @@ public final class Swerve extends GRRSubsystem {
         double deltaY = state.pose.getY() - target.getY();
 
         // If shoot on the move is enabled, perform the necessary adjustments.
-        if (enableSOTM.get() && inOurZone()) {
+        if (enableSOTM.get() && inOurZone() && DriverStation.isTeleop()) {
             // Get our field-relative chassis speeds.
             var fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(state.speeds, state.rotation);
 

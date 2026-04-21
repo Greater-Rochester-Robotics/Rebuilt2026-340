@@ -156,10 +156,10 @@ public final class Field {
 
     /** NEUTRAL ZONE FUEL obstacles for the P-APF. */
     public static final Obstacle[] FUEL_OBSTACLES = {
-        new LineObstacle(FUEL_LEFT_NEAR, FUEL_LEFT_FAR, 2.0, 1.0),
-        new LineObstacle(FUEL_RIGHT_NEAR, FUEL_RIGHT_FAR, 2.0, 1.0),
-        new LineObstacle(FUEL_LEFT_NEAR, FUEL_RIGHT_NEAR, 2.0, 1.0),
-        new LineObstacle(FUEL_LEFT_FAR, FUEL_RIGHT_FAR, 2.0, 1.0)
+        new LineObstacle(FUEL_LEFT_NEAR, FUEL_LEFT_FAR, 1.25, 1.0),
+        new LineObstacle(FUEL_RIGHT_NEAR, FUEL_RIGHT_FAR, 1.25, 1.0),
+        new LineObstacle(FUEL_LEFT_NEAR, FUEL_RIGHT_NEAR, 1.25, 1.0),
+        new LineObstacle(FUEL_LEFT_FAR, FUEL_RIGHT_FAR, 1.25, 1.0)
     };
 
     /**

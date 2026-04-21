@@ -40,7 +40,7 @@ public final class Intake extends GRRSubsystem {
     private static enum State {
         STOW(-0.08, 1.0, 0.0),
         EXTEND(0.256, 1.0, 0.0),
-        INTAKE(0.256, 1.0, 90.0),
+        INTAKE(0.256, 1.0, 95.0),
         COMPRESS(0.2, 0.18, 32.0),
         BARF(0.256, 1.0, -90.0),
         PURGE(-0.08, 1.0, -90.0);
@@ -253,9 +253,9 @@ public final class Intake extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 30.0;
-        config.CurrentLimits.SupplyCurrentLowerLimit = 15.0;
-        config.CurrentLimits.SupplyCurrentLowerTime = 2.0;
+        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.SupplyCurrentLowerLimit = 30.0;
+        config.CurrentLimits.SupplyCurrentLowerTime = 5.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
