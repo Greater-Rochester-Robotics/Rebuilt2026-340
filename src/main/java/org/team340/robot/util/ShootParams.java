@@ -46,7 +46,10 @@ public final class ShootParams {
             new DataPoint(1.554, 4.0, 31.0),
             new DataPoint(2.158, 7.0, 33.0),
             new DataPoint(2.620, 7.8, 34.0),
-            new DataPoint(3.098, 9.9, 36.0)
+            new DataPoint(3.098, 9.9, 36.0),
+            new DataPoint(3.602, 11.2, 39.0),
+            new DataPoint(4.097, 12.5, 40.0),
+            new DataPoint(4.587, 12.5, 44.0)
         };
 
         // Create our lookup tables.
