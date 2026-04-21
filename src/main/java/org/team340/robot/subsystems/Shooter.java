@@ -144,6 +144,7 @@ public final class Shooter extends GRRSubsystem {
 
         config.CurrentLimits.StatorCurrentLimit = 80.0;
         config.CurrentLimits.SupplyCurrentLimit = 40.0;
+        config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
