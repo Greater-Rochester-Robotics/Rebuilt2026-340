@@ -115,7 +115,14 @@ public final class Swerve extends GRRSubsystem {
         new CameraConfig(
             "lumap1",
             new Translation3d(-0.3182, 0.0, 0.3674),
-            new Rotation3d(0.0, Math.toRadians(-24.0), Math.PI)
+            new Rotation3d(0.0, Math.toRadians(-24.0), Math.PI),
+            false
+        ),
+        new CameraConfig(
+            "OV2311",
+            new Translation3d(-0.3015, -0.2999, 0.3202),
+            new Rotation3d(Math.toRadians(-15.0), 0.0, -Math2.HALF_PI),
+            true
         )
     };
 

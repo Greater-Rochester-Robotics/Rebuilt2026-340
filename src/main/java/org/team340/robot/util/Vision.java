@@ -36,7 +36,12 @@ import org.team340.lib.util.Alliance;
 @Logged
 public final class Vision {
 
-    public static final record CameraConfig(String name, Translation3d translation, Rotation3d rotation) {}
+    public static final record CameraConfig(
+        String name,
+        Translation3d translation,
+        Rotation3d rotation,
+        boolean autoOnly
+    ) {}
 
     private static final TunableTable tunables = Tunables.getNested("vision");
     private static final TunableDouble zTolerance = tunables.value("zTolerance", 0.5);
@@ -142,6 +147,8 @@ public final class Vision {
 
         private final PhotonCamera camera;
         private final PhotonPoseEstimator estimator;
+        private final boolean autoOnly;
+
         private final Debouncer enabledDebounce = new Debouncer(5.0, DebounceType.kFalling);
 
         /**
@@ -154,6 +161,7 @@ public final class Vision {
 
             camera = new PhotonCamera(config.name());
             estimator = new PhotonPoseEstimator(FieldInfo.aprilTags(), robotToCamera);
+            autoOnly = config.autoOnly();
 
             if (sim != null) {
                 // (Roughly) the properties of an OV9281
@@ -203,6 +211,10 @@ public final class Vision {
             double velocity
         ) {
             boolean enabled = enabledDebounce.calculate(DriverStation.isEnabled());
+
+            if (autoOnly) {
+                camera.setPipelineIndex(DriverStation.isAutonomousEnabled() ? 0 : 1);
+            }
 
             for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
                 if (!result.hasTargets()) continue;
