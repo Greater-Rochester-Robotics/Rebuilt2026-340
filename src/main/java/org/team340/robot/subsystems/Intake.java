@@ -6,7 +6,7 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -41,7 +41,7 @@ public final class Intake extends GRRSubsystem {
         STOW(-0.08, 1.0, 0.0),
         EXTEND(0.256, 1.0, 0.0),
         INTAKE(0.256, 1.0, 90.0),
-        COMPRESS(0.08, 0.18, 32.0),
+        COMPRESS(0.2, 0.18, 32.0),
         BARF(0.256, 1.0, -90.0),
         PURGE(-0.08, 1.0, -90.0);
 
@@ -64,7 +64,7 @@ public final class Intake extends GRRSubsystem {
     private final StatusSignal<Angle> pivotPosition;
 
     private final DynamicMotionMagicVoltage pivotPositionControl;
-    private final VelocityTorqueCurrentFOC rollersVelocityControl;
+    private final VelocityVoltage rollersVelocityControl;
     private final Follower pivotFollowControl;
 
     public Intake() {
@@ -100,7 +100,8 @@ public final class Intake extends GRRSubsystem {
         pivotPositionControl.EnableFOC = true;
         pivotPositionControl.UpdateFreqHz = 0.0;
 
-        rollersVelocityControl = new VelocityTorqueCurrentFOC(0.0);
+        rollersVelocityControl = new VelocityVoltage(0.0);
+        pivotPositionControl.EnableFOC = true;
         rollersVelocityControl.UpdateFreqHz = 0.0;
 
         pivotFollowControl = new Follower(RobotMap.INTAKE_ROLLER_LEAD_MOTOR, MotorAlignmentValue.Aligned);
@@ -252,17 +253,17 @@ public final class Intake extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.SupplyCurrentLimit = 60.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 14.0;
+        config.Slot0.kP = 0.32;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
-        config.Slot0.kS = 6.0;
-        config.Slot0.kV = 0.0;
+        config.Slot0.kS = 0.2;
+        config.Slot0.kV = 0.123;
         config.Slot0.kA = 0.0;
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
