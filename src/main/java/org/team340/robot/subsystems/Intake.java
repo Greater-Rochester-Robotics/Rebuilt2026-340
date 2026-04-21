@@ -39,10 +39,10 @@ public final class Intake extends GRRSubsystem {
 
     private static enum State {
         STOW(-0.08, 1.0, 0.0),
-        EXTEND(0.253, 1.0, 0.0),
-        INTAKE(0.253, 1.0, 90.0),
-        COMPRESS(0.19, 0.1, 45.0),
-        BARF(0.253, 1.0, -90.0),
+        EXTEND(0.256, 1.0, 0.0),
+        INTAKE(0.256, 1.0, 90.0),
+        COMPRESS(0.08, 0.18, 32.0),
+        BARF(0.256, 1.0, -90.0),
         PURGE(-0.08, 1.0, -90.0);
 
         public final TunableDouble position;
@@ -219,7 +219,8 @@ public final class Intake extends GRRSubsystem {
         config.ClosedLoopGeneral.ContinuousWrap = true;
 
         config.CurrentLimits.StatorCurrentLimit = 60.0;
-        config.CurrentLimits.SupplyCurrentLimit = 30.0;
+        config.CurrentLimits.SupplyCurrentLimit = 15.0;
+        config.CurrentLimits.SupplyCurrentLowerLimit = 6.0;
 
         config.Feedback.FeedbackRemoteSensorID = RobotMap.INTAKE_WCP_THROUGHBORE_POWERED_BY_CANCODER_FOR_HALF_INCH_HEX;
         config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
@@ -251,16 +252,16 @@ public final class Intake extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.SupplyCurrentLimit = 70.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 20.0;
+        config.Slot0.kP = 14.0;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
-        config.Slot0.kS = 3.0;
+        config.Slot0.kS = 6.0;
         config.Slot0.kV = 0.0;
         config.Slot0.kA = 0.0;
 

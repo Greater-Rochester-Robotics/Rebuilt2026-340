@@ -77,8 +77,8 @@ public final class Robot extends LoggedRobot {
 
         // Driver bindings
         driver.a().and(shoot.negate()).whileTrue(intake.intake());
-        driver.b().onTrue(routines.barf()).onFalse(routines.finishBarf());
-        driver.x().whileTrue(routines.staticShoot());
+        driver.b().whileTrue(routines.barf());
+        driver.x().onTrue(routines.barf()).onFalse(routines.finishBarf());
         driver.y().onTrue(none()); // Reserved for shoot override
 
         shoot
@@ -87,6 +87,7 @@ public final class Robot extends LoggedRobot {
 
         driver.povLeft().onTrue(swerve.tareRotation());
         driver.povDown().whileTrue(hood.goToZero(true));
+        driver.povUp().whileTrue(routines.staticShoot());
 
         driver.start().and(driver.back()).whileTrue(routines.testSequence());
         driver.start().and(driver.rightStick()).whileTrue(routines.tune());

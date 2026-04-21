@@ -97,10 +97,27 @@ public final class Lights extends GRRSubsystem {
      * @param active If the hub is active.
      */
     public Command hubDisplay(BooleanSupplier active) {
+        Mutable<Boolean> lastRSL = new Mutable<>(false);
+        Timer timer = new Timer();
+
         return commandBuilder()
             .onExecute(() -> {
-                if (RobotController.getRSLState()) {
-                    set(active.getAsBoolean() ? Color.HUB_ACTIVE : Color.HUB_INACTIVE);
+                boolean rsl = RobotController.getRSLState();
+                boolean isActive = active.getAsBoolean();
+
+                if (lastRSL.value != (lastRSL.value = rsl)) {
+                    if (isActive || rsl) timer.restart();
+                    else timer.stop();
+                }
+
+                if (timer.isRunning()) {
+                    Color color = isActive ? Color.HUB_ACTIVE : Color.HUB_INACTIVE;
+                    double percent = Math.max(1.0 - (timer.get() / (isActive ? 0.1 : 0.2)), 0.0);
+                    set(
+                        (int) (color.r.get() * percent),
+                        (int) (color.g.get() * percent),
+                        (int) (color.b.get() * percent)
+                    );
                 } else {
                     set(Color.OFF);
                 }
@@ -261,13 +278,35 @@ public final class Lights extends GRRSubsystem {
     }
 
     /**
+     * Sets the entire LED strip to a single color.
+     * @param r Red value from {@code 0} to {@code 255}.
+     * @param g Green value from {@code 0} to {@code 255}.
+     * @param b Blue value from {@code 0} to {@code 255}.
+     */
+    private void set(int r, int g, int b) {
+        for (int i = 0; i < LENGTH; i++) set(i, r, g, b);
+    }
+
+    /**
      * Sets a single LED to a specified color.
      * @param i The index of the LED on the strip.
      * @param color The color to apply.
      */
     private void set(int i, Color color) {
         if (i < 0 || i >= LENGTH) return;
-        buffer.setRGB(i, color.r.get(), color.g.get(), color.b.get());
+        set(i, color.r.get(), color.g.get(), color.b.get());
+    }
+
+    /**
+     * Sets a single LED to a specified color.
+     * @param i The index of the LED on the strip.
+     * @param r Red value from {@code 0} to {@code 255}.
+     * @param g Green value from {@code 0} to {@code 255}.
+     * @param b Blue value from {@code 0} to {@code 255}.
+     */
+    private void set(int i, int r, int g, int b) {
+        if (i < 0 || i >= LENGTH) return;
+        buffer.setRGB(i, r, g, b);
     }
 
     /**
@@ -278,8 +317,7 @@ public final class Lights extends GRRSubsystem {
      * @param b Blue value from {@code 0} to {@code 255}.
      */
     private void setMirrored(int i, int r, int g, int b) {
-        if (i < 0 || i >= LENGTH / 2) return;
-        buffer.setRGB(LENGTH / 2 - i - 1, r, g, b);
-        buffer.setRGB(LENGTH / 2 + i, r, g, b);
+        set(LENGTH / 2 - i - 1, r, g, b);
+        set(LENGTH / 2 + i, r, g, b);
     }
 }

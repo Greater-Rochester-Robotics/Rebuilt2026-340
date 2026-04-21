@@ -31,7 +31,7 @@ public final class Indexer extends GRRSubsystem {
     private static enum State {
         ACCELERATE(55.0, 0.0),
         FEED(55.0, 50.0),
-        CLEAR(-15.0, -15.0),
+        CLEAR(-25.0, -25.0),
         BARF(-50.0, -50.0);
 
         public final TunableDouble uptakeSpeed;
@@ -176,8 +176,8 @@ public final class Indexer extends GRRSubsystem {
     private void configurePortMotors() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.StatorCurrentLimit = 160.0;
+        config.CurrentLimits.SupplyCurrentLimit = 50.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
@@ -203,7 +203,7 @@ public final class Indexer extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.SupplyCurrentLimit = 65.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;

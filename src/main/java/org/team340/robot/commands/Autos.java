@@ -46,7 +46,7 @@ public final class Autos {
     private static final TunableDouble endAngTolerance = defaultTunables.value("endAngTolerance", Math.toRadians(6.0));
 
     private static final TunableTable intakeTunables = tunables.getNested("intake");
-    private static final TunableDouble intakeDeceleration = intakeTunables.value("deceleration", 12.0);
+    private static final TunableDouble intakeDeceleration = intakeTunables.value("deceleration", 16.0);
     private static final TunableDouble intakeEndTolerance = intakeTunables.value("endTolerance", 0.4);
 
     private static final TunableTable depotTunables = tunables.getNested("depot");
@@ -201,16 +201,16 @@ public final class Autos {
                         ? depth.sweepStartPreTags.get(left.getAsBoolean())
                         : depth.sweepStartPostTags.get(left.getAsBoolean())
                 ),
-                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), 1.5).withTimeout(4.0),
+                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), 3.0).withTimeout(4.0),
                 swerve.apfDrive(
                     () -> depth.returnStart.get(left.getAsBoolean()),
                     velocity,
-                    () -> 15.0,
+                    () -> 20.0,
                     () -> 0.25,
                     () -> 1e5,
                     false
                 ),
-                apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), 2.75).withTimeout(4.0),
+                apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), 3.75).withTimeout(4.0),
                 apfDefaults(() -> shootPosition.get(left.getAsBoolean())),
                 print("hello")
             ),

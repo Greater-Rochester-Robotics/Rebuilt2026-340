@@ -29,7 +29,7 @@ public final class Routines {
     private static final TunableDouble staticShootDistance = tunables.value("staticShootDistance", 2.0);
     private static final TunableDouble staticShootHoodPosition = tunables.value("staticShootHoodPosition", 3.0);
 
-    private static final TunableInteger shootingMinRqTagsSeen = tunables.value("shootingMinRqTagsSeen", 25);
+    private static final TunableInteger shootingMinRqTagsSeen = tunables.value("shootingMinRqTagsSeen", 15);
 
     private final Hood hood;
     private final Indexer indexer;
@@ -94,7 +94,7 @@ public final class Routines {
                 indexer.feed()
             ),
             sequence(
-                race(waitUntil(runIntake), waitSeconds(0.75)),
+                race(waitUntil(runIntake), waitSeconds(1.0)),
                 either(intake.intake().onlyWhile(runIntake), intake.compress().until(runIntake), runIntake)
             ).repeatedly()
         ).withName("Routines.shoot()");
