@@ -205,6 +205,7 @@ public final class Indexer extends GRRSubsystem {
         config.CurrentLimits.StatorCurrentLimit = 180.0;
         config.CurrentLimits.SupplyCurrentLimit = 65.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 30.0;
+        config.CurrentLimits.SupplyCurrentLowerTime = 3.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 

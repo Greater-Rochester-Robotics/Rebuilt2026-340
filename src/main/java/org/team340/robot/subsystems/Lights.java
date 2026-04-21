@@ -144,7 +144,7 @@ public final class Lights extends GRRSubsystem {
             })
             .onExecute(() -> {
                 for (int i = 0; i < LENGTH / 2; i++) {
-                    state[i] = Math.max(0, state[i] - 30);
+                    state[i] = Math.max(0, state[i] - 28);
                 }
 
                 for (int i = LENGTH / 2 - 1; i >= 2; i--) {
