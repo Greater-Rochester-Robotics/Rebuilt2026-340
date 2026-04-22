@@ -76,10 +76,17 @@ public final class Autos {
             new ExtPose(6.7, 4.0, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(6.25, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
+        DOUBLE_DANGER(
+            "Double Danger",
+            new ExtPose(8.45, 1.2, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(8.45, 4.0, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(7.9, 4.0, Rotation2d.fromDegrees(-170.0)),
+            new ExtPose(7.5, 2.6, Rotation2d.fromDegrees(-90.0))
+        ),
         INNIE_OUTIE(
             "Innie Outie",
-            new ExtPose(6.7, 2.0, Rotation2d.fromDegrees(85.0)),
-            new ExtPose(6.7, 4.0, Rotation2d.fromDegrees(85.0)),
+            new ExtPose(6.5, 2.0, Rotation2d.fromDegrees(85.0)),
+            new ExtPose(6.5, 4.5, Rotation2d.fromDegrees(85.0)),
             new ExtPose(7.6, 4.0, Rotation2d.fromDegrees(10.0)),
             new ExtPose(7.6, 2.0, Rotation2d.fromDegrees(-95.0))
         );
