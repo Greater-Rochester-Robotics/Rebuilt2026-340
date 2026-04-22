@@ -66,12 +66,16 @@ public final class ShootParams {
     static {
         // Data obtained from empirical testing.
         final DataPoint[] ferryingDataPoints = {
-            new DataPoint(1.78, 8.5, 19.5),
-            new DataPoint(2.69, 8.0, 24.0),
-            new DataPoint(3.82, 7.5, 40.0),
-            new DataPoint(4.85, 7.5, 43.0),
-            new DataPoint(5.81, 7.5, 43.6),
-            new DataPoint(6.69, 7.5, 47.5)
+            new DataPoint(1.638, 12.5, 18.0),
+            new DataPoint(1.994, 11.5, 20.0),
+            new DataPoint(3.23, 10.0, 28.0),
+            new DataPoint(4.053, 10.5, 34.0),
+            new DataPoint(5.016, 10.75, 44.0),
+            new DataPoint(6.001, 11.5, 47.0),
+            new DataPoint(6.905, 11.5, 50.0),
+            new DataPoint(8.914, 11.5, 60.0),
+            new DataPoint(9.995, 12.0, 60.0),
+            new DataPoint(11.040, 12.5, 60.0)
         };
 
         // Create our lookup tables.
