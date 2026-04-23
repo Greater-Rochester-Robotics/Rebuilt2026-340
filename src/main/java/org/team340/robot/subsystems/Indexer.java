@@ -31,7 +31,7 @@ public final class Indexer extends GRRSubsystem {
     private static enum State {
         ACCELERATE(55.0, 0.0),
         FEED(55.0, 50.0),
-        CLEAR(-25.0, -25.0),
+        CLEAR(-10.0, -10.0),
         BARF(-50.0, -50.0);
 
         public final TunableDouble uptakeSpeed;

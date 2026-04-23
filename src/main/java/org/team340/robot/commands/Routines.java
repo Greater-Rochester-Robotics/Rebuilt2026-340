@@ -51,9 +51,7 @@ public final class Routines {
      * Barfs fuel out of the intake.
      */
     public Command barf() {
-        return parallel(sequence(waitSeconds(0.25), indexer.barf().asProxy()), intake.barf()).withName(
-            "Routines.barf()"
-        );
+        return parallel(indexer.barf(), intake.barf()).withName("Routines.barf()");
     }
 
     /**
