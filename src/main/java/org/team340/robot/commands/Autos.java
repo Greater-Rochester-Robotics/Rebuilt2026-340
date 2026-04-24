@@ -39,7 +39,7 @@ public final class Autos {
     );
 
     private static final TunableDouble shootingVelocity = tunables.value("shootingVelocity", 1.25);
-    private static final TunableInteger intakeMinRqTagsSeen = tunables.value("intakeMinRqTagsSeen", 15);
+    private static final TunableInteger intakeMinRqTagsSeen = tunables.value("intakeMinRqTagsSeen", 20);
 
     private static final TunableTable defaultTunables = tunables.getNested("default");
     private static final TunableDouble velocity = defaultTunables.value("velocity", 4.5);
@@ -70,24 +70,24 @@ public final class Autos {
         ),
         MODERATE(
             "Moderate",
-            new ExtPose(7.9, 1.05, Rotation2d.fromDegrees(110.0)),
-            new ExtPose(7.9, 3.9, Rotation2d.fromDegrees(110.0)),
+            new ExtPose(7.9, 1.05, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(7.9, 3.9, Rotation2d.fromDegrees(105.0)),
             new ExtPose(6.7, 3.9, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(6.25, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
         DANGER(
             "Danger",
-            new ExtPose(8.4, 1.05, Rotation2d.fromDegrees(110.0)),
-            new ExtPose(8.4, 3.85, Rotation2d.fromDegrees(110.0)),
+            new ExtPose(8.4, 1.05, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(8.4, 3.85, Rotation2d.fromDegrees(105.0)),
             new ExtPose(6.9, 3.85, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(6.25, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
         LITTLE_DANGER(
             "Little Danger",
-            new ExtPose(8.4, 1.05, Rotation2d.fromDegrees(115.0)),
-            new ExtPose(8.4, 3.5, Rotation2d.fromDegrees(115.0)),
+            new ExtPose(8.4, 1.05, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(8.4, 3.5, Rotation2d.fromDegrees(105.0)),
             new ExtPose(7.5, 3.5, Rotation2d.fromDegrees(-170.0)),
-            new ExtPose(7.25, 2.3, Rotation2d.fromDegrees(-90.0))
+            new ExtPose(7.25, 2.15, Rotation2d.fromDegrees(-90.0))
         ),
         DOUBLE_DANGER(
             "Double Danger",
@@ -259,7 +259,7 @@ public final class Autos {
         return deadline(
             sequence(
                 apfFuelApproach(() ->
-                    !swerve.inNeutralZone() || swerve.tagsSeen() < intakeMinRqTagsSeen.get()
+                    !swerve.overBump() || swerve.tagsSeen() < intakeMinRqTagsSeen.get()
                         ? depth.sweepStartPreTags.get(left.getAsBoolean())
                         : depth.sweepStartPostTags.get(left.getAsBoolean())
                 ),

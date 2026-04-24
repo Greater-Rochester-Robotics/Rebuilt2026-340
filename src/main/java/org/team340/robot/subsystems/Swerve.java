@@ -21,6 +21,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.team340.lib.logging.LoggedRobot;
 import org.team340.lib.logging.Profiler;
+import org.team340.lib.math.FieldInfo;
 import org.team340.lib.math.Math2;
 import org.team340.lib.math.PAPFController;
 import org.team340.lib.math.geometry.ExtTranslation;
@@ -58,7 +59,8 @@ public final class Swerve extends GRRSubsystem {
 
     private static final TunableBoolean enableSOTM = tunables.value("enableSOTM", true);
     private static final TunableDouble distanceFudge = tunables.value("distanceFudge", 0.1);
-    private static final TunableDouble apfBumpVelocity = tunables.value("apfBumpVelocity", 2.25);
+    private static final TunableDouble apfBumpVelocity = tunables.value("apfBumpVelocity", 2.0);
+    private static final TunableDouble overBumpX = tunables.value("overBumpX", 5.7);
     private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(10.0));
     private static final TunableDouble flatTolerance = tunables.value("flatTolerance", Math.toRadians(10.0));
 
@@ -430,6 +432,15 @@ public final class Swerve extends GRRSubsystem {
      */
     public boolean isLeftOfCenter() {
         return Alliance.isBlue() ^ (state.pose.getY() < Field.Y_CENTER);
+    }
+
+    /**
+     * Returns {@code true} if we are over our bump in the neutral zone.
+     */
+    public boolean overBump() {
+        return Alliance.isBlue()
+            ? state.pose.getX() >= overBumpX.get()
+            : state.pose.getX() <= FieldInfo.length() - overBumpX.get();
     }
 
     /**
