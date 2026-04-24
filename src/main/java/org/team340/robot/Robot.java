@@ -65,6 +65,7 @@ public final class Robot extends LoggedRobot {
         driver = new CommandXboxController(Constants.DRIVER);
 
         // Set default commands
+        indexer.setDefaultCommand(indexer.clear());
         intake.setDefaultCommand(intake.extend());
         hood.setDefaultCommand(hood.goToZero(false));
         swerve.setDefaultCommand(swerve.drive(this::driverX, this::driverY, this::driverAngular));

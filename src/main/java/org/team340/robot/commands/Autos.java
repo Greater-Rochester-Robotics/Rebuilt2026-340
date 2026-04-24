@@ -16,7 +16,6 @@ import org.team340.lib.tunable.Tunables.TunableInteger;
 import org.team340.lib.util.command.AutoChooser;
 import org.team340.robot.Robot;
 import org.team340.robot.subsystems.Hood;
-import org.team340.robot.subsystems.Indexer;
 import org.team340.robot.subsystems.Intake;
 import org.team340.robot.subsystems.Shooter;
 import org.team340.robot.subsystems.Swerve;
@@ -64,31 +63,38 @@ public final class Autos {
         ),
         MODERATE(
             "Moderate",
-            new ExtPose(8.0, 1.05, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(8.0, 4.0, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.7, 4.0, Rotation2d.fromDegrees(-170.0)),
+            new ExtPose(7.9, 1.1, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(7.9, 3.9, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.7, 3.9, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(6.25, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
         DANGER(
             "Danger",
-            new ExtPose(8.45, 1.05, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(8.45, 4.0, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.7, 4.0, Rotation2d.fromDegrees(-170.0)),
+            new ExtPose(8.4, 1.1, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(8.4, 3.85, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.9, 3.85, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(6.25, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
         DOUBLE_DANGER(
             "Double Danger",
-            new ExtPose(8.45, 1.05, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(8.45, 1.1, Rotation2d.fromDegrees(105.0)),
             new ExtPose(8.45, 4.0, Rotation2d.fromDegrees(105.0)),
             new ExtPose(7.9, 4.0, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(7.5, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
+        MIDDLE_MANY(
+            "Middle Many",
+            new ExtPose(7.8, 1.6, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(7.8, 5.0, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.3, 5.0, Rotation2d.fromDegrees(-170.0)),
+            new ExtPose(6.25, 3.0, Rotation2d.fromDegrees(-90.0))
+        ),
         INNIE_OUTIE(
             "Innie Outie",
-            new ExtPose(6.5, 2.0, Rotation2d.fromDegrees(85.0)),
-            new ExtPose(6.5, 4.5, Rotation2d.fromDegrees(85.0)),
-            new ExtPose(7.4, 4.5, Rotation2d.fromDegrees(10.0)),
-            new ExtPose(6.9, 3.0, Rotation2d.fromDegrees(-95.0))
+            new ExtPose(6.2, 2.0, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(6.2, 4.7, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(7.3, 4.6, Rotation2d.fromDegrees(10.0)),
+            new ExtPose(6.9, 3.2, Rotation2d.fromDegrees(-95.0))
         );
 
         private String name;
@@ -109,7 +115,6 @@ public final class Autos {
     }
 
     private final Hood hood;
-    private final Indexer indexer;
     private final Intake intake;
     private final Shooter shooter;
     private final Swerve swerve;
@@ -123,7 +128,6 @@ public final class Autos {
 
     public Autos(Robot robot) {
         hood = robot.hood;
-        indexer = robot.indexer;
         intake = robot.intake;
         shooter = robot.shooter;
         swerve = robot.swerve;
@@ -213,7 +217,7 @@ public final class Autos {
                         ? depth.sweepStartPreTags.get(left.getAsBoolean())
                         : depth.sweepStartPostTags.get(left.getAsBoolean())
                 ),
-                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), secondPass ? 2.25 : 1.5).withTimeout(4.0),
+                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), secondPass ? 2.25 : 1.6).withTimeout(4.0),
                 swerve.apfDrive(
                     () -> depth.returnStart.get(left.getAsBoolean()),
                     velocity,
@@ -225,12 +229,7 @@ public final class Autos {
                 apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), 3.75).withTimeout(3.0),
                 apfDefaults(() -> shootPosition.get(left.getAsBoolean()))
             ),
-            sequence(
-                indexer.clear().asProxy().withTimeout(0.5),
-                waitSeconds(1.0),
-                intake.intake().asProxy().until(swerve::inOurZone),
-                getReady()
-            )
+            sequence(waitSeconds(1.5), intake.intake().asProxy().until(swerve::inOurZone), getReady())
         );
     }
 

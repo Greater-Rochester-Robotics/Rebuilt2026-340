@@ -3,7 +3,7 @@ package org.team340.robot.subsystems;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -48,7 +48,7 @@ public final class Indexer extends GRRSubsystem {
     private final TalonFX starboardUpperFollow;
     private final TalonFX starboardLowerLead;
 
-    private final VelocityVoltage velocityControl;
+    private final MotionMagicVelocityVoltage velocityControl;
     private final Follower portFollowControl;
     private final Follower starboardFollowControl;
 
@@ -89,7 +89,7 @@ public final class Indexer extends GRRSubsystem {
             )
         );
 
-        velocityControl = new VelocityVoltage(0.0);
+        velocityControl = new MotionMagicVelocityVoltage(0.0);
         velocityControl.EnableFOC = true;
         velocityControl.UpdateFreqHz = 0.0;
 
@@ -145,7 +145,7 @@ public final class Indexer extends GRRSubsystem {
      * Runs the indexer to clear the ball tunnel.
      */
     public Command clear() {
-        return runState(State.CLEAR).withName("Indexer.clear()");
+        return runState(State.CLEAR).withTimeout(0.5).andThen(idle()).withName("Indexer.clear()");
     }
 
     /**
@@ -176,9 +176,11 @@ public final class Indexer extends GRRSubsystem {
     private void configurePortMotors() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 160.0;
+        config.CurrentLimits.StatorCurrentLimit = 180.0;
         config.CurrentLimits.SupplyCurrentLimit = 50.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
+
+        config.MotionMagic.MotionMagicAcceleration = 800.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
@@ -206,6 +208,8 @@ public final class Indexer extends GRRSubsystem {
         config.CurrentLimits.SupplyCurrentLimit = 65.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 30.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 3.0;
+
+        config.MotionMagic.MotionMagicAcceleration = 800.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
