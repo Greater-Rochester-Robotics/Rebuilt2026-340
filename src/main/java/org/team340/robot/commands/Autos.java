@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.team340.lib.math.geometry.ExtPose;
 import org.team340.lib.tunable.TunableTable;
@@ -14,8 +15,10 @@ import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.tunable.Tunables.TunableInteger;
 import org.team340.lib.util.command.AutoChooser;
+import org.team340.lib.util.command.VariableWaitCommand;
 import org.team340.robot.Robot;
 import org.team340.robot.subsystems.Hood;
+import org.team340.robot.subsystems.Indexer;
 import org.team340.robot.subsystems.Intake;
 import org.team340.robot.subsystems.Shooter;
 import org.team340.robot.subsystems.Swerve;
@@ -53,6 +56,10 @@ public final class Autos {
     private static final TunableDouble depotDeceleration = depotTunables.value("deceleration", 4.0);
     private static final TunableDouble depotEndTolerance = depotTunables.value("endTolerance", 0.04);
 
+    private static final TunableTable swipeDelays = tunables.getNested("swipeDelays");
+    private static final TunableDouble firstSwipeDelay = swipeDelays.value("first", 0.0);
+    private static final TunableDouble secondSwipeDelay = swipeDelays.value("second", 0.0);
+
     private static enum GrabDepth {
         SHALLOW(
             "Shallow",
@@ -63,28 +70,35 @@ public final class Autos {
         ),
         MODERATE(
             "Moderate",
-            new ExtPose(7.9, 1.1, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(7.9, 3.9, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(7.9, 1.05, Rotation2d.fromDegrees(110.0)),
+            new ExtPose(7.9, 3.9, Rotation2d.fromDegrees(110.0)),
             new ExtPose(6.7, 3.9, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(6.25, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
         DANGER(
             "Danger",
-            new ExtPose(8.4, 1.1, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(8.4, 3.85, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(8.4, 1.05, Rotation2d.fromDegrees(110.0)),
+            new ExtPose(8.4, 3.85, Rotation2d.fromDegrees(110.0)),
             new ExtPose(6.9, 3.85, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(6.25, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
+        LITTLE_DANGER(
+            "Little Danger",
+            new ExtPose(8.4, 1.05, Rotation2d.fromDegrees(115.0)),
+            new ExtPose(8.4, 3.5, Rotation2d.fromDegrees(115.0)),
+            new ExtPose(7.5, 3.5, Rotation2d.fromDegrees(-170.0)),
+            new ExtPose(7.25, 2.3, Rotation2d.fromDegrees(-90.0))
+        ),
         DOUBLE_DANGER(
             "Double Danger",
-            new ExtPose(8.45, 1.1, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(8.45, 1.05, Rotation2d.fromDegrees(105.0)),
             new ExtPose(8.45, 4.0, Rotation2d.fromDegrees(105.0)),
             new ExtPose(7.9, 4.0, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(7.5, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
         MIDDLE_MANY(
             "Middle Many",
-            new ExtPose(7.8, 1.6, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(7.8, 1.7, Rotation2d.fromDegrees(105.0)),
             new ExtPose(7.8, 5.0, Rotation2d.fromDegrees(105.0)),
             new ExtPose(6.3, 5.0, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(6.25, 3.0, Rotation2d.fromDegrees(-90.0))
@@ -115,6 +129,7 @@ public final class Autos {
     }
 
     private final Hood hood;
+    private final Indexer indexer;
     private final Intake intake;
     private final Shooter shooter;
     private final Swerve swerve;
@@ -128,6 +143,7 @@ public final class Autos {
 
     public Autos(Robot robot) {
         hood = robot.hood;
+        indexer = robot.indexer;
         intake = robot.intake;
         shooter = robot.shooter;
         swerve = robot.swerve;
@@ -145,7 +161,6 @@ public final class Autos {
         // Add autonomous modes to the dashboard
         chooser.add("Double Swipe Right", doubleSwipe(false));
         chooser.add("Double Swipe Left", doubleSwipe(true));
-        chooser.add("Depoo", depoo());
         chooser.add("Simple Sally Right", simpleSally(false));
         chooser.add("Simple Sally Left", simpleSally(true));
 
@@ -154,35 +169,23 @@ public final class Autos {
             firstSwipeChooser.add(depth.name, grab(depth, () -> doubleSwipeLeft, false));
             secondSwipeChooser.add(depth.name, grab(depth, () -> doubleSwipeLeft, true));
         }
-    }
 
-    private Command doubleSwipe(boolean left) {
-        return sequence(
-            singleSwipe(firstSwipeChooser::getSelected, left).withTimeout(10.0),
-            singleSwipe(secondSwipeChooser::getSelected, left)
-        );
-    }
-
-    private Command singleSwipe(Supplier<Command> grabCommand, boolean left) {
-        return sequence(
-            deferredProxy(grabCommand).alongWith(runOnce(() -> doubleSwipeLeft = left)),
-            parallel(apfShooting(() -> shootPosition.get(left).getTranslation()), routines.shoot()).asProxy()
-        );
+        firstSwipeChooser.add("Depoo", depoo());
+        secondSwipeChooser.add("Depoo", depoo());
     }
 
     /**
-     * The "Depoo" auto routine.
+     * the "Double Swipe" auto routine.
+     * @param left {@code true} if the auto should run on the left side of the field
+     *             (from the perspective of the current alliance's driver station),
+     *             {@code false} to run on the right side.
      */
-    private Command depoo() {
-        var prePickup = new ExtPose(1.25, 5.94, Rotation2d.k180deg);
-        var pickup = new ExtPose(0.5, 5.94, Rotation2d.k180deg);
-
+    private Command doubleSwipe(boolean left) {
         return sequence(
-            grab(GrabDepth.MODERATE, () -> true, false),
-            deadline(apfShooting(() -> prePickup.get().getTranslation()).withTimeout(5.0), routines.shoot().asProxy()),
-            deadline(apfDepot(pickup).withTimeout(2.0), getReady()),
-            deadline(apfDepot(prePickup).withTimeout(2.0), getReady()),
-            parallel(apfShooting(() -> shootPosition.get(true).getTranslation()), routines.shoot().asProxy())
+            singleSwipe(firstSwipeChooser::getSelected, firstSwipeDelay, left).raceWith(
+                new VariableWaitCommand(() -> 10.0 + firstSwipeDelay.get())
+            ),
+            singleSwipe(secondSwipeChooser::getSelected, secondSwipeDelay, left)
         );
     }
 
@@ -200,6 +203,49 @@ public final class Autos {
     }
 
     // ********** Helper Methods **********
+
+    /**
+     * Grabs balls once and shoots them.
+     * @param grabCommand A command to grab the balls.
+     * @param delay The number of seconds to wait till grabbing balls.
+     * @param left {@code true} if the auto should run on the left side of the field
+     *             (from the perspective of the current alliance's driver station),
+     *             {@code false} to run on the right side.
+     */
+    private Command singleSwipe(Supplier<Command> grabCommand, DoubleSupplier delay, boolean left) {
+        Supplier<Command> supplier = () ->
+            sequence(
+                deferredProxy(grabCommand).alongWith(runOnce(() -> doubleSwipeLeft = left)),
+                parallel(apfShooting(() -> shootPosition.get(left).getTranslation()), routines.shoot()).asProxy()
+            );
+
+        return either(
+            supplier.get(),
+            sequence(
+                new VariableWaitCommand(delay).deadlineFor(
+                    parallel(apfShooting(() -> shootPosition.get(left).getTranslation()), routines.shoot()).asProxy()
+                ),
+                supplier.get()
+            ),
+            () -> delay.getAsDouble() < 1e-6
+        );
+    }
+
+    /**
+     * The "Depoo" auto routine.
+     */
+    private Command depoo() {
+        var prePickup1 = new ExtPose(1.5, 4.8, Rotation2d.fromDegrees(125.0));
+        var prePickup2 = new ExtPose(0.585, 4.8, Rotation2d.fromDegrees(100.0));
+        var pickup = new ExtPose(0.585, 7.3, Rotation2d.fromDegrees(100.0));
+
+        return sequence(
+            deadline(apfDefaults(prePickup1).withTimeout(5.0)),
+            deadline(apfDefaults(prePickup2).withTimeout(2.0)),
+            deadline(apfDepot(pickup).withTimeout(4.0), getReady()),
+            deadline(apfDefaults(() -> shootPosition.get(true)), getReady())
+        );
+    }
 
     /**
      * Sweeps the neutral zone to intake fuel, then returns to a shooting position in the
@@ -226,7 +272,7 @@ public final class Autos {
                     () -> 1e5,
                     false
                 ),
-                apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), 3.75).withTimeout(3.0),
+                apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), 3.85).withTimeout(3.0),
                 apfDefaults(() -> shootPosition.get(left.getAsBoolean()))
             ),
             sequence(waitSeconds(1.5), intake.intake().asProxy().until(swerve::inOurZone), getReady())
@@ -290,6 +336,7 @@ public final class Autos {
      */
     private Command getReady() {
         return parallel(
+            indexer.accelerate(),
             intake.intake(),
             hood.targetDistance(swerve::targetDistance, () -> true),
             shooter.targetDistance(swerve::targetDistance, () -> true)
