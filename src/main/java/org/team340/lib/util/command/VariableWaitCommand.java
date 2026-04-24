@@ -2,28 +2,26 @@ package org.team340.lib.util.command;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import org.team340.lib.tunable.TunableTable;
-import org.team340.lib.tunable.Tunables.Tunable;
+import java.util.function.DoubleSupplier;
 
 /**
  * A command that does nothing but takes a specified and tunable amount of time to finish.
  *
  */
-public class TunableWaitCommand extends Command implements Tunable {
+public class VariableWaitCommand extends Command {
 
     /** The timer used for waiting. */
     protected Timer timer = new Timer();
 
-    private double duration;
+    private DoubleSupplier duration;
 
     /**
      * Creates a new TunableWaitCommand. This command will do nothing, and end after the specified duration.
      *
-     * @param seconds default time to wait, in seconds
+     * @param duration default time to wait, in seconds.
      */
-    @SuppressWarnings("this-escape")
-    public TunableWaitCommand(double seconds) {
-        duration = seconds;
+    public VariableWaitCommand(DoubleSupplier duration) {
+        this.duration = duration;
     }
 
     @Override
@@ -38,16 +36,11 @@ public class TunableWaitCommand extends Command implements Tunable {
 
     @Override
     public boolean isFinished() {
-        return timer.hasElapsed(duration);
+        return timer.hasElapsed(duration.getAsDouble());
     }
 
     @Override
     public boolean runsWhenDisabled() {
         return true;
-    }
-
-    @Override
-    public void initTunable(TunableTable table) {
-        table.value("seconds", duration, v -> duration = v);
     }
 }
