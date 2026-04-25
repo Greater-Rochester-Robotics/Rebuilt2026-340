@@ -106,7 +106,7 @@ public final class Swerve extends GRRSubsystem {
         .setBrakeMode(true, true)
         .setLimits(4.5, 0.01, 16.0, 12.0, 32.0)
         .setDriverProfile(4.5, 1.5, 0.1, 5.4, 2.0, 0.05)
-        .setPowerProperties(Constants.VOLTAGE, 80.0, 36.0, 60.0, 40.0)
+        .setPowerProperties(Constants.VOLTAGE, 80.0, 35.0, 60.0, 40.0)
         .setMechanicalProperties(675.0 / 112.0, 287.0 / 11.0, Units.inchesToMeters(3.87))
         .setOdometryStd(0.1, 0.1, 0.05)
         .setIMU(SwerveIMUs.canandgyro(RobotMap.CANANDGYRO))
