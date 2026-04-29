@@ -259,7 +259,10 @@ public final class Vision {
                             if (!useTag(target.fiducialId)) invalidTag = true;
                         }
 
-                        if (invalidTag) continue;
+                        if (invalidTag) {
+                            estimate = Optional.empty();
+                            break;
+                        }
 
                         xyWeight = StrategyWeights.AMBIGUITY.xy.get();
                         angularWeight = StrategyWeights.AMBIGUITY.angular.get();
