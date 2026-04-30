@@ -71,22 +71,22 @@ public final class Autos {
         MODERATE(
             "Moderate",
             new ExtPose(7.9, 1.05, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(7.9, 3.9, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.7, 3.9, Rotation2d.fromDegrees(-170.0)),
+            new ExtPose(7.9, 3.8, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.7, 3.8, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(6.25, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
         DANGER(
             "Danger",
             new ExtPose(8.4, 1.05, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(8.4, 3.85, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.9, 3.85, Rotation2d.fromDegrees(-170.0)),
+            new ExtPose(8.4, 3.7, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.9, 3.7, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(6.25, 2.6, Rotation2d.fromDegrees(-90.0))
         ),
         LITTLE_DANGER(
             "Little Danger",
             new ExtPose(8.4, 1.05, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(8.4, 3.5, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(7.5, 3.5, Rotation2d.fromDegrees(-170.0)),
+            new ExtPose(8.4, 3.45, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(7.5, 3.45, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(7.25, 2.15, Rotation2d.fromDegrees(-90.0))
         ),
         DOUBLE_DANGER(
@@ -263,7 +263,7 @@ public final class Autos {
                         ? depth.sweepStartPreTags.get(left.getAsBoolean())
                         : depth.sweepStartPostTags.get(left.getAsBoolean())
                 ),
-                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), secondPass ? 2.25 : 1.6).withTimeout(4.0),
+                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), secondPass ? 2.25 : 1.8).withTimeout(4.0),
                 swerve.apfDrive(
                     () -> depth.returnStart.get(left.getAsBoolean()),
                     velocity,

@@ -252,8 +252,8 @@ public final class Intake extends GRRSubsystem {
     private void configureRollers() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.StatorCurrentLimit = 170.0;
+        config.CurrentLimits.SupplyCurrentLimit = 40.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 15.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 4.0;
 

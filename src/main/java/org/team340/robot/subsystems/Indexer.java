@@ -30,7 +30,7 @@ public final class Indexer extends GRRSubsystem {
 
     private static enum State {
         ACCELERATE(55.0, 0.0),
-        FEED(55.0, 55.0),
+        FEED(55.0, 50.0),
         CLEAR(-10.0, -10.0),
         BARF(-50.0, -50.0);
 
@@ -205,7 +205,7 @@ public final class Indexer extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 70.0;
+        config.CurrentLimits.SupplyCurrentLimit = 60.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 30.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 3.0;
 

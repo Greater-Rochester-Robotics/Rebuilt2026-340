@@ -2,6 +2,7 @@ package org.team340.robot.commands;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.BooleanSupplier;
@@ -85,7 +86,7 @@ public final class Routines {
                             (hood.atPosition()
                                 && shooter.atVelocity()
                                 && swerve.aimingAtTarget()
-                                && swerve.tagsSeen() >= shootingMinRqTagsSeen.get())
+                                && (DriverStation.isAutonomous() || swerve.tagsSeen() >= shootingMinRqTagsSeen.get()))
                             || force.getAsBoolean()
                     )
                 ).deadlineFor(indexer.accelerate()),
