@@ -104,7 +104,7 @@ public final class Swerve extends GRRSubsystem {
         .setMoveFF(0.0, 0.125)
         .setTurnPID(100.0, 0.0, 0.2)
         .setBrakeMode(true, true)
-        .setLimits(4.5, 0.01, 16.0, 10.0, 32.0)
+        .setLimits(4.5, 0.01, 15.0, 10.0, 32.0)
         .setDriverProfile(4.5, 1.5, 0.1, 5.4, 2.0, 0.05)
         .setPowerProperties(Constants.VOLTAGE, 80.0, 28.0, 60.0, 40.0)
         .setMechanicalProperties(675.0 / 112.0, 287.0 / 11.0, Units.inchesToMeters(3.87))

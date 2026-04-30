@@ -41,7 +41,7 @@ public final class Intake extends GRRSubsystem {
         STOW(-0.08, 1.0, 0.0),
         EXTEND(0.25, 1.0, 0.0),
         INTAKE(0.26, 1.0, 95.0),
-        COMPRESS(0.16, 0.18, 50.0),
+        COMPRESS(0.16, 0.18, 40.0),
         BARF(0.245, 1.0, -90.0),
         PURGE(-0.08, 1.0, -90.0);
 
@@ -253,7 +253,7 @@ public final class Intake extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 170.0;
-        config.CurrentLimits.SupplyCurrentLimit = 40.0;
+        config.CurrentLimits.SupplyCurrentLimit = 35.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 15.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 4.0;
 
