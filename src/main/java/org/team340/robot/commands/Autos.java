@@ -105,8 +105,8 @@ public final class Autos {
         ),
         INNIE_OUTIE(
             "Innie Outie",
-            new ExtPose(6.2, 2.0, Rotation2d.fromDegrees(95.0)),
-            new ExtPose(6.2, 4.7, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(6.1, 2.0, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(6.1, 4.7, Rotation2d.fromDegrees(95.0)),
             new ExtPose(7.3, 4.6, Rotation2d.fromDegrees(10.0)),
             new ExtPose(6.9, 3.2, Rotation2d.fromDegrees(-95.0))
         );
