@@ -58,7 +58,7 @@ public final class Swerve extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("swerve");
 
     private static final TunableBoolean enableSOTM = tunables.value("enableSOTM", true);
-    private static final TunableDouble distanceFudge = tunables.value("distanceFudge", 0.08);
+    private static final TunableDouble distanceFudge = tunables.value("distanceFudge", -0.15);
     private static final TunableDouble apfBumpVelocity = tunables.value("apfBumpVelocity", 2.0);
     private static final TunableDouble overBumpX = tunables.value("overBumpX", 5.7);
     private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(10.0));
