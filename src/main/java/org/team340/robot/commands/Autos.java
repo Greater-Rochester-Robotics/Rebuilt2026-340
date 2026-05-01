@@ -263,7 +263,7 @@ public final class Autos {
                         ? depth.sweepStartPreTags.get(left.getAsBoolean())
                         : depth.sweepStartPostTags.get(left.getAsBoolean())
                 ),
-                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), secondPass ? 2.25 : 1.8).withTimeout(4.0),
+                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), secondPass ? 2.25 : 2.0).withTimeout(4.0),
                 swerve.apfDrive(
                     () -> depth.returnStart.get(left.getAsBoolean()),
                     velocity,
