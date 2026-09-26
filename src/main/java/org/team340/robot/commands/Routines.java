@@ -93,8 +93,12 @@ public final class Routines {
                 indexer.feed()
             ),
             sequence(
-                race(waitUntil(runIntake), waitSeconds(1.0)),
-                either(intake.intake().onlyWhile(runIntake), intake.compress().until(runIntake), runIntake)
+                race(intake.intake(), waitUntil(runIntake), waitSeconds(0.4)),
+                either(
+                    intake.intake().onlyWhile(runIntake),
+                    intake.compress().raceWith(waitUntil(runIntake), waitSeconds(0.8)),
+                    runIntake
+                )
             ).repeatedly()
         ).withName("Routines.shoot()");
     }
@@ -176,5 +180,28 @@ public final class Routines {
             shooter.tune(),
             swerve.aimAtTarget()
         ).withName("Routines.tune()");
+    }
+
+    /**
+     * Runs the shooter for demos, using the tuning hood position and shooter velocity.
+     * @param runIntake Whether the intake should also be intaking.
+     * @param force A supplier that if {@code true} will force the indexer to feed the shooter.
+     */
+    public Command demoShoot(BooleanSupplier runIntake, BooleanSupplier force) {
+        return parallel(
+            hood.tune(),
+            sequence(
+                sequence(
+                    waitSeconds(0.05),
+                    waitUntil(() -> ((hood.atPosition() && shooter.atVelocity()) || force.getAsBoolean()))
+                ).deadlineFor(indexer.accelerate()),
+                indexer.feed()
+            ),
+            shooter.tune(),
+            sequence(
+                race(waitUntil(runIntake), waitSeconds(0.25)),
+                either(intake.intake().onlyWhile(runIntake), intake.compress().until(runIntake), runIntake)
+            ).repeatedly()
+        ).withName("Routines.demoShoot()");
     }
 }

@@ -1,7 +1,6 @@
 package org.team340.robot;
 
-import static edu.wpi.first.wpilibj2.command.Commands.*;
-
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.wpilibj.RobotController;
@@ -11,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.team340.lib.logging.LoggedRobot;
 import org.team340.lib.logging.Profiler;
+import org.team340.lib.math.FieldInfo;
 import org.team340.lib.util.DisableWatchdog;
 import org.team340.lib.util.command.RumbleCommand;
 import org.team340.lib.util.vendors.PhoenixUtil;
@@ -44,6 +44,7 @@ public final class Robot extends LoggedRobot {
     private final CommandXboxController driver;
 
     public Robot() {
+        FieldInfo.setLayout(AprilTagFields.k2026RebuiltAndymark);
         PhoenixUtil.disableDaemons();
 
         // Initialize subsystems
@@ -71,25 +72,29 @@ public final class Robot extends LoggedRobot {
         swerve.setDefaultCommand(swerve.drive(this::driverX, this::driverY, this::driverAngular));
 
         // Create triggers
-        var shoot = driver.leftBumper().or(driver.rightBumper());
+        var intakeTrigger = driver.leftTrigger(0.2);
+        var shootTrigger = driver.rightTrigger(0.2);
         new Trigger(() -> shiftTracker.shiftTimeLeft() < 5.0)
             .onTrue(new RumbleCommand(driver, 1.0).withTimeout(0.3).onlyIf(this::isTeleop))
             .onFalse(new RumbleCommand(driver, 1.0).withTimeout(0.6).onlyIf(this::isTeleop));
 
         // Driver bindings
-        driver.a().and(shoot.negate()).whileTrue(intake.intake());
-        driver.b().whileTrue(routines.barf());
-        driver.x().onTrue(routines.barf()).onFalse(routines.finishBarf());
-        driver.y().onTrue(none()); // Reserved for shoot override
-
-        shoot
-            .onTrue(routines.driverShoot(this::driverX, this::driverY, driver.a(), driver.y()))
+        intakeTrigger.and(shootTrigger.negate()).whileTrue(intake.intake());
+        shootTrigger
+            .onTrue(routines.driverShoot(this::driverX, this::driverY, intakeTrigger, driver.y()))
             .onFalse(routines.driverShootShutdown(this::driverX, this::driverY));
+
+        driver.leftBumper().whileTrue(routines.barf());
+        driver.rightBumper().onTrue(routines.barf()).onFalse(routines.finishBarf());
 
         driver.povLeft().onTrue(swerve.tareRotation());
         driver.povDown().whileTrue(hood.goToZero(true));
         driver.povUp().whileTrue(routines.staticShoot());
 
+        // Demo Binding
+        // shootTrigger.whileTrue(routines.demoShoot(intakeTrigger, driver.y()));
+
+        // Debugging Bindings
         driver.start().and(driver.back()).whileTrue(routines.testSequence());
         driver.start().and(driver.rightStick()).whileTrue(routines.tune());
 
@@ -129,6 +134,6 @@ public final class Robot extends LoggedRobot {
 
     @NotLogged
     private double driverAngular() {
-        return driver.getLeftTriggerAxis() - driver.getRightTriggerAxis();
+        return -driver.getRightX();
     }
 }

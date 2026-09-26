@@ -32,7 +32,7 @@ public final class Shooter extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("shooter");
 
     private static final TunableDouble atVelocityEpsilon = tunables.value("atVelocityEpsilon", 1.0);
-    private static final TunableDouble tuneVelocity = tunables.value("tuneVelocity", 0.0);
+    private static final TunableDouble tuneVelocity = tunables.value("tuneVelocity", 45.0);
 
     private final TalonFX portUpperFollow;
     private final TalonFX portLowerLead;
@@ -142,7 +142,7 @@ public final class Shooter extends GRRSubsystem {
     private void configureMotors() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.StatorCurrentLimit = 100.0;
         config.CurrentLimits.SupplyCurrentLimit = 40.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 

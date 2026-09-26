@@ -29,7 +29,7 @@ public final class Indexer extends GRRSubsystem {
     private static final TunableTable tunables = Tunables.getNested("indexer");
 
     private static enum State {
-        ACCELERATE(55.0, 0.0),
+        ACCELERATE(55.0, -5.0),
         FEED(55.0, 50.0),
         CLEAR(-10.0, -10.0),
         BARF(-50.0, -50.0);
@@ -177,10 +177,10 @@ public final class Indexer extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 50.0;
+        config.CurrentLimits.SupplyCurrentLimit = 45.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.0;
 
-        config.MotionMagic.MotionMagicAcceleration = 800.0;
+        config.MotionMagic.MotionMagicAcceleration = 450.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
@@ -205,11 +205,11 @@ public final class Indexer extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
+        config.CurrentLimits.SupplyCurrentLimit = 45.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 30.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 3.0;
 
-        config.MotionMagic.MotionMagicAcceleration = 800.0;
+        config.MotionMagic.MotionMagicAcceleration = 450.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 

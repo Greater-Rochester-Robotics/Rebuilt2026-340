@@ -6,7 +6,7 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -38,12 +38,12 @@ public final class Intake extends GRRSubsystem {
     private static final TunableDouble pivotStowed = tunables.value("pivotStowed", -0.07);
 
     private static enum State {
-        STOW(-0.08, 1.0, 0.0),
-        EXTEND(0.25, 1.0, 0.0),
-        INTAKE(0.26, 1.0, 95.0),
-        COMPRESS(0.16, 0.18, 40.0),
-        BARF(0.245, 1.0, -90.0),
-        PURGE(-0.08, 1.0, -90.0);
+        STOW(-0.08, 0.9, 0.0),
+        EXTEND(0.255, 0.9, 0.0),
+        INTAKE(0.27, 0.9, 90.0),
+        COMPRESS(0.0, 0.5, 90.0),
+        BARF(0.24, 0.9, -85.0),
+        PURGE(-0.08, 0.9, -85.0);
 
         public final TunableDouble position;
         public final TunableDouble pivotVelocity;
@@ -64,7 +64,7 @@ public final class Intake extends GRRSubsystem {
     private final StatusSignal<Angle> pivotPosition;
 
     private final DynamicMotionMagicVoltage pivotPositionControl;
-    private final VelocityVoltage rollersVelocityControl;
+    private final MotionMagicVelocityVoltage rollersVelocityControl;
     private final Follower pivotFollowControl;
 
     public Intake() {
@@ -82,7 +82,7 @@ public final class Intake extends GRRSubsystem {
 
         pivotPosition = pivot.getPosition();
 
-        PhoenixUtil.run(() -> rollersLead.getTorqueCurrent().setUpdateFrequency(500));
+        PhoenixUtil.run(() -> rollersLead.getMotorVoltage().setUpdateFrequency(500));
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(100, pivotPosition, pivot.getClosedLoopReference())
         );
@@ -100,8 +100,8 @@ public final class Intake extends GRRSubsystem {
         pivotPositionControl.EnableFOC = true;
         pivotPositionControl.UpdateFreqHz = 0.0;
 
-        rollersVelocityControl = new VelocityVoltage(0.0);
-        pivotPositionControl.EnableFOC = true;
+        rollersVelocityControl = new MotionMagicVelocityVoltage(0.0);
+        rollersVelocityControl.EnableFOC = true;
         rollersVelocityControl.UpdateFreqHz = 0.0;
 
         pivotFollowControl = new Follower(RobotMap.INTAKE_ROLLER_LEAD_MOTOR, MotorAlignmentValue.Aligned);
@@ -229,7 +229,7 @@ public final class Intake extends GRRSubsystem {
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 90.0;
+        config.Slot0.kP = 300.0;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
@@ -253,17 +253,19 @@ public final class Intake extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 170.0;
-        config.CurrentLimits.SupplyCurrentLimit = 35.0;
-        config.CurrentLimits.SupplyCurrentLowerLimit = 15.0;
-        config.CurrentLimits.SupplyCurrentLowerTime = 4.0;
+        config.CurrentLimits.SupplyCurrentLimit = 30.0;
+        config.CurrentLimits.SupplyCurrentLowerLimit = 18.0;
+        config.CurrentLimits.SupplyCurrentLowerTime = 4.5;
+
+        config.MotionMagic.MotionMagicAcceleration = 600.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.Slot0.kP = 0.32;
+        config.Slot0.kP = 0.3;
         config.Slot0.kI = 0.0;
         config.Slot0.kD = 0.0;
         config.Slot0.kG = 0.0;
-        config.Slot0.kS = 0.2;
+        config.Slot0.kS = 0.1;
         config.Slot0.kV = 0.123;
         config.Slot0.kA = 0.0;
 

@@ -40,7 +40,7 @@ public final class Hood extends GRRSubsystem {
     private static final TunableDouble homingVelocity = tunables.value("homingVelocity", -30.0); // In rotations per second.
     private static final TunableDouble zeroZero = tunables.value("zeroZero", 1.0); // In rotations per second.
 
-    private static final TunableDouble tunePosition = tunables.value("tunePosition", 0.0);
+    private static final TunableDouble tunePosition = tunables.value("tunePosition", 8.0);
 
     private final TalonFX motor;
 
