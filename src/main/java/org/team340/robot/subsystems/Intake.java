@@ -219,8 +219,8 @@ public final class Intake extends GRRSubsystem {
 
         config.ClosedLoopGeneral.ContinuousWrap = true;
 
-        config.CurrentLimits.StatorCurrentLimit = 60.0;
-        config.CurrentLimits.SupplyCurrentLimit = 15.0;
+        config.CurrentLimits.StatorCurrentLimit = 30.0;
+        config.CurrentLimits.SupplyCurrentLimit = 8.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 6.0;
 
         config.Feedback.FeedbackRemoteSensorID = RobotMap.INTAKE_WCP_THROUGHBORE_POWERED_BY_CANCODER_FOR_HALF_INCH_HEX;
@@ -252,8 +252,8 @@ public final class Intake extends GRRSubsystem {
     private void configureRollers() {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.StatorCurrentLimit = 170.0;
-        config.CurrentLimits.SupplyCurrentLimit = 30.0;
+        config.CurrentLimits.StatorCurrentLimit = 180.0;
+        config.CurrentLimits.SupplyCurrentLimit = 35.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 18.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 4.5;
 

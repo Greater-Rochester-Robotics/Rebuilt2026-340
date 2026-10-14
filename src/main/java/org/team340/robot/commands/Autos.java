@@ -38,7 +38,7 @@ public final class Autos {
     );
     private static final ExtPose shootPose = positionsTunables.add(
         "shoot",
-        new ExtPose(2.75, 2.45, Rotation2d.fromDegrees(-90.0))
+        new ExtPose(2.9, 2.35, Rotation2d.fromDegrees(-90.0))
     );
 
     private static final ExtPose trenchEnterPose = positionsTunables.add(
@@ -74,8 +74,8 @@ public final class Autos {
     private static final TunableDouble depotEndTolerance = depotTunables.value("endTolerance", 0.04);
 
     private static final TunableTable trenchingTunables = tunables.getNested("trenching");
-    private static final TunableDouble trenchingDeceleration = trenchingTunables.value("deceleration", 13.0);
-    private static final TunableDouble trenchingEndTolerance = trenchingTunables.value("endTolerance", 0.3);
+    private static final TunableDouble trenchingDeceleration = trenchingTunables.value("deceleration", 12.0);
+    private static final TunableDouble trenchingEndTolerance = trenchingTunables.value("endTolerance", 0.4);
     private static final TunableDouble trenchingEndAngTolerance = defaultTunables.value(
         "endAngTolerance",
         Math.toRadians(15.0)
@@ -95,38 +95,31 @@ public final class Autos {
         ),
         MODERATE(
             "Moderate",
-            new ExtPose(7.5, 0.9, Rotation2d.fromDegrees(70.0)),
-            new ExtPose(7.5, 3.2, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.25, 3.5, Rotation2d.fromDegrees(-180.0)),
+            new ExtPose(7.5, 0.9, Rotation2d.fromDegrees(75.0)),
+            new ExtPose(7.5, 3.35, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.25, 3.6, Rotation2d.fromDegrees(170.0)),
             new ExtPose(6.2, 2.7, Rotation2d.fromDegrees(-90.0))
         ),
         DANGER(
             "Danger",
-            new ExtPose(7.85, 0.9, Rotation2d.fromDegrees(70.0)),
-            new ExtPose(7.85, 3.1, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.25, 3.5, Rotation2d.fromDegrees(-180.0)),
+            new ExtPose(7.85, 0.9, Rotation2d.fromDegrees(75.0)),
+            new ExtPose(7.85, 3.25, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.25, 3.5, Rotation2d.fromDegrees(170.0)),
             new ExtPose(6.2, 2.7, Rotation2d.fromDegrees(-90.0))
         ),
         LITTLE_DANGER(
             "Double Danger",
             new ExtPose(7.85, 1.2, Rotation2d.fromDegrees(85.0)),
-            new ExtPose(7.85, 3.3, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(7.85, 3.3, Rotation2d.fromDegrees(95.0)),
             new ExtPose(7.4, 3.3, Rotation2d.fromDegrees(-170.0)),
             new ExtPose(7.2, 2.15, Rotation2d.fromDegrees(-90.0))
-        ),
-        MIDDLE_MANY(
-            "Middle Many",
-            new ExtPose(7.7, 1.4, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(7.7, 4.0, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.3, 4.0, Rotation2d.fromDegrees(-170.0)),
-            new ExtPose(6.25, 3.0, Rotation2d.fromDegrees(-90.0))
         ),
         INNIE_OUTIE(
             "Innie Outie",
             new ExtPose(5.6, 0.8, Rotation2d.fromDegrees(95.0)),
             new ExtPose(5.55, 3.75, Rotation2d.fromDegrees(85.0)),
             new ExtPose(7.4, 3.85, Rotation2d.fromDegrees(0.0)),
-            new ExtPose(7.4, 2.7, Rotation2d.fromDegrees(-92.0))
+            new ExtPose(7.5, 2.7, Rotation2d.fromDegrees(-92.0))
         );
 
         private String name;
@@ -280,13 +273,13 @@ public final class Autos {
                         )
                     )
                 ),
-                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), () -> secondPass ? 3.0 : 1.7).withTimeout(
+                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), () -> secondPass ? 3.0 : 2.0).withTimeout(
                     3.75
                 ),
                 swerve
                     .apfDrive(
                         () -> depth.returnStart.get(left.getAsBoolean()),
-                        () -> 3.25,
+                        () -> 3.5,
                         () -> 20.0,
                         () -> 0.25,
                         () -> 1e5,
