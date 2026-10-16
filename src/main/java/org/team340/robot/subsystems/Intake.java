@@ -219,7 +219,7 @@ public final class Intake extends GRRSubsystem {
 
         config.ClosedLoopGeneral.ContinuousWrap = true;
 
-        config.CurrentLimits.StatorCurrentLimit = 30.0;
+        config.CurrentLimits.StatorCurrentLimit = 35.0;
         config.CurrentLimits.SupplyCurrentLimit = 8.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 6.0;
 

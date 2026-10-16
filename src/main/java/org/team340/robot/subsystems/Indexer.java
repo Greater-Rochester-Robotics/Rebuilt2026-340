@@ -207,7 +207,7 @@ public final class Indexer extends GRRSubsystem {
         config.CurrentLimits.StatorCurrentLimit = 180.0;
         config.CurrentLimits.SupplyCurrentLimit = 45.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 30.0;
-        config.CurrentLimits.SupplyCurrentLowerTime = 3.0;
+        config.CurrentLimits.SupplyCurrentLowerTime = 2.0;
 
         config.MotionMagic.MotionMagicAcceleration = 450.0;
 

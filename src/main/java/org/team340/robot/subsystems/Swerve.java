@@ -61,7 +61,7 @@ public final class Swerve extends GRRSubsystem {
     private static final TunableDouble distanceFudge = tunables.value("distanceFudge", 0.12); // Champs -0.15
     private static final TunableDouble apfBumpVelocity = tunables.value("apfBumpVelocity", 2.4);
     private static final TunableDouble overBumpX = tunables.value("overBumpX", 5.0);
-    private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(10.0));
+    private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(5.0));
     private static final TunableDouble flatTolerance = tunables.value("flatTolerance", Math.toRadians(10.0));
 
     // spotless:off
@@ -104,9 +104,9 @@ public final class Swerve extends GRRSubsystem {
         .setMoveFF(0.0, 0.125)
         .setTurnPID(100.0, 0.0, 0.2)
         .setBrakeMode(true, true)
-        .setLimits(4.5, 0.01, 15.0, 10.0, 32.0)
+        .setLimits(4.5, 0.01, 14.0, 10.0, 32.0)
         .setDriverProfile(4.5, 1.5, 0.15, 5.4, 1.0, 0.15)
-        .setPowerProperties(Constants.VOLTAGE, 80.0, 24.0, 60.0, 30.0)
+        .setPowerProperties(Constants.VOLTAGE, 80.0, 20.0, 60.0, 20.0)
         .setMechanicalProperties(675.0 / 112.0, 287.0 / 11.0, Units.inchesToMeters(3.87))
         .setOdometryStd(0.1, 0.1, 0.05)
         .setIMU(SwerveIMUs.canandgyro(RobotMap.CANANDGYRO))

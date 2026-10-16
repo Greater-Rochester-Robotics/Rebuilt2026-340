@@ -56,7 +56,7 @@ public final class Autos {
         new ExtPose(7.3, 1.2, Rotation2d.fromDegrees(25.0))
     );
 
-    private static final TunableDouble swipeTime = tunables.value("swipeTime", 8.5);
+    private static final TunableDouble swipeTime = tunables.value("swipeTime", 8.75);
 
     private static final TunableTable defaultTunables = tunables.getNested("default");
     private static final TunableDouble velocity = defaultTunables.value("velocity", 4.5);
@@ -96,7 +96,7 @@ public final class Autos {
         MODERATE(
             "Moderate",
             new ExtPose(7.5, 0.9, Rotation2d.fromDegrees(75.0)),
-            new ExtPose(7.5, 3.35, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(7.5, 3.45, Rotation2d.fromDegrees(105.0)),
             new ExtPose(6.25, 3.6, Rotation2d.fromDegrees(170.0)),
             new ExtPose(6.2, 2.7, Rotation2d.fromDegrees(-90.0))
         ),
@@ -118,8 +118,8 @@ public final class Autos {
             "Innie Outie",
             new ExtPose(5.6, 0.8, Rotation2d.fromDegrees(95.0)),
             new ExtPose(5.55, 3.75, Rotation2d.fromDegrees(85.0)),
-            new ExtPose(7.4, 3.85, Rotation2d.fromDegrees(0.0)),
-            new ExtPose(7.5, 2.7, Rotation2d.fromDegrees(-92.0))
+            new ExtPose(7.5, 3.85, Rotation2d.fromDegrees(0.0)),
+            new ExtPose(7.6, 2.7, Rotation2d.fromDegrees(-92.0))
         );
 
         private String name;
