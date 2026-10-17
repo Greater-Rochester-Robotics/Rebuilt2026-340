@@ -219,8 +219,8 @@ public final class Intake extends GRRSubsystem {
 
         config.ClosedLoopGeneral.ContinuousWrap = true;
 
-        config.CurrentLimits.StatorCurrentLimit = 35.0;
-        config.CurrentLimits.SupplyCurrentLimit = 8.0;
+        config.CurrentLimits.StatorCurrentLimit = 45.0;
+        config.CurrentLimits.SupplyCurrentLimit = 10.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 6.0;
 
         config.Feedback.FeedbackRemoteSensorID = RobotMap.INTAKE_WCP_THROUGHBORE_POWERED_BY_CANCODER_FOR_HALF_INCH_HEX;

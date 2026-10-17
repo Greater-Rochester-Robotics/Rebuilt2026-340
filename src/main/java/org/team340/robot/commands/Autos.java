@@ -38,7 +38,7 @@ public final class Autos {
     );
     private static final ExtPose shootPose = positionsTunables.add(
         "shoot",
-        new ExtPose(2.9, 2.35, Rotation2d.fromDegrees(-90.0))
+        new ExtPose(2.82, 2.35, Rotation2d.fromDegrees(-90.0))
     );
 
     private static final ExtPose trenchEnterPose = positionsTunables.add(
