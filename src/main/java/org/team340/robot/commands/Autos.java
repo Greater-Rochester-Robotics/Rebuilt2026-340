@@ -273,20 +273,20 @@ public final class Autos {
                         )
                     )
                 ),
-                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), () -> secondPass ? 3.0 : 2.0).withTimeout(
+                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), () -> secondPass ? 4.0 : 3.0).withTimeout(
                     3.75
                 ),
                 swerve
                     .apfDrive(
                         () -> depth.returnStart.get(left.getAsBoolean()),
-                        () -> 3.5,
+                        () -> 4.5,
                         () -> 20.0,
                         () -> 0.25,
                         () -> 1e5,
                         false
                     )
                     .withTimeout(4.0),
-                apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), () -> 3.5).withTimeout(5.0),
+                apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), () -> 4.5).withTimeout(5.0),
                 apfDefaults(() -> shootPose.get(left.getAsBoolean()))
             ),
             sequence(
