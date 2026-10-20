@@ -116,7 +116,7 @@ public final class Autos {
         ),
         INNIE_OUTIE(
             "Innie Outie",
-            new ExtPose(5.6, 0.8, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(6.05, 0.78, Rotation2d.fromDegrees(95.0)),
             new ExtPose(5.55, 3.75, Rotation2d.fromDegrees(85.0)),
             new ExtPose(7.5, 3.85, Rotation2d.fromDegrees(0.0)),
             new ExtPose(7.6, 2.7, Rotation2d.fromDegrees(-92.0))
@@ -273,7 +273,7 @@ public final class Autos {
                         )
                     )
                 ),
-                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), () -> secondPass ? 4.0 : 3.0).withTimeout(
+                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), () -> secondPass ? 4.0 : 2.8).withTimeout(
                     3.75
                 ),
                 swerve
@@ -283,6 +283,7 @@ public final class Autos {
                         () -> 20.0,
                         () -> 0.25,
                         () -> 1e5,
+                        false,
                         false
                     )
                     .withTimeout(4.0),
@@ -322,7 +323,7 @@ public final class Autos {
      * @param goal A supplier that returns the target blue-origin relative field location.
      */
     private Command apfDefaults(Supplier<Pose2d> goal) {
-        return swerve.apfDrive(goal, velocity, deceleration, endTolerance, endAngTolerance, false);
+        return swerve.apfDrive(goal, velocity, deceleration, endTolerance, endAngTolerance, false, false);
     }
 
     /**
@@ -333,7 +334,7 @@ public final class Autos {
      * @param velocity The desired cruise velocity of the robot, in m/s.
      */
     private Command apfIntaking(Supplier<Pose2d> goal, DoubleSupplier velocity) {
-        return swerve.apfDrive(goal, velocity, intakeDeceleration, intakeEndTolerance, () -> 1e5, false);
+        return swerve.apfDrive(goal, velocity, intakeDeceleration, intakeEndTolerance, () -> 1e5, false, false);
     }
 
     /**
@@ -343,7 +344,7 @@ public final class Autos {
      * @param goal A supplier that returns the target blue-origin relative field location.
      */
     private Command apfDepot(Supplier<Pose2d> goal) {
-        return swerve.apfDrive(goal, depotVelocity, depotDeceleration, depotEndTolerance, () -> 1e5, false);
+        return swerve.apfDrive(goal, depotVelocity, depotDeceleration, depotEndTolerance, () -> 1e5, false, false);
     }
 
     /**
@@ -359,7 +360,8 @@ public final class Autos {
             trenchingDeceleration,
             trenchingEndTolerance,
             trenchingEndAngTolerance,
-            false
+            false,
+            true
         );
     }
 
@@ -369,7 +371,7 @@ public final class Autos {
      * @param goal A supplier that returns the target blue-origin relative field location.
      */
     private Command apfFuelApproach(Supplier<Pose2d> goal) {
-        return swerve.apfDrive(goal, velocity, () -> 30.0, () -> 0.5, () -> 1e5, false);
+        return swerve.apfDrive(goal, velocity, () -> 30.0, () -> 0.5, () -> 1e5, false, false);
     }
 
     /**

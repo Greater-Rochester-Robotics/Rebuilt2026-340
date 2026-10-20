@@ -37,8 +37,8 @@ public final class Hood extends GRRSubsystem {
 
     private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 2.0);
     private static final TunableDouble stallVelocity = tunables.value("stallVelocity", 0.05);
-    private static final TunableDouble homingVelocity = tunables.value("homingVelocity", -30.0); // In rotations per second.
-    private static final TunableDouble zeroZero = tunables.value("zeroZero", 1.0); // In rotations per second.
+    private static final TunableDouble homingVelocity = tunables.value("homingVelocity", -30.0);
+    private static final TunableDouble zeroZero = tunables.value("zeroZero", 3.75);
 
     private static final TunableDouble tunePosition = tunables.value("tunePosition", 8.0);
 
@@ -138,7 +138,8 @@ public final class Hood extends GRRSubsystem {
                     if (!debouncer.calculate(Math.abs(velocity.getValueAsDouble()) < stallVelocity.get())) return;
 
                     isZeroed = true;
-                    motor.setPosition(0.0);
+                    motor.setPosition(3.0);
+                    DriverStation.reportWarning("HOMED!!", false);
                 }
 
                 positionVoltage.withPosition(position.getAsDouble());
@@ -183,8 +184,8 @@ public final class Hood extends GRRSubsystem {
 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
-        config.TorqueCurrent.PeakForwardTorqueCurrent = 10.0;
-        config.TorqueCurrent.PeakReverseTorqueCurrent = -10.0;
+        config.TorqueCurrent.PeakForwardTorqueCurrent = 15.0;
+        config.TorqueCurrent.PeakReverseTorqueCurrent = -15.0;
 
         PhoenixUtil.run(() -> motor.clearStickyFaults());
         PhoenixUtil.run(() -> motor.getConfigurator().apply(config));
