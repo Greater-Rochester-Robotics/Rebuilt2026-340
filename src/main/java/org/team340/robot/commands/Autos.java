@@ -74,11 +74,11 @@ public final class Autos {
     private static final TunableDouble depotEndTolerance = depotTunables.value("endTolerance", 0.04);
 
     private static final TunableTable trenchingTunables = tunables.getNested("trenching");
-    private static final TunableDouble trenchingDeceleration = trenchingTunables.value("deceleration", 12.0);
+    private static final TunableDouble trenchingDeceleration = trenchingTunables.value("deceleration", 14.0);
     private static final TunableDouble trenchingEndTolerance = trenchingTunables.value("endTolerance", 0.4);
     private static final TunableDouble trenchingEndAngTolerance = defaultTunables.value(
         "endAngTolerance",
-        Math.toRadians(15.0)
+        Math.toRadians(30.0)
     );
 
     private static final TunableTable swipeDelays = tunables.getNested("swipeDelays");
@@ -116,8 +116,8 @@ public final class Autos {
         ),
         INNIE_OUTIE(
             "Innie Outie",
-            new ExtPose(6.05, 0.78, Rotation2d.fromDegrees(95.0)),
-            new ExtPose(5.55, 3.75, Rotation2d.fromDegrees(85.0)),
+            new ExtPose(6.0, 0.78, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(5.6, 3.75, Rotation2d.fromDegrees(85.0)),
             new ExtPose(7.5, 3.85, Rotation2d.fromDegrees(0.0)),
             new ExtPose(7.6, 2.7, Rotation2d.fromDegrees(-92.0))
         );
