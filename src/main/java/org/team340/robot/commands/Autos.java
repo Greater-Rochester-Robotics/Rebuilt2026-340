@@ -43,7 +43,7 @@ public final class Autos {
 
     private static final ExtPose trenchEnterPose = positionsTunables.add(
         "trenchEnter",
-        new ExtPose(3.05, 0.75, Rotation2d.kZero)
+        new ExtPose(3.1, 0.75, Rotation2d.kZero)
     );
 
     private static final ExtPose transitionExitPose = positionsTunables.add(
@@ -116,8 +116,8 @@ public final class Autos {
         ),
         INNIE_OUTIE(
             "Innie Outie",
-            new ExtPose(6.0, 0.78, Rotation2d.fromDegrees(95.0)),
-            new ExtPose(5.6, 3.75, Rotation2d.fromDegrees(85.0)),
+            new ExtPose(5.75, 0.8, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(5.55, 3.75, Rotation2d.fromDegrees(85.0)),
             new ExtPose(7.5, 3.85, Rotation2d.fromDegrees(0.0)),
             new ExtPose(7.6, 2.7, Rotation2d.fromDegrees(-92.0))
         );
