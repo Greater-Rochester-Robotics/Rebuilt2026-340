@@ -1,6 +1,7 @@
 package org.team340.robot.subsystems;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
@@ -28,6 +29,8 @@ public final class Indexer extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("indexer");
 
+    private static final TunableDouble uptakeAtVelocityEpsilon = tunables.value("uptakeAtVelocityEpsilon", 2.0);
+
     private static enum State {
         ACCELERATE(55.0, -5.0),
         FEED(55.0, 50.0),
@@ -48,6 +51,8 @@ public final class Indexer extends GRRSubsystem {
     private final TalonFX starboardUpperFollow;
     private final TalonFX starboardLowerLead;
 
+    private final StatusSignal<Double> uptakeClosedLoopError;
+
     private final MotionMagicVelocityVoltage velocityControl;
     private final Follower portFollowControl;
     private final Follower starboardFollowControl;
@@ -63,6 +68,8 @@ public final class Indexer extends GRRSubsystem {
         configurePortMotors();
         configureStarboardMotors();
 
+        uptakeClosedLoopError = portUpperLead.getClosedLoopError();
+
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(
                 500,
@@ -70,6 +77,7 @@ public final class Indexer extends GRRSubsystem {
                 starboardLowerLead.getMotorVoltage()
             )
         );
+        PhoenixUtil.run(() -> uptakeClosedLoopError.setUpdateFrequency(100));
         PhoenixUtil.run(() ->
             BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
@@ -107,6 +115,8 @@ public final class Indexer extends GRRSubsystem {
 
     @Override
     public void periodic() {
+        uptakeClosedLoopError.refresh();
+
         portLowerFollow.setControl(portFollowControl);
         starboardUpperFollow.setControl(starboardFollowControl);
 
@@ -123,6 +133,13 @@ public final class Indexer extends GRRSubsystem {
      */
     public boolean isFeeding() {
         return isFeeding;
+    }
+
+    /**
+     * Returns {@code true} if the uptake is at its velocity target.
+     */
+    public boolean uptakeAtVelocity() {
+        return Math.abs(uptakeClosedLoopError.getValueAsDouble()) <= uptakeAtVelocityEpsilon.get();
     }
 
     /**

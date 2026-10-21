@@ -38,17 +38,17 @@ public final class Autos {
     );
     private static final ExtPose shootPose = positionsTunables.add(
         "shoot",
-        new ExtPose(2.82, 2.35, Rotation2d.fromDegrees(-90.0))
+        new ExtPose(2.9, 2.45, Rotation2d.fromDegrees(-90.0))
     );
 
     private static final ExtPose trenchEnterPose = positionsTunables.add(
         "trenchEnter",
-        new ExtPose(3.1, 0.75, Rotation2d.kZero)
+        new ExtPose(3.1, 0.8, Rotation2d.kZero)
     );
 
     private static final ExtPose transitionExitPose = positionsTunables.add(
         "transitionPrep",
-        new ExtPose(6.3, 0.7, Rotation2d.kZero)
+        new ExtPose(6.3, 0.65, Rotation2d.kZero)
     );
 
     private static final ExtPose transitionFinalPose = positionsTunables.add(
@@ -96,8 +96,8 @@ public final class Autos {
         MODERATE(
             "Moderate",
             new ExtPose(7.5, 0.9, Rotation2d.fromDegrees(75.0)),
-            new ExtPose(7.5, 3.45, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.25, 3.6, Rotation2d.fromDegrees(170.0)),
+            new ExtPose(7.5, 3.5, Rotation2d.fromDegrees(105.0)),
+            new ExtPose(6.2, 3.7, Rotation2d.fromDegrees(170.0)),
             new ExtPose(6.2, 2.7, Rotation2d.fromDegrees(-90.0))
         ),
         DANGER(
@@ -116,9 +116,9 @@ public final class Autos {
         ),
         INNIE_OUTIE(
             "Innie Outie",
-            new ExtPose(5.75, 0.8, Rotation2d.fromDegrees(95.0)),
-            new ExtPose(5.55, 3.75, Rotation2d.fromDegrees(85.0)),
-            new ExtPose(7.5, 3.85, Rotation2d.fromDegrees(0.0)),
+            new ExtPose(5.75, 0.65, Rotation2d.fromDegrees(95.0)),
+            new ExtPose(5.55, 3.65, Rotation2d.fromDegrees(85.0)),
+            new ExtPose(7.5, 3.9, Rotation2d.fromDegrees(0.0)),
             new ExtPose(7.6, 2.7, Rotation2d.fromDegrees(-92.0))
         );
 
@@ -273,7 +273,7 @@ public final class Autos {
                         )
                     )
                 ),
-                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), () -> secondPass ? 4.0 : 2.8).withTimeout(
+                apfIntaking(() -> depth.sweepEnd.get(left.getAsBoolean()), () -> secondPass ? 4.5 : 2.8).withTimeout(
                     3.75
                 ),
                 swerve

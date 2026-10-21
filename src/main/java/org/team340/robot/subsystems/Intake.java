@@ -34,14 +34,14 @@ public final class Intake extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("intake");
 
-    private static final TunableDouble pivotAcceleration = tunables.value("pivotAcceleration", 18.0);
+    private static final TunableDouble pivotAcceleration = tunables.value("pivotAcceleration", 16.0);
     private static final TunableDouble pivotStowed = tunables.value("pivotStowed", -0.07);
 
     private static enum State {
         STOW(-0.08, 0.9, 0.0),
         EXTEND(0.255, 0.9, 0.0),
-        INTAKE(0.27, 0.9, 90.0),
-        COMPRESS(0.0, 0.5, 90.0),
+        INTAKE(0.27, 1.0, 90.0),
+        COMPRESS(0.0, 1.0, 90.0),
         BARF(0.24, 0.9, -85.0),
         PURGE(-0.08, 0.9, -85.0);
 

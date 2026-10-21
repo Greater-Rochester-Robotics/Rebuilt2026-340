@@ -35,7 +35,7 @@ public final class Hood extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("hood");
 
-    private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 2.0);
+    private static final TunableDouble atPositionEpsilon = tunables.value("atPositionEpsilon", 0.75);
     private static final TunableDouble stallVelocity = tunables.value("stallVelocity", 0.05);
     private static final TunableDouble homingVelocity = tunables.value("homingVelocity", -30.0);
     private static final TunableDouble zeroZero = tunables.value("zeroZero", 1.0);

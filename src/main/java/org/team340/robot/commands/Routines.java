@@ -84,6 +84,7 @@ public final class Routines {
                     waitUntil(
                         () ->
                             (hood.atPosition()
+                                && indexer.uptakeAtVelocity()
                                 && shooter.atVelocity()
                                 && swerve.aimingAtTarget()
                                 && (DriverStation.isAutonomous() || swerve.tagsSeen() >= shootingMinRqTagsSeen.get()))
@@ -93,10 +94,10 @@ public final class Routines {
                 indexer.feed()
             ),
             sequence(
-                race(intake.intake(), waitUntil(runIntake), waitSeconds(0.4)),
+                race(intake.intake(), waitUntil(runIntake), waitUntil(indexer::isFeeding).andThen(waitSeconds(0.4))),
                 either(
                     intake.intake().onlyWhile(runIntake),
-                    intake.compress().raceWith(waitUntil(runIntake), waitSeconds(0.8)),
+                    intake.compress().raceWith(waitUntil(runIntake), waitSeconds(0.7)),
                     runIntake
                 )
             ).repeatedly()
