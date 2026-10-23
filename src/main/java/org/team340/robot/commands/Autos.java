@@ -103,9 +103,9 @@ public final class Autos {
         DANGER(
             "Danger",
             new ExtPose(7.8, 0.9, Rotation2d.fromDegrees(85.0)),
-            new ExtPose(8.15, 3.55, Rotation2d.fromDegrees(105.0)),
-            new ExtPose(6.2, 3.75, Rotation2d.fromDegrees(170.0)),
-            new ExtPose(6.2, 2.7, Rotation2d.fromDegrees(-90.0))
+            new ExtPose(8.3, 3.55, Rotation2d.fromDegrees(110.0)),
+            new ExtPose(6.5, 3.15, Rotation2d.fromDegrees(-165.0)),
+            new ExtPose(6.2, 2.9, Rotation2d.fromDegrees(-90.0))
         ),
         LITTLE_DANGER(
             "Double Danger",
@@ -117,8 +117,8 @@ public final class Autos {
         INNIE_OUTIE(
             "Innie Outie",
             new ExtPose(5.75, 0.65, Rotation2d.fromDegrees(95.0)),
-            new ExtPose(5.6, 3.5, Rotation2d.fromDegrees(85.0)),
-            new ExtPose(7.5, 3.9, Rotation2d.fromDegrees(0.0)),
+            new ExtPose(5.65, 3.4, Rotation2d.fromDegrees(85.0)),
+            new ExtPose(7.5, 3.8, Rotation2d.fromDegrees(0.0)),
             new ExtPose(7.6, 2.7, Rotation2d.fromDegrees(-92.0))
         );
 

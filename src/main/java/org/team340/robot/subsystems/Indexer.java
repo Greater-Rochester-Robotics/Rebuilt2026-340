@@ -222,8 +222,8 @@ public final class Indexer extends GRRSubsystem {
         final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.StatorCurrentLimit = 180.0;
-        config.CurrentLimits.SupplyCurrentLimit = 45.0;
-        config.CurrentLimits.SupplyCurrentLowerLimit = 30.0;
+        config.CurrentLimits.SupplyCurrentLimit = 40.0;
+        config.CurrentLimits.SupplyCurrentLowerLimit = 25.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 2.0;
 
         config.MotionMagic.MotionMagicAcceleration = 450.0;
