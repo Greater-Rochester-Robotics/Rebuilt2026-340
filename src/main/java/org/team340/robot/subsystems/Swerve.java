@@ -38,6 +38,7 @@ import org.team340.lib.tunable.Tunables;
 import org.team340.lib.tunable.Tunables.TunableBoolean;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.Alliance;
+import org.team340.lib.util.Mutable;
 import org.team340.lib.util.command.DummySubsystem;
 import org.team340.lib.util.command.GRRSubsystem;
 import org.team340.robot.Constants;
@@ -57,13 +58,14 @@ public final class Swerve extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("swerve");
 
-    private static final TunableBoolean enableSOTM = tunables.value("enableSOTM", true);
+    private static final TunableBoolean enableSOTM = tunables.value("enableSOTM", false);
     private static final TunableDouble distanceFudge = tunables.value("distanceFudge", 0.15); // Champs -0.15, Ruckus -0.12
     private static final TunableDouble apfBumpVelocity = tunables.value("apfBumpVelocity", 2.6);
     private static final TunableDouble apfSlowTurn = tunables.value("apfSlowTurn", 5.0);
     private static final TunableDouble overBumpX = tunables.value("overBumpX", 5.0);
     private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(5.0));
     private static final TunableDouble flatTolerance = tunables.value("flatTolerance", Math.toRadians(10.0));
+    private static final TunableDouble turboSpin = tunables.value("turboSpin", 8.0);
 
     // spotless:off
     private static final TunableTable ferryTargets = tunables.getNested("ferryTargets");
@@ -251,6 +253,22 @@ public final class Swerve extends GRRSubsystem {
                 true
             )
         );
+    }
+
+    /**
+     * SPIN FAST RAHHHHHHH
+     * @param x The X value from the driver's joystick.
+     * @param y The Y value from the driver's joystick.
+     * @param angular The CCW+ angular speed to apply, from {@code [-1.0, 1.0]}.
+     */
+    public Command turboSpin(DoubleSupplier x, DoubleSupplier y, DoubleSupplier angular) {
+        Mutable<Double> configured = new Mutable<>(0.0);
+        return drive(x, y, angular)
+            .beforeStarting(() -> {
+                configured.value = api.config.driverAngularVel;
+                api.config.driverAngularVel = turboSpin.get();
+            })
+            .finallyDo(() -> api.config.driverAngularVel = configured.value);
     }
 
     /**

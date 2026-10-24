@@ -91,6 +91,8 @@ public final class Robot extends LoggedRobot {
         driver.povDown().whileTrue(hood.goToZero(true));
         driver.povUp().whileTrue(routines.staticShoot());
 
+        driver.leftStick().whileTrue(swerve.turboSpin(this::driverX, this::driverY, this::driverAngular));
+
         // Demo Binding
         // shootTrigger.whileTrue(routines.demoShoot(intakeTrigger, driver.y()));
 

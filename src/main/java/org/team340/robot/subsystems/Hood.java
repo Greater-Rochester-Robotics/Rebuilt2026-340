@@ -176,7 +176,7 @@ public final class Hood extends GRRSubsystem {
         config.Slot1.kV = 0.0;
         config.Slot1.kA = 0.0;
 
-        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 17.97;
+        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 17.12;
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0;
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;

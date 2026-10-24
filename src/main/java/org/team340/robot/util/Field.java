@@ -83,14 +83,14 @@ public final class Field {
         // Blue HUB
         new LineObstacle(HUB_NEAR_LEFT_CORNER.getBlue(), HUB_NEAR_RIGHT_CORNER.getBlue(), 2.0, 1.0),
         new LineObstacle(HUB_FAR_LEFT_CORNER.getBlue(), HUB_FAR_RIGHT_CORNER.getBlue(), 2.0, 1.0),
-        new LineObstacle(HUB_NEAR_LEFT_CORNER.getBlue(), HUB_FAR_LEFT_CORNER.getBlue(), 2.0, 1.25),
-        new LineObstacle(HUB_NEAR_RIGHT_CORNER.getBlue(), HUB_FAR_RIGHT_CORNER.getBlue(), 2.0, 1.25),
+        new LineObstacle(HUB_NEAR_LEFT_CORNER.getBlue(), HUB_FAR_LEFT_CORNER.getBlue(), 2.0, 1.0),
+        new LineObstacle(HUB_NEAR_RIGHT_CORNER.getBlue(), HUB_FAR_RIGHT_CORNER.getBlue(), 2.0, 1.0),
 
         // Red HUB
         new LineObstacle(HUB_NEAR_LEFT_CORNER.getRed(), HUB_NEAR_RIGHT_CORNER.getRed(), 2.0, 1.0),
         new LineObstacle(HUB_FAR_LEFT_CORNER.getRed(), HUB_FAR_RIGHT_CORNER.getRed(), 2.0, 1.0),
-        new LineObstacle(HUB_NEAR_LEFT_CORNER.getRed(), HUB_FAR_LEFT_CORNER.getRed(), 2.0, 1.25),
-        new LineObstacle(HUB_NEAR_RIGHT_CORNER.getRed(), HUB_FAR_RIGHT_CORNER.getRed(), 2.0, 1.25),
+        new LineObstacle(HUB_NEAR_LEFT_CORNER.getRed(), HUB_FAR_LEFT_CORNER.getRed(), 2.0, 1.0),
+        new LineObstacle(HUB_NEAR_RIGHT_CORNER.getRed(), HUB_FAR_RIGHT_CORNER.getRed(), 2.0, 1.0),
 
         // Blue left TRENCH base
         new LineObstacle(LEFT_TRENCH_BASE_NEAR_BUMP_CORNER.getBlue(), LEFT_TRENCH_BASE_NEAR_OPENING_CORNER.getBlue(), 2.0, 1.0),

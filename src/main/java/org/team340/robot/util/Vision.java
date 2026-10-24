@@ -220,8 +220,9 @@ public final class Vision {
                 if (!result.hasTargets()) continue;
 
                 // The usage of EstimatedRobotPose.targetsUsed below leverages our modifications
-                // to PhotonPoseEstimator. Utilized strategies have been modified to return
-                // PhotonTrackedTarget lists with only the AprilTags used for the solve.
+                // to the coprocessor image and to the PhotonPoseEstimator used on RIO. Utilized
+                // strategies have been modified to return PhotonTrackedTarget lists with only
+                // the AprilTags used for the solve.
 
                 Optional<EstimatedRobotPose> estimate = Optional.empty();
                 double xyWeight = 1e5;
