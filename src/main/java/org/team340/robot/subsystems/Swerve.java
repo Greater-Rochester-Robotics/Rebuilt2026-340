@@ -63,6 +63,7 @@ public final class Swerve extends GRRSubsystem {
     private static final TunableDouble apfBumpVelocity = tunables.value("apfBumpVelocity", 2.6);
     private static final TunableDouble apfSlowTurn = tunables.value("apfSlowTurn", 5.0);
     private static final TunableDouble overBumpX = tunables.value("overBumpX", 5.0);
+    private static final TunableDouble insideBumpX = tunables.value("insideBumpX", 3.75);
     private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(5.0));
     private static final TunableDouble flatTolerance = tunables.value("flatTolerance", Math.toRadians(10.0));
     private static final TunableDouble turboSpin = tunables.value("turboSpin", 8.0);
@@ -106,7 +107,7 @@ public final class Swerve extends GRRSubsystem {
         .setMovePID(0.25, 0.0, 0.0)
         .setMoveFF(0.0, 0.125)
         .setTurnPID(100.0, 0.0, 0.2)
-        .setBrakeMode(true, true)
+        .setBrakeMode(false, true)
         .setLimits(4.5, 0.01, 14.0, 10.0, 32.0)
         .setDriverProfile(4.5, 1.5, 0.15, 5.4, 1.0, 0.15)
         .setPowerProperties(Constants.VOLTAGE, 80.0, 20.0, 60.0, 20.0)
@@ -465,6 +466,15 @@ public final class Swerve extends GRRSubsystem {
         return Alliance.isBlue()
             ? state.pose.getX() >= overBumpX.get()
             : state.pose.getX() <= FieldInfo.length() - overBumpX.get();
+    }
+
+    /**
+     * Returns {@code true} if we are inside our bump in the alliance zone.
+     */
+    public boolean insideBump() {
+        return Alliance.isBlue()
+            ? state.pose.getX() <= insideBumpX.get()
+            : state.pose.getX() >= FieldInfo.length() - insideBumpX.get();
     }
 
     /**

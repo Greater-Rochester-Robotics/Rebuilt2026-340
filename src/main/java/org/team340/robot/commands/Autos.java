@@ -36,9 +36,14 @@ public final class Autos {
         "start",
         new ExtPose(4.4, 0.63, Rotation2d.fromDegrees(90.0))
     );
+
     private static final ExtPose shootPose = positionsTunables.add(
         "shoot",
-        new ExtPose(3.0, 2.5, Rotation2d.fromDegrees(-90.0))
+        new ExtPose(3.0, 2.5, Rotation2d.fromDegrees(-129.0))
+    );
+    private static final ExtPose preShoot = positionsTunables.add(
+        "preShoot",
+        new ExtPose(shootPose.getBlue().getTranslation(), Rotation2d.fromDegrees(-90.0))
     );
 
     private static final ExtPose trenchEnterPose = positionsTunables.add(
@@ -56,7 +61,7 @@ public final class Autos {
         new ExtPose(7.3, 1.2, Rotation2d.fromDegrees(25.0))
     );
 
-    private static final TunableDouble swipeTime = tunables.value("swipeTime", 8.85);
+    private static final TunableDouble swipeTime = tunables.value("swipeTime", 8.8);
 
     private static final TunableTable defaultTunables = tunables.getNested("default");
     private static final TunableDouble velocity = defaultTunables.value("velocity", 4.5);
@@ -74,7 +79,7 @@ public final class Autos {
     private static final TunableDouble depotEndTolerance = depotTunables.value("endTolerance", 0.04);
 
     private static final TunableTable trenchingTunables = tunables.getNested("trenching");
-    private static final TunableDouble trenchingDeceleration = trenchingTunables.value("deceleration", 14.0);
+    private static final TunableDouble trenchingDeceleration = trenchingTunables.value("deceleration", 13.0);
     private static final TunableDouble trenchingEndTolerance = trenchingTunables.value("endTolerance", 0.4);
     private static final TunableDouble trenchingEndAngTolerance = defaultTunables.value(
         "endAngTolerance",
@@ -102,8 +107,8 @@ public final class Autos {
         ),
         DANGER(
             "Danger",
-            new ExtPose(7.8, 0.9, Rotation2d.fromDegrees(85.0)),
-            new ExtPose(8.3, 3.55, Rotation2d.fromDegrees(110.0)),
+            new ExtPose(7.77, 0.9, Rotation2d.fromDegrees(85.0)),
+            new ExtPose(8.27, 3.55, Rotation2d.fromDegrees(110.0)),
             new ExtPose(6.5, 2.9, Rotation2d.fromDegrees(-160.0)),
             new ExtPose(6.2, 2.8, Rotation2d.fromDegrees(-90.0))
         ),
@@ -118,8 +123,8 @@ public final class Autos {
             "Innie Outie",
             new ExtPose(5.75, 0.65, Rotation2d.fromDegrees(95.0)),
             new ExtPose(5.65, 3.4, Rotation2d.fromDegrees(85.0)),
-            new ExtPose(7.5, 3.8, Rotation2d.fromDegrees(0.0)),
-            new ExtPose(7.6, 2.6, Rotation2d.fromDegrees(-92.0))
+            new ExtPose(7.55, 3.8, Rotation2d.fromDegrees(0.0)),
+            new ExtPose(7.68, 2.6, Rotation2d.fromDegrees(-92.0))
         );
 
         private String name;
@@ -289,7 +294,9 @@ public final class Autos {
                     )
                     .withTimeout(4.0),
                 apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), () -> 4.5).withTimeout(5.0),
-                apfDefaults(() -> shootPose.get(left.getAsBoolean()))
+                apfDefaults(() ->
+                    swerve.insideBump() ? shootPose.get(left.getAsBoolean()) : preShoot.get(left.getAsBoolean())
+                )
             ),
             sequence(
                 waitUntil(swerve::overBump).deadlineFor(
