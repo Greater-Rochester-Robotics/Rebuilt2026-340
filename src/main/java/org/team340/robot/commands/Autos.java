@@ -62,8 +62,8 @@ public final class Autos {
     );
 
     private static final TunableTable swipeTime = tunables.getNested("swipeTime");
-    private static final TunableDouble firstSwipeTime = swipeTime.value("firstSwipeTime", 8.7);
-    private static final TunableDouble secondSwipeTime = swipeTime.value("secondSwipeTime", 8.9);
+    private static final TunableDouble firstSwipeTime = swipeTime.value("firstSwipe", 8.7);
+    private static final TunableDouble secondSwipeTime = swipeTime.value("secondSwipe", 8.9);
 
     private static final TunableTable defaultTunables = tunables.getNested("default");
     private static final TunableDouble velocity = defaultTunables.value("velocity", 4.5);
