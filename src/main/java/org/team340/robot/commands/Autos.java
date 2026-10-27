@@ -12,6 +12,7 @@ import org.team340.lib.math.Math2;
 import org.team340.lib.math.geometry.ExtPose;
 import org.team340.lib.tunable.TunableTable;
 import org.team340.lib.tunable.Tunables;
+import org.team340.lib.tunable.Tunables.TunableBoolean;
 import org.team340.lib.tunable.Tunables.TunableDouble;
 import org.team340.lib.util.Mutable;
 import org.team340.lib.util.command.AutoChooser;
@@ -31,39 +32,19 @@ public final class Autos {
 
     private static final TunableTable tunables = Tunables.getNested("autos");
 
-    private static final TunableTable positionsTunables = tunables.getNested("positions");
-    private static final ExtPose startingPose = positionsTunables.add(
-        "start",
-        new ExtPose(4.4, 0.63, Rotation2d.fromDegrees(90.0))
+    private static final ExtPose startPose = new ExtPose(4.4, 0.63, Rotation2d.fromDegrees(90.0));
+    private static final ExtPose insideStartPose = new ExtPose(3.65, 0.63, Rotation2d.fromDegrees(90.0));
+
+    private static final ExtPose shootPose = new ExtPose(3.0, 2.5, Rotation2d.fromDegrees(-129.0));
+    private static final ExtPose safeShootPose = new ExtPose(2.1, 3.9, Rotation2d.fromDegrees(-174.0));
+    private static final ExtPose preShoot = new ExtPose(
+        shootPose.getBlue().getTranslation(),
+        Rotation2d.fromDegrees(-90.0)
     );
 
-    private static final ExtPose shootPose = positionsTunables.add(
-        "shoot",
-        new ExtPose(3.0, 2.5, Rotation2d.fromDegrees(-129.0))
-    );
-    private static final ExtPose preShoot = positionsTunables.add(
-        "preShoot",
-        new ExtPose(shootPose.getBlue().getTranslation(), Rotation2d.fromDegrees(-90.0))
-    );
-
-    private static final ExtPose trenchEnterPose = positionsTunables.add(
-        "trenchEnter",
-        new ExtPose(3.1, 0.8, Rotation2d.kZero)
-    );
-
-    private static final ExtPose transitionExitPose = positionsTunables.add(
-        "transitionPrep",
-        new ExtPose(6.3, 0.65, Rotation2d.kZero)
-    );
-
-    private static final ExtPose transitionFinalPose = positionsTunables.add(
-        "transitionFinal",
-        new ExtPose(7.3, 1.2, Rotation2d.fromDegrees(25.0))
-    );
-
-    private static final TunableTable swipeTime = tunables.getNested("swipeTime");
-    private static final TunableDouble firstSwipeTime = swipeTime.value("firstSwipe", 8.7);
-    private static final TunableDouble secondSwipeTime = swipeTime.value("secondSwipe", 8.9);
+    private static final ExtPose trenchEnterPose = new ExtPose(3.1, 0.8, Rotation2d.kZero);
+    private static final ExtPose transitionExitPose = new ExtPose(6.3, 0.65, Rotation2d.kZero);
+    private static final ExtPose transitionFinalPose = new ExtPose(7.3, 1.2, Rotation2d.fromDegrees(25.0));
 
     private static final TunableTable defaultTunables = tunables.getNested("default");
     private static final TunableDouble velocity = defaultTunables.value("velocity", 4.5);
@@ -76,7 +57,7 @@ public final class Autos {
     private static final TunableDouble intakeEndTolerance = intakeTunables.value("endTolerance", 0.4);
 
     private static final TunableTable depotTunables = tunables.getNested("depot");
-    private static final TunableDouble depotVelocity = depotTunables.value("velocity", 0.75);
+    private static final TunableDouble depotVelocity = depotTunables.value("velocity", 1.5);
     private static final TunableDouble depotDeceleration = depotTunables.value("deceleration", 4.0);
     private static final TunableDouble depotEndTolerance = depotTunables.value("endTolerance", 0.04);
 
@@ -88,18 +69,19 @@ public final class Autos {
         Math.toRadians(30.0)
     );
 
-    private static final TunableTable swipeDelays = tunables.getNested("swipeDelays");
-    private static final TunableDouble firstSwipeDelay = swipeDelays.value("first", 0.0);
-    private static final TunableDouble secondSwipeDelay = swipeDelays.value("second", 0.0);
+    private static final TunableTable swipeDelay = tunables.getNested("swipeDelay");
+    private static final TunableDouble firstSwipeDelay = swipeDelay.value("first", 0.0);
+    private static final TunableDouble secondSwipeDelay = swipeDelay.value("second", 0.0);
+
+    private static final TunableTable swipeTime = tunables.getNested("swipeTime");
+    private static final TunableDouble firstSwipeTime = swipeTime.value("first", 8.7);
+    private static final TunableDouble secondSwipeTime = swipeTime.value("second", 8.9);
+
+    private static final TunableBoolean insideStart = tunables.value("insideStart", false);
+    private static final TunableBoolean safeShoot = tunables.value("safeShoot", false);
+    private static final TunableBoolean secondTrench = tunables.value("secondTrench", true);
 
     private static enum GrabDepth {
-        SHALLOW(
-            "Shallow",
-            new ExtPose(6.7, 1.0, Rotation2d.fromDegrees(90.0)),
-            new ExtPose(6.7, 4.0, Rotation2d.fromDegrees(90.0)),
-            new ExtPose(6.3, 4.0, Rotation2d.fromDegrees(-160.0)),
-            new ExtPose(6.2, 2.6, Rotation2d.fromDegrees(-95.0))
-        ),
         MODERATE(
             "Moderate",
             new ExtPose(7.5, 0.9, Rotation2d.fromDegrees(75.0)),
@@ -114,7 +96,7 @@ public final class Autos {
             new ExtPose(6.5, 2.9, Rotation2d.fromDegrees(-160.0)),
             new ExtPose(6.2, 2.8, Rotation2d.fromDegrees(-90.0))
         ),
-        LITTLE_DANGER(
+        DOUBLE_DANGER(
             "Double Danger",
             new ExtPose(7.85, 1.2, Rotation2d.fromDegrees(85.0)),
             new ExtPose(7.85, 3.3, Rotation2d.fromDegrees(95.0)),
@@ -177,8 +159,6 @@ public final class Autos {
         // Add autonomous modes to the dashboard
         chooser.add("Double Swipe Right", doubleSwipe(false));
         chooser.add("Double Swipe Left", doubleSwipe(true));
-        chooser.add("Simple Sally Right", simpleSally(false));
-        chooser.add("Simple Sally Left", simpleSally(true));
 
         // Add swipe options to the dashboard
         for (var depth : GrabDepth.values()) {
@@ -201,7 +181,9 @@ public final class Autos {
             singleSwipe(firstSwipeChooser::getSelected, firstSwipeDelay, left).raceWith(
                 new VariableWaitCommand(() -> firstSwipeTime.get() + firstSwipeDelay.get())
             ),
-            apfTrenching(() -> trenchEnterPose.get(left)).asProxy(),
+            apfTrenching(() -> trenchEnterPose.get(left))
+                .asProxy()
+                .onlyIf(secondTrench),
             singleSwipe(secondSwipeChooser::getSelected, secondSwipeDelay, left).raceWith(
                 new VariableWaitCommand(() -> secondSwipeTime.get() + secondSwipeDelay.get())
             ),
@@ -213,19 +195,6 @@ public final class Autos {
                 ).asProxy(),
                 intake.intake().asProxy()
             )
-        );
-    }
-
-    /**`
-     * The "Simple Sally" auto routine.
-     * @param left {@code true} if the auto should run on the left side of the field
-     *             (from the perspective of the current alliance's driver station),
-     *             {@code false} to run on the right side.
-     */
-    private Command simpleSally(boolean left) {
-        return sequence(
-            grab(GrabDepth.MODERATE, () -> left, false),
-            parallel(swerve.aimAtTarget(), routines.shoot().asProxy())
         );
     }
 
@@ -249,7 +218,10 @@ public final class Autos {
 
         return either(
             supplier.get(),
-            sequence(new VariableWaitCommand(delay).deadlineFor(swerve.stop(false)).asProxy(), supplier.get()),
+            sequence(
+                new VariableWaitCommand(delay).deadlineFor(swerve.stop(false).alongWith(intake.stow())).asProxy(),
+                supplier.get()
+            ),
             () -> delay.getAsDouble() < 1e-6
         );
     }
@@ -267,7 +239,9 @@ public final class Autos {
 
         return deadline(
             sequence(
-                !secondPass ? swerve.resetPose(() -> startingPose.get(left.getAsBoolean())) : none(),
+                !secondPass
+                    ? swerve.resetPose(() -> (insideStart.get() ? insideStartPose : startPose).get(left.getAsBoolean()))
+                    : none(),
                 apfFuelApproach(() ->
                     !swerve.overBump() ? preExit.value : depth.sweepStart.get(left.getAsBoolean())
                 ).alongWith(
@@ -297,7 +271,9 @@ public final class Autos {
                     .withTimeout(4.0),
                 apfIntaking(() -> depth.returnEnd.get(left.getAsBoolean()), () -> 4.5).withTimeout(5.0),
                 apfDefaults(() ->
-                    swerve.insideBump() ? shootPose.get(left.getAsBoolean()) : preShoot.get(left.getAsBoolean())
+                    swerve.insideBump()
+                        ? (safeShoot.get() ? safeShootPose : shootPose).get(left.getAsBoolean())
+                        : preShoot.get(left.getAsBoolean())
                 )
             ),
             sequence(
@@ -314,15 +290,21 @@ public final class Autos {
      * The "Depoo" auto routine.
      */
     private Command depoo() {
-        var prePickup1 = new ExtPose(1.5, 4.8, Rotation2d.fromDegrees(125.0));
-        var prePickup2 = new ExtPose(0.585, 4.8, Rotation2d.fromDegrees(100.0));
-        var pickup = new ExtPose(0.585, 7.3, Rotation2d.fromDegrees(100.0));
+        var prePickup1 = new ExtPose(1.9, 4.8, Rotation2d.fromDegrees(135.0));
+        var prePickup2 = new ExtPose(0.53, 4.8, Rotation2d.fromDegrees(100.0));
+        var pickup = new ExtPose(0.53, 7.35, Rotation2d.fromDegrees(100.0));
+        var preShoot = new ExtPose(1.6, 7.35, Rotation2d.fromDegrees(100.0));
 
         return sequence(
-            deadline(apfDefaults(prePickup1).withTimeout(5.0)),
-            deadline(apfDefaults(prePickup2).withTimeout(2.0)),
-            deadline(apfDepot(pickup).withTimeout(4.0), getReady()),
-            deadline(apfDefaults(() -> shootPose.get(true)), getReady())
+            sequence(
+                apfDefaults(prePickup1).withTimeout(5.0),
+                apfDefaults(prePickup2).withTimeout(2.0),
+                apfDepot(pickup).withTimeout(4.0),
+                apfDefaults(preShoot).withTimeout(2.0)
+            ).deadlineFor(intake.intake().asProxy()),
+            apfDefaults(() -> safeShoot.get() ? safeShootPose.get(true) : shootPose.get(true)).deadlineFor(
+                sequence(intake.intake().asProxy().withTimeout(1.0), getReady())
+            )
         );
     }
 
