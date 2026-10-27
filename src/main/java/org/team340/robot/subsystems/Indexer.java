@@ -29,7 +29,7 @@ public final class Indexer extends GRRSubsystem {
 
     private static final TunableTable tunables = Tunables.getNested("indexer");
 
-    private static final TunableDouble uptakeAtVelocityEpsilon = tunables.value("uptakeAtVelocityEpsilon", 2.0);
+    private static final TunableDouble uptakeAtVelocityEpsilon = tunables.value("uptakeAtVelocityEpsilon", 3.0);
 
     private static enum State {
         ACCELERATE(55.0, -5.0),

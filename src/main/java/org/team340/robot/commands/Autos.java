@@ -61,7 +61,9 @@ public final class Autos {
         new ExtPose(7.3, 1.2, Rotation2d.fromDegrees(25.0))
     );
 
-    private static final TunableDouble swipeTime = tunables.value("swipeTime", 8.8);
+    private static final TunableTable swipeTime = tunables.getNested("swipeTime");
+    private static final TunableDouble firstSwipeTime = swipeTime.value("firstSwipeTime", 8.7);
+    private static final TunableDouble secondSwipeTime = swipeTime.value("secondSwipeTime", 8.9);
 
     private static final TunableTable defaultTunables = tunables.getNested("default");
     private static final TunableDouble velocity = defaultTunables.value("velocity", 4.5);
@@ -197,11 +199,11 @@ public final class Autos {
     private Command doubleSwipe(boolean left) {
         return sequence(
             singleSwipe(firstSwipeChooser::getSelected, firstSwipeDelay, left).raceWith(
-                new VariableWaitCommand(() -> swipeTime.get() + firstSwipeDelay.get())
+                new VariableWaitCommand(() -> firstSwipeTime.get() + firstSwipeDelay.get())
             ),
             apfTrenching(() -> trenchEnterPose.get(left)).asProxy(),
             singleSwipe(secondSwipeChooser::getSelected, secondSwipeDelay, left).raceWith(
-                new VariableWaitCommand(() -> swipeTime.get() + secondSwipeDelay.get())
+                new VariableWaitCommand(() -> secondSwipeTime.get() + secondSwipeDelay.get())
             ),
             apfTrenching(() -> trenchEnterPose.get(left)).asProxy(),
             parallel(
