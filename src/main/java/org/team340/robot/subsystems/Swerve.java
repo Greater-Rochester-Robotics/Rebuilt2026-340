@@ -66,7 +66,7 @@ public final class Swerve extends GRRSubsystem {
     private static final TunableDouble insideBumpX = tunables.value("insideBumpX", 3.75);
     private static final TunableDouble aimAtHubTolerance = tunables.value("aimAtHubTolerance", Math.toRadians(8.0));
     private static final TunableDouble flatTolerance = tunables.value("flatTolerance", Math.toRadians(10.0));
-    private static final TunableDouble turboSpin = tunables.value("turboSpin", 8.0);
+    private static final TunableDouble turboSpin = tunables.value("turboSpin", 9.0);
 
     // spotless:off
     private static final TunableTable ferryTargets = tunables.getNested("ferryTargets");
@@ -269,7 +269,8 @@ public final class Swerve extends GRRSubsystem {
                 configured.value = api.config.driverAngularVel;
                 api.config.driverAngularVel = turboSpin.get();
             })
-            .finallyDo(() -> api.config.driverAngularVel = configured.value);
+            .finallyDo(() -> api.config.driverAngularVel = configured.value)
+            .withName("Swerve.turboSpin()");
     }
 
     /**

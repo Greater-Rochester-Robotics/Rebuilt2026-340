@@ -89,7 +89,7 @@ public final class Robot extends LoggedRobot {
 
         driver.povLeft().onTrue(swerve.tareRotation());
         driver.povDown().whileTrue(hood.goToZero(true));
-        driver.povUp().whileTrue(routines.staticShoot());
+        driver.povUp().or(driver.x()).whileTrue(routines.staticShoot());
 
         driver.leftStick().whileTrue(swerve.turboSpin(this::driverX, this::driverY, this::driverAngular));
 

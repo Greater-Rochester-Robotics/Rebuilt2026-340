@@ -74,8 +74,8 @@ public final class Autos {
     private static final TunableDouble secondSwipeDelay = swipeDelay.value("second", 0.0);
 
     private static final TunableTable swipeTime = tunables.getNested("swipeTime");
-    private static final TunableDouble firstSwipeTime = swipeTime.value("first", 8.7);
-    private static final TunableDouble secondSwipeTime = swipeTime.value("second", 8.9);
+    private static final TunableDouble firstSwipeTime = swipeTime.value("first", 8.6);
+    private static final TunableDouble secondSwipeTime = swipeTime.value("second", 9.0);
 
     private static final TunableBoolean insideStart = tunables.value("insideStart", false);
     private static final TunableBoolean safeShoot = tunables.value("safeShoot", false);
@@ -106,7 +106,7 @@ public final class Autos {
         INNIE_OUTIE(
             "Innie Outie",
             new ExtPose(5.75, 0.65, Rotation2d.fromDegrees(95.0)),
-            new ExtPose(5.65, 3.4, Rotation2d.fromDegrees(85.0)),
+            new ExtPose(5.7, 3.4, Rotation2d.fromDegrees(85.0)),
             new ExtPose(7.55, 3.8, Rotation2d.fromDegrees(0.0)),
             new ExtPose(7.68, 2.6, Rotation2d.fromDegrees(-92.0))
         );

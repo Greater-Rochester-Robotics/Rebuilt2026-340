@@ -41,7 +41,6 @@ public final class Lights extends GRRSubsystem {
         BLUE(0, 10, 255),
         RED(255, 0, 0),
         NO_DS(255, 0, 255),
-        NO_TAGS(255, 0, 0),
         BAD_LOCATION(255, 144, 0),
         BAD_ROTATION(255, 32, 0),
         OFF(0, 0, 0);
@@ -211,11 +210,15 @@ public final class Lights extends GRRSubsystem {
                 errorTime.value = -1.0;
             })
             .onExecute(() -> {
+                Color alliance = !DriverStation.isDSAttached()
+                    ? Color.NO_DS
+                    : (Alliance.isBlue() ? Color.BLUE : Color.RED);
+
                 errors.clear();
                 Pose2d pose = robotPose.get();
 
                 if (tag.calculate(!tagFilter.calculate(seesAprilTag.getAsBoolean()))) {
-                    errors.add(Color.NO_TAGS);
+                    errors.add(alliance);
                 } else if (
                     location.calculate(
                         !Math2.isNear(lastPose.value.getTranslation(), pose.getTranslation(), locationTol.get())
@@ -252,9 +255,6 @@ public final class Lights extends GRRSubsystem {
                     double percent = (center.calculate(radians) + (view / 2.0) - radians) / view;
                     int closestLED = (int) Math.round(percent * (LENGTH - 1));
 
-                    Color alliance = !DriverStation.isDSAttached()
-                        ? Color.NO_DS
-                        : (Alliance.isBlue() ? Color.BLUE : Color.RED);
                     for (int i = 0; i < LENGTH; i++) {
                         if (Math.abs(closestLED - i) <= 1) {
                             set(i, alliance);
